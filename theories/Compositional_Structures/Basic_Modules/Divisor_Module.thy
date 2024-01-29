@@ -199,11 +199,9 @@ fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarro
   "create_empty_seats indexes parties =
     (\<lambda>i. if i \<in> indexes then set parties else {})"
 
-(*
-Returns two elements: (Result, Seats)
+(* Returns two elements: (Result, Seats)
 Result contains the assigned and disputed Seats
-Seats is a function assigning every seat to a party or a list of parties
-*)
+Seats is a function assigning every seat to a party or a list of parties *)
 type_synonym ('a, 'b) full_module_params = "'b Parties \<Rightarrow> 'b Profile \<Rightarrow> 'a set \<Rightarrow> Params \<Rightarrow> (('a Result) \<times> ('a, 'b) Seats)"
 fun full_module:: "('a::linorder, 'b::linorder) full_module_params" where
 "full_module parties profile_l indexes params = (
