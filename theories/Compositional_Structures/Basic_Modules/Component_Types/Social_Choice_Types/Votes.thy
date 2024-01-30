@@ -55,10 +55,10 @@ fun empty_struct_votes :: "('b \<Rightarrow> rat)" where
 (* this calculate votes and returns "Votes" *)
 fun calculate_votes_for_election :: "'b Parties \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes" where
   "calculate_votes_for_election parties_list profile_list =
-      (let votes = empty_struct_votes in
+      (let votes = empty_struct_votes in (if parties_list = [] then empty_struct_votes else
       (foldr (\<lambda>party acc_votes. 
               count_votes_for_party party profile_list acc_votes) 
-              parties_list votes))"
+              parties_list votes)))"
 
 (* Step 1: function to find maximum in "Votes" and returns both winner and votes *)
 fun find_max_votes :: "'b Votes \<Rightarrow> 'b list \<Rightarrow> 'b list" where

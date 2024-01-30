@@ -10,6 +10,7 @@ HOL.List
 "HOL-Combinatorics.Multiset_Permutations"
 "Component_Types/Consensus_Class"
 "Component_Types/Distance"
+
 begin
 
 type_synonym 'a Divisor_Term_Condition = "('a Parties \<Rightarrow> bool)"
@@ -34,9 +35,15 @@ record ('a::linorder, 'b) Divisor_Module =
   fv :: "'b Votes"
   d :: "nat list"
 
-locale types = 
-  fixes dmp :: "('a::linorder, 'b) Divisor_Module"
+locale typesl = 
+  fixes dm :: "('a::linorder, 'b) Divisor_Module"
   and em :: "'a::linorder Electoral_Module"
+
+fun loop1 :: "('a, 'b) Divisor_Module => ('a, 'b) Divisor_Module" where
+  "loop1 dm = dm" 
+
+fun loop2 :: "'a Electoral_Module => 'a Electoral_Module" where
+  "loop2 em = em" 
 
 fun divisor_module :: "_ \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where 
 "divisor_module rec =
@@ -68,22 +75,6 @@ fun defer_divisor :: "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linor
 fun create_seats :: "'a::linorder set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 'b set \<Rightarrow> ('a::linorder, 'b) Seats" where
   "create_seats def seats p_set=
     (\<lambda>x. if x \<in> def then p_set else seats x)"
-
-(*
-fun apply_divisor_module_list ::
-  "'a::linorder Result \<times> 'b StructVotes \<times> ('a::linorder, 'b) Seats \<Rightarrow>
-   'b list \<Rightarrow> 'a::linorder set \<Rightarrow>
-   'b StructVotes \<Rightarrow> 'b StructVotes \<Rightarrow> nat list \<Rightarrow> 
-   ('a::linorder Result \<times> 'b StructVotes \<times> ('a::linorder, 'b) Seats)" where
-"apply_divisor_module_list input [] indexes votes fract_votes ps = input" |
-"apply_divisor_module_list input (party # parties) indexes votes fract_votes ps = 
-    (let res = fst (input);
-     seats = snd(snd(input));
-              (result, new_fractvotes, new_seats) = 
-                  divisor_module res party indexes seats votes fract_votes ps
-          in
-        apply_divisor_module_list (result, new_fractvotes, new_seats) parties indexes votes new_fractvotes ps)"
-*)
 
 (* divisor module for tie breaking: assigns all remaining seats to all tied parties 
 in another Seats function and returns  *)
@@ -124,8 +115,7 @@ next
 qed
 
 (*
-main function is the whole method. After creating the starting structures, 
-this function assigns the seats.
+After creating the starting structures, this function assigns the seats.
 *)
 fun main_function :: "('a::linorder, 'b) Divisor_Module \<Rightarrow>
    ('a::linorder, 'b) Divisor_Module" where
@@ -180,8 +170,8 @@ next
   case (2 rec)
   assume "p rec \<noteq> []"
   then have "ns (main_function rec) < ns (rec)" 
-    using nseats_decreasing_main_function by simp
-  then show ?case by simp
+  using nseats_decreasing_main_function by simp
+  then show ?case  by simp
 qed
 
 fun seats_assigned :: "char list Termination_Condition" where 
@@ -195,21 +185,20 @@ fun t_inner :: "'b Termination_Condition" where
     case result of 
       (lp, _, _) \<Rightarrow> lp = {} 
   )"
+
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
   "create_empty_seats indexes parties =
     (\<lambda>i. if i \<in> indexes then set parties else {})"
 
-(* Returns two elements: (Result, Seats)
-Result contains the assigned and disputed Seats
-Seats is a function assigning every seat to a party or a list of parties *)
-type_synonym ('a, 'b) full_module_params = "'b Parties \<Rightarrow> 'b Profile \<Rightarrow> 'a set \<Rightarrow> Params \<Rightarrow> (('a Result) \<times> ('a, 'b) Seats)"
-fun full_module:: "('a::linorder, 'b::linorder) full_module_params" where
-"full_module parties profile_l indexes params = (
-    let votes = calculate_votes_for_election parties profile_l;
-    n = card indexes;
-    empty_seats = create_empty_seats indexes parties;
-    outcome = main_function (({}, {}, indexes), votes, empty_seats) parties n indexes votes params 
-    in outcome)"
+(* full divisor module function *) 
+fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
+"full_module rec pl = (
+    let sv = calculate_votes_for_election (p rec) pl;
+    empty_seats = create_empty_seats (i rec) (p rec)
+    in loop_divisor_outer (rec\<lparr>
+             s := empty_seats,
+             fv := sv
+            \<rparr>))"
 
 (* to prove *)
 theorem full_module_anonymity:
@@ -220,24 +209,10 @@ theorem full_module_anonymity:
            full_module parties2 profile_l indexes params"
   sorry
 
-definition example_multiset :: "nat multiset" where
-  "example_multiset = {#1, 2, 3#}"
-(* Example usage *)
-value "permutations_of_multiset example_multiset"
-
 
 (* Define a set *)
 definition my_set :: "nat set" where
   "my_set = {1, 2, 3, 4, 5}"
-
-(*
-fun profile_permutations :: "nat \<Rightarrow> 'a set \<Rightarrow> ('a Profile) set" where
-  "profile_permutations n A =
-    (if permutations_of_set A = {}
-      then {} else listset (replicate n (pl_\<alpha> ` permutations_of_set A)))"
-
-value "profile_permutations "
-*)
 
 (* works *)
 fun list_to_multiset :: "'a list \<Rightarrow> 'a multiset" where
@@ -255,25 +230,45 @@ function take_one_element :: "'a set \<Rightarrow> 'a option" where
 "take_one_element my_et = (if my_et = {} then None else Some (SOME x. x \<in> my_et))"
 value "take_one_element {''a'',''bb'', ''c''}"
 *)
+fun empty_votes :: "('b \<Rightarrow> rat)" where
+  "empty_votes b = 0"
 
 (* to check *)
-theorem find_max_votes_anonymous:
-  "\<forall>votes1 votes2 parties.
-    (\<forall>party. party \<in> set parties \<longrightarrow> votes1 party = votes2 party) \<longrightarrow>
-    find_max_votes votes1 parties = find_max_votes votes2 parties"
+theorem votes_anonymous:
+  "\<forall>(parties2 :: 'b list) (parties1:: 'b list) profile.
+    parties1 <~~> parties2 \<longrightarrow>
+    calculate_votes_for_election parties1 profile = 
+    calculate_votes_for_election parties2 profile"
+proof (induction "length parties1")
+  case 0
+  show ?case
+  proof -
+    have "parties1 = []" using "0" by simp
+    hence "parties2 = []" using perm_empty_imp \<open>parties1 <~~> parties2\<close> by simp
+    have "calculate_votes_for_election [] prof = empty_struct_votes" 
+      by simp
+    moreover have "calculate_votes_for_election parties2 prof = empty_struct_votes"
+      using \<open>parties2 = []\<close> by simp
+    ultimately show ?thesis by simp
+  qed
+next
+  case (Suc n)
+  then obtain a parties1' where "parties1 = a # parties1'" "length parties1' = n"
+    by (metis Suc_eq_plus1 length_Suc_conv)
+  moreover obtain b parties2' where "parties2 = b # parties2'"
+    using Suc.prems(2) perm_length by fastforce
+  ultimately have "a = b" "parties1' <~~> parties2'"
+    using Suc.prems(2) perm_Cons by auto
+  then have "calculate_votes_for_election parties1' profile = calculate_votes_for_election parties2' profile"
+    using Suc.IH Suc.prems(2) by blast
+  with \<open>a = b\<close> show ?case by simp
+qed
 
-(*
-subsubsection \<open>Anonymity\<close>
-
-definition anonymity :: "'a Electoral_Module \<Rightarrow> bool" where
-  "anonymity m \<equiv>
-    electoral_module m \<and>
-      (\<forall> A p q. profile A p \<and> profile A q \<and> p <~~> q \<longrightarrow> m A p = m A q)"
-*)
-
-(*definition anonymity :: "'a multiset \<Rightarrow> 'a multiset \<Rightarrow> bool" where
-  "anonymity f \<equiv> \<forall>V1 V2. V2 \<in> permutations_of_multiset V1 \<longrightarrow> f V1 = f V2"
-*)
+(* Define the concordant property *)
+definition concordant :: "(('a, 'b) Divisor_Module \<Rightarrow> ('a, 'b) Divisor_Module) \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow> bool" where
+  "concordant D dm = (\<forall>party1 party2 i.
+    (v dm) party1 > (v dm) party2 \<longrightarrow>
+    count_seats {party1} (s (D dm)) (i dm) \<ge> count_seats {party2} (s (D dm)) (i dm))"
 
 (* example values *)
 definition pref_rel_a :: "char list Preference_Relation" where
@@ -326,18 +321,5 @@ definition parameters_list :: "nat list" where
 
 definition seats_set :: "nat set" where
 "seats_set = {1, 2, 3}"
-
-(* full_module *)
-value "full_module parties_list profile_list seats_set parameters_list"
-
-(* Result *)
-value "fst(full_module parties_list profile_list seats_set parameters_list)"
-
-(* Seats *)
-value "snd(full_module parties_list profile_list seats_set parameters_list)"
-
-(* full_module permuted *)
-value "full_module parties_list_perm profile_list seats_set parameters_list"
-value "snd(full_module parties_list_perm profile_list seats_set parameters_list)"
 
 end
