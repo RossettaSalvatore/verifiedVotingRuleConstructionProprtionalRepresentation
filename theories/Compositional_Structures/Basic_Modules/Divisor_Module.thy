@@ -13,6 +13,7 @@ HOL.List
 
 begin
 
+
 type_synonym 'a Divisor_Term_Condition = "('a Parties \<Rightarrow> bool)"
 
 (*
@@ -35,15 +36,10 @@ record ('a::linorder, 'b) Divisor_Module =
   fv :: "'b Votes"
   d :: "nat list"
 
+
 locale typesl = 
   fixes dm :: "('a::linorder, 'b) Divisor_Module"
   and em :: "'a::linorder Electoral_Module"
-
-fun loop1 :: "('a, 'b) Divisor_Module => ('a, 'b) Divisor_Module" where
-  "loop1 dm = dm" 
-
-fun loop2 :: "'a Electoral_Module => 'a Electoral_Module" where
-  "loop2 em = em" 
 
 fun divisor_module :: "_ \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where 
 "divisor_module rec =
@@ -62,15 +58,16 @@ lemma divisor_module_length:
   shows "length (p (divisor_module rec)) < length (p rec)"
   using assms by (simp add:Let_def)
 
-function loop_divisor ::
-    "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
-  "(p rec = []) \<Longrightarrow> loop_divisor rec = rec" |
-  "\<not>(p rec = []) \<Longrightarrow> loop_divisor rec = loop_divisor (divisor_module rec)" 
-  by auto
-termination by (relation "measure (\<lambda>rec. length (p rec))") (auto simp add: divisor_module_length Let_def)
 
 fun defer_divisor :: "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
 "defer_divisor r = r"
+
+function loop_divisor ::
+    "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
+  "(p rec = []) \<Longrightarrow> loop_divisor rec = defer_divisor rec" |
+  "\<not>(p rec = []) \<Longrightarrow> loop_divisor rec = loop_divisor (divisor_module rec)" 
+  by auto
+termination by (relation "measure (\<lambda>rec. length (p rec))") (auto simp add: divisor_module_length Let_def)
 
 fun create_seats :: "'a::linorder set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 'b set \<Rightarrow> ('a::linorder, 'b) Seats" where
   "create_seats def seats p_set=
@@ -158,7 +155,7 @@ qed
 function loop_divisor_outer ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
   where  
-  "ns r = 0 \<Longrightarrow> loop_divisor_outer r = r" |
+  "ns r = 0 \<Longrightarrow> loop_divisor_outer r = defer_divisor r" |
   "ns r > 0 \<Longrightarrow> loop_divisor_outer r = loop_divisor_outer (main_function r)"
   by auto
 
@@ -203,10 +200,10 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
 (* to prove *)
 theorem full_module_anonymity:
   assumes "finite indexes"
-  shows "\<forall>profile_l parties1 parties2 indexes params.
-           set parties1 = set parties2 \<longrightarrow>
-           full_module parties1 profile_l indexes params =
-           full_module parties2 profile_l indexes params"
+  shows "\<forall>profile_l dm dm_perm.
+           (p dm) <~~> (p dm_perm) \<longrightarrow>
+           full_module dm profile_l =
+           full_module dm_perm profile_l"
   sorry
 
 
@@ -233,22 +230,27 @@ value "take_one_element {''a'',''bb'', ''c''}"
 fun empty_votes :: "('b \<Rightarrow> rat)" where
   "empty_votes b = 0"
 
+fun empty_seats :: "('a::linorder \<Rightarrow> 'b list)" where
+  "empty_seats b = []"
+
 (* to check *)
 theorem votes_anonymous:
-  "\<forall>(parties2 :: 'b list) (parties1:: 'b list) profile.
-    parties1 <~~> parties2 \<longrightarrow>
-    calculate_votes_for_election parties1 profile = 
-    calculate_votes_for_election parties2 profile"
-proof (induction "length parties1")
+  "\<forall>p2 p1 profile.
+    p1 <~~> p2 \<longrightarrow>
+    calculate_votes_for_election p1 profile = 
+    calculate_votes_for_election p2 profile"
+proof (induction "length p1")
   case 0
   show ?case
   proof -
-    have "parties1 = []" using "0" by simp
-    hence "parties2 = []" using perm_empty_imp \<open>parties1 <~~> parties2\<close> by simp
+  (*  fix 
+    p1 :: "'b Parties" and p2::"'b Parties" *)
+    have "p1 = []" using "0" by simp
+    hence "p2 = []" using perm_empty_imp \<open>p1 <~~> p2\<close> by simp
     have "calculate_votes_for_election [] prof = empty_struct_votes" 
       by simp
-    moreover have "calculate_votes_for_election parties2 prof = empty_struct_votes"
-      using \<open>parties2 = []\<close> by simp
+    have "calculate_votes_for_election p2 prof = empty_struct_votes"
+      using \<open>p2 = []\<close> by simp
     ultimately show ?thesis by simp
   qed
 next
@@ -322,4 +324,8 @@ definition parameters_list :: "nat list" where
 definition seats_set :: "nat set" where
 "seats_set = {1, 2, 3}"
 
+definition create_divisor_module :: "nat Result \<Rightarrow> char list Parties \<Rightarrow> nat set \<Rightarrow> (nat, char list) Seats \<Rightarrow> nat \<Rightarrow> char list Votes \<Rightarrow> char list Votes \<Rightarrow> nat list \<Rightarrow> (nat, char list) Divisor_Module" where
+  "create_divisor_module resu pu iu su nsu vu fvu du = \<lparr> res = resu, p = pu, i = iu, s = su, ns = nsu, v = vu, fv = fvu, d = du \<rparr>"
+
+(* value "full_module (create_divisor_module ({1}, {1}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 empty_votes empty_votes parameters_list) profile_list" *)
 end
