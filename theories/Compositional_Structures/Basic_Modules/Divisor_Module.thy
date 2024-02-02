@@ -5,6 +5,7 @@ HOL.List
 "Component_Types/Social_Choice_Types/Preference_Relation"
 "Component_Types/Social_Choice_Types/Profile"
 "Component_Types/Social_Choice_Types/Result"
+"Component_Types/Electoral_Module"
 "Component_Types/Social_Choice_Types/Votes"
 "Component_Types/Termination_Condition"
 "HOL-Combinatorics.Multiset_Permutations"
@@ -41,6 +42,9 @@ locale typesl =
   fixes dm :: "('a::linorder, 'b) Divisor_Module"
   and em :: "'a::linorder Electoral_Module"
 
+locale l2 = 
+  typesl + fixes n :: nat
+
 fun divisor_module :: "_ \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where 
 "divisor_module rec =
   (let 
@@ -64,7 +68,7 @@ fun defer_divisor :: "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linor
 
 function loop_divisor ::
     "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
-  "(p rec = []) \<Longrightarrow> loop_divisor rec = defer_divisor rec" |
+  "(p rec = []) \<Longrightarrow> loop_divisor rec = rec" |
   "\<not>(p rec = []) \<Longrightarrow> loop_divisor rec = loop_divisor (divisor_module rec)" 
   by auto
 termination by (relation "measure (\<lambda>rec. length (p rec))") (auto simp add: divisor_module_length Let_def)
@@ -160,15 +164,15 @@ function loop_divisor_outer ::
   by auto
 
 termination
-proof (relation "measure (\<lambda>rec. ns rec)", goal_cases)
+proof (relation "measure (\<lambda>r. ns r)", goal_cases)
   case (1)
   then show ?case by simp
 next
-  case (2 rec)
-  assume "p rec \<noteq> []"
-  then have "ns (main_function rec) < ns (rec)" 
-  using nseats_decreasing_main_function by simp
-  then show ?case  by simp
+  case (2 r)
+  assume "p r \<noteq> []"
+  then have "ns (main_function r) < ns (r)" 
+  using nseats_decreasing_main_function "2" by blast
+  then show ?case by simp
 qed
 
 fun seats_assigned :: "char list Termination_Condition" where 
@@ -239,7 +243,7 @@ theorem votes_anonymous:
     p1 <~~> p2 \<longrightarrow>
     calculate_votes_for_election p1 profile = 
     calculate_votes_for_election p2 profile"
-proof (induction "length p1")
+proof (safe, induction "length p1" arbitrary ..)
   case 0
   show ?case
   proof -
