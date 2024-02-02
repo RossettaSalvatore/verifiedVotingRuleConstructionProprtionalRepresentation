@@ -48,10 +48,10 @@ locale l2 =
 fun divisor_module :: "_ \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where 
 "divisor_module rec =
   (let 
-    ni = Min (snd (snd (res rec)));
-    a = (fst (res rec) \<union> {ni});
-    dis =  snd (snd (res rec)) - {ni}
-     in rec\<lparr> res := (a, {}, dis),
+    ni = Min (defer_r (res rec));
+    new_e = elect_r (res rec) \<union> {ni};
+    new_d =  defer_r (res rec) - {ni}
+     in rec\<lparr> res := (new_e, {}, new_d),
              p := tl (p rec),
              s := assign_seat ni (hd(p rec)) (s rec),
              fv := update_votes (hd(p rec)) (s rec) (i rec) (v rec) (fv rec) (d rec)
