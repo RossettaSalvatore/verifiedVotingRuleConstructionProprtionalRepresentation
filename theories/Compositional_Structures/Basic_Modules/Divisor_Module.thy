@@ -37,7 +37,6 @@ record ('a::linorder, 'b) Divisor_Module =
   fv :: "'b Votes"
   d :: "nat list"
 
-
 locale typesl = 
   fixes dm :: "('a::linorder, 'b) Divisor_Module"
   and em :: "'a::linorder Electoral_Module"
@@ -45,12 +44,18 @@ locale typesl =
 locale l2 = 
   typesl + fixes n :: nat
 
+abbreviation ass_r :: "'a Result \<Rightarrow> 'a set" where
+  "ass_r r \<equiv> fst r"
+
+abbreviation disp_r :: "'a Result \<Rightarrow> 'a set" where
+  "disp_r r \<equiv> snd (snd r)"
+
 fun divisor_module :: "_ \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where 
 "divisor_module rec =
   (let 
-    ni = Min (defer_r (res rec));
-    new_e = elect_r (res rec) \<union> {ni};
-    new_d =  defer_r (res rec) - {ni}
+    ni = Min (ass_r (res rec));
+    new_e = ass_r (res rec) \<union> {ni};
+    new_d =  disp_r (res rec) - {ni}
      in rec\<lparr> res := (new_e, {}, new_d),
              p := tl (p rec),
              s := assign_seat ni (hd(p rec)) (s rec),
