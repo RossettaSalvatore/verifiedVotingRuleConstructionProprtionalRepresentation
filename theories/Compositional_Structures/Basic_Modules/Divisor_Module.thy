@@ -53,6 +53,8 @@ abbreviation ass_r :: "'a Result \<Rightarrow> 'a set" where
 abbreviation disp_r :: "'a Result \<Rightarrow> 'a set" where
   "disp_r r \<equiv> snd (snd r)"
 
+subsection \<open> Definition \<close>
+
 text \<open> This function moves one seat from the disputed set to the assigned set. Moreover,
        returns the record with updated Seats function and "fractional" Votes entry 
        for the winning party. \<close>
