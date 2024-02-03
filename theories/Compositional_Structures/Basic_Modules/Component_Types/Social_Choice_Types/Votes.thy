@@ -1,3 +1,8 @@
+
+
+
+section \<open>Votes\<close>
+
 theory Votes
   imports Complex_Main
 HOL.List
@@ -8,11 +13,16 @@ Result
 begin
 
 (* \<equiv> *)
+
+subsection  \<open>Definition\<close>
+text  \<open>Parties is the list of parties, that can be of any type. 
+       Votes is a function used to assign a rational number (indeed, the votes) to each party. \<close>
+
 type_synonym 'b Parties = "'b list"
 type_synonym 'b Votes = "'b \<Rightarrow> rat"
                 
-(* Seats function with each seat numbered assigned to a party or list of parties. *)
-type_synonym ('a, 'b) Seats = "'a \<Rightarrow> 'b set" 
+text  \<open>Every seat is unique and identified and has a set of parties to which it is assigned.\<close>
+type_synonym ('a, 'b) Seats = "'a \<Rightarrow> 'b set"
 type_synonym Params = "nat list"
 
 (* function to generate the list of parameters *)
@@ -35,12 +45,12 @@ lemma [code]:
 fun count_above :: "('a rel) \<Rightarrow> 'a \<Rightarrow> nat" where
   "count_above r a = card (above r a) + 1"
 
-(* this adds a new correspondence between 'a and nat in already existing 
-Votes. It is used inside "count_votes_for_election" to update Votes. *)
+text \<open> This function adds a new correspondence in function Votes between
+       'a and nat in already existing Votes \<close>
 fun add_new_vote :: "'b => rat => 'b Votes => 'b Votes" where
   "add_new_vote party cnt votes = (votes(party := cnt))"
 
-(* this function counts votes for one party and add correspondence to Votes. *)
+text \<open> this function counts votes for one party and add correspondence to Votes function \<close>
 fun count_votes_for_party :: "'b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes 
                                       \<Rightarrow> 'b Votes" where
   "count_votes_for_party party profile_list votes =
@@ -52,7 +62,9 @@ fun count_votes_for_party :: "'b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes
 fun empty_struct_votes :: "('b \<Rightarrow> rat)" where
   "empty_struct_votes b = 0"
 
-(* this calculate votes and returns "Votes" *)
+text \<open> This function receives in input the list of parties and the list of preferation 
+       relations. The output is the function Votes, in which every party has the 
+       correspondent number of votes.  \<close>
 fun calculate_votes_for_election :: "'b Parties \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes" where
   "calculate_votes_for_election parties_list profile_list =
       (let votes = empty_struct_votes in (if parties_list = [] then empty_struct_votes else
@@ -60,7 +72,9 @@ fun calculate_votes_for_election :: "'b Parties \<Rightarrow> 'b Profile \<Right
               count_votes_for_party party profile_list acc_votes) 
               parties_list votes)))"
 
-(* Step 1: function to find maximum in "Votes" and returns both winner and votes *)
+text \<open> This function receives in input the function Votes and the list of parties. The 
+       output is the list of parties with the maximum number of votes.  \<close>
+
 fun find_max_votes :: "'b Votes \<Rightarrow> 'b list \<Rightarrow> 'b list" where
   "find_max_votes votes parties =
     (if parties = [] then parties
@@ -74,36 +88,30 @@ lemma find_max_votes_not_empty:
   using assms
   sorry
 
-(* Step 2: assign one seat to winner party of step above *)
 fun assign_seat :: "'a::linorder \<Rightarrow> 'b  \<Rightarrow> ('a::linorder, 'b) Seats 
                     \<Rightarrow> ('a::linorder, 'b) Seats" where
   "assign_seat seat_n winner seats = (\<lambda>n. if n = seat_n then {winner} else seats n)"
 
-(* Step 3: Define a function count_seats *)
-(* function to count the seats of a given party (the winner). *)
+text \<open> This function counts seats of a given party. \<close>
+
 fun count_seats :: "'b set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
                     'a::linorder set => nat" where
   "count_seats party seats indexes = 
     (card {i. i \<in> indexes \<and> seats i = party})"
 
-(* Step 4: Update Fract-Votes which is a StructVotes type. 
-In this function I have the winner party of this round ('a), the seats at the moment
-('a Seats), the normal votes function (the first 'a StructVotes), the fract_votes (the 
-second 'a StructVotes) and the parameters (params).
-*)
+text \<open> This function updates the "fractional votes" of the winning party, dividing the starting
+       votes by the i-th parameter, where i is the number of seats won by the party. \<close>
 
 fun update_votes :: "'b \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
                             'a::linorder set \<Rightarrow> 'b Votes \<Rightarrow> 
                             'b Votes \<Rightarrow> nat list \<Rightarrow> 'b Votes" where 
-"update_votes party seats indexes votes fract_votes params = 
+"update_votes party seats indexes votes fract_votes p = 
      (let
        ns = count_seats {party} seats indexes;
-       p = List.nth params ns;
+       px = List.nth p ns;
        v = votes party
      in
-       fract_votes(party := v / rat_of_nat p))"
-
-
+       fract_votes(party := v / rat_of_nat px))"
 
 
 end

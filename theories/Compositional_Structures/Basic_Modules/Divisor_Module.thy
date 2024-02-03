@@ -1,3 +1,7 @@
+
+
+section \<open> Divisor Module \<close>
+
 theory Divisor_Module
   imports Complex_Main
 HOL.List
@@ -14,9 +18,6 @@ HOL.List
 
 begin
 
-
-type_synonym 'a Divisor_Term_Condition = "('a Parties \<Rightarrow> bool)"
-
 (*
 - set of seats assigned and to assign in form (assigned, {}, to_assign);
 - fv, fract votes (Votes function);
@@ -27,6 +28,8 @@ type_synonym 'a Divisor_Term_Condition = "('a Parties \<Rightarrow> bool)"
 - votes, "starting" votes (Votes function);
 - list of divisors ([1, 2, 3, ...] or [1, 3, 5, ...])
 *)
+
+text \<open> This record contains the list of parameters used in the whole divisor module.  \<close>
 record ('a::linorder, 'b) Divisor_Module =
   res :: "'a::linorder Result"
   p :: "'b Parties"
@@ -50,6 +53,10 @@ abbreviation ass_r :: "'a Result \<Rightarrow> 'a set" where
 abbreviation disp_r :: "'a Result \<Rightarrow> 'a set" where
   "disp_r r \<equiv> snd (snd r)"
 
+text \<open> This function moves one seat from the disputed set to the assigned set. Moreover,
+       returns the record with updated Seats function and "fractional" Votes entry 
+       for the winning party. \<close>
+
 fun divisor_module :: "_ \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where 
 "divisor_module rec =
   (let 
@@ -68,32 +75,38 @@ lemma divisor_module_length:
   using assms by (simp add:Let_def)
 
 
-fun defer_divisor :: "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
+fun defer_divisor :: "('a::linorder, 'b) Divisor_Module 
+                      \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
 "defer_divisor r = r"
 
+text \<open> This function takes the list of winning parties and assigns a seat to each of team.
+       The output is the record updated.  \<close>
 function loop_divisor ::
     "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
   "(p rec = []) \<Longrightarrow> loop_divisor rec = rec" |
   "\<not>(p rec = []) \<Longrightarrow> loop_divisor rec = loop_divisor (divisor_module rec)" 
   by auto
-termination by (relation "measure (\<lambda>rec. length (p rec))") (auto simp add: divisor_module_length Let_def)
+termination by (relation "measure (\<lambda>rec. length (p rec))")
+               (auto simp add: divisor_module_length Let_def)
 
-fun create_seats :: "'a::linorder set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 'b set \<Rightarrow> ('a::linorder, 'b) Seats" where
+fun create_seats :: "'a::linorder set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 'b set \<Rightarrow>
+                      ('a::linorder, 'b) Seats" where
   "create_seats def seats p_set=
     (\<lambda>x. if x \<in> def then p_set else seats x)"
 
-(* divisor module for tie breaking: assigns all remaining seats to all tied parties 
-in another Seats function and returns  *)
+text \<open>This function assigns remaining seats to all tied parties 
+in another Seats function and returns \<close>
 fun tie_breaking :: 
 "('a::linorder, 'b) Divisor_Module \<Rightarrow>  
  ('a::linorder, 'b) Divisor_Module" where 
-"tie_breaking rec = 
-  (let fs = create_seats (snd (snd (res rec))) (s rec) (set (p rec));
-    new_rec = rec\<lparr> s := fs \<rparr>
-in 
-     rec)"
+"tie_breaking rec = rec\<lparr> s := create_seats (disp_r (res rec)) (s rec) (set (p rec)) \<rparr>"
 
-fun assigning_seats :: "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
+text \<open>This function checks whether there are enough seats for all the winning parties.
+      - If yes, assign one seat to each party.
+      - If not, assign all remaining seats to the winning parties, making these seats 
+        "disputed".\<close>
+fun assigning_seats :: "('a::linorder, 'b) Divisor_Module
+                        \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
 "assigning_seats rec = (
       if length (p rec) \<le> (ns rec) then
         loop_divisor rec\<lparr>ns := ns rec - length (p rec)\<rparr>
@@ -120,9 +133,8 @@ next
   finally show ?thesis .
 qed
 
-(*
-After creating the starting structures, this function assigns the seats.
-*)
+text \<open>This function finds the parties with the tied-maximum number of "fractional" votes 
+      and assigns to each of them a seat, if possible. \<close>
 fun main_function :: "('a::linorder, 'b) Divisor_Module \<Rightarrow>
    ('a::linorder, 'b) Divisor_Module" where
 "main_function rec = 
@@ -155,12 +167,15 @@ lemma nseats_decreasing_main_function:
 proof -
   have "main_function rec = assigning_seats (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)"
     by simp
-  also have "ns ( assigning_seats (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)) < ns rec" using non_empty_parties n_positive
+  also have "ns ( assigning_seats (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)) < ns rec"
+    using non_empty_parties n_positive
     by (simp add: Let_def)
   finally show ?thesis
     using assms nseats_decreasing_main nseats_decreasing by auto
 qed
 
+text \<open>This loop assigns all the seats until either there are no more seats available or
+      there are not enough seats for all winning parties (tie). \<close>
 function loop_divisor_outer ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
   where  
