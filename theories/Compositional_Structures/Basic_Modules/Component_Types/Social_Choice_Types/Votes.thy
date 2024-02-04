@@ -65,12 +65,12 @@ fun empty_struct_votes :: "('b \<Rightarrow> rat)" where
 text \<open> This function receives in input the list of parties and the list of preferation 
        relations. The output is the function Votes, in which every party has the 
        correspondent number of votes.  \<close>
-fun calculate_votes_for_election :: "'b Parties \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes" where
-  "calculate_votes_for_election parties_list profile_list =
-      (let votes = empty_struct_votes in (if parties_list = [] then empty_struct_votes else
+fun calculate_votes_for_election :: "'b list \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes" where
+  "calculate_votes_for_election parties prof =
+      (let votes = empty_struct_votes in (if parties = [] then empty_struct_votes else
       (foldr (\<lambda>party acc_votes. 
-              count_votes_for_party party profile_list acc_votes) 
-              parties_list votes)))"
+              count_votes_for_party party prof acc_votes) 
+              parties votes)))"
 
 text \<open> This function receives in input the function Votes and the list of parties. The 
        output is the list of parties with the maximum number of votes.  \<close>

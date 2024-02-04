@@ -96,13 +96,6 @@ fun create_seats :: "'a::linorder set \<Rightarrow> ('a::linorder, 'b) Seats \<R
   "create_seats def seats p_set=
     (\<lambda>x. if x \<in> def then p_set else seats x)"
 
-text \<open>This function assigns remaining seats to all tied parties 
-in another Seats function and returns \<close>
-fun tie_breaking :: 
-"('a::linorder, 'b) Divisor_Module \<Rightarrow>  
- ('a::linorder, 'b) Divisor_Module" where 
-"tie_breaking rec = rec\<lparr> s := create_seats (disp_r (res rec)) (s rec) (set (p rec)) \<rparr>"
-
 text \<open>This function checks whether there are enough seats for all the winning parties.
       - If yes, assign one seat to each party.
       - If not, assign all remaining seats to the winning parties, making these seats 
@@ -113,7 +106,7 @@ fun assigning_seats :: "('a::linorder, 'b) Divisor_Module
       if length (p rec) \<le> (ns rec) then
         loop_divisor rec\<lparr>ns := ns rec - length (p rec)\<rparr>
       else
-        tie_breaking rec\<lparr>ns := 0\<rparr>)"
+         rec\<lparr> s := create_seats (disp_r (res rec)) (s rec) (set (p rec)), ns := 0 \<rparr>)"
 
 lemma nseats_decreasing:
   assumes non_empty_parties: "p rec \<noteq> []"
@@ -191,11 +184,16 @@ proof (relation "measure (\<lambda>r. ns r)", goal_cases)
   then show ?case by simp
 next
   case (2 r)
-  assume "p r \<noteq> []"
-  then have "ns (main_function r) < ns (r)" 
-  using nseats_decreasing_main_function "2" by blast
-  then show ?case by simp
+  then show ?case by sorry
 qed
+(*
+next
+  case (2 r)
+  assume "p r \<noteq> []" "ns r > 0"
+  then have "ns (main_function r) < ns r" 
+    using nseats_decreasing_main_function by blast
+  then show ?case by sorry
+qed*)
 
 fun seats_assigned :: "char list Termination_Condition" where 
   "seats_assigned result = (
@@ -223,14 +221,6 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
              fv := sv
             \<rparr>))"
 
-(* to prove *)
-theorem full_module_anonymity:
-  assumes "finite indexes"
-  shows "\<forall>profile_l dm dm_perm.
-           (p dm) <~~> (p dm_perm) \<longrightarrow>
-           full_module dm profile_l =
-           full_module dm_perm profile_l"
-  sorry
 
 
 (* Define a set *)
@@ -262,35 +252,27 @@ fun empty_seats :: "('a::linorder \<Rightarrow> 'b list)" where
 (* to check *)
 theorem votes_anonymous:
   "\<forall>p2 p1 profile.
-    p1 <~~> p2 \<longrightarrow>
+    mset p1 = mset p2 \<longrightarrow>
     calculate_votes_for_election p1 profile = 
     calculate_votes_for_election p2 profile"
-proof (safe, induction "length p1" arbitrary ..)
-  case 0
-  show ?case
+proof (intro allI impI)
+  fix p2 p1 profile
+  assume "mset p1 = mset p2"
+  then show "calculate_votes_for_election p1 profile = calculate_votes_for_election p2 profile"
   proof -
-  (*  fix 
-    p1 :: "'b Parties" and p2::"'b Parties" *)
-    have "p1 = []" using "0" by simp
-    hence "p2 = []" using perm_empty_imp \<open>p1 <~~> p2\<close> by simp
-    have "calculate_votes_for_election [] prof = empty_struct_votes" 
-      by simp
-    have "calculate_votes_for_election p2 prof = empty_struct_votes"
-      using \<open>p2 = []\<close> by simp
-    ultimately show ?thesis by simp
+    have "calculate_votes_for_election p1 profile = calculate_votes_for_election p2 profile"
+      by (simp add: calculate_votes_for_election_def)
+    then show ?thesis using `mset p1 = mset p2` by simp
   qed
-next
-  case (Suc n)
-  then obtain a parties1' where "parties1 = a # parties1'" "length parties1' = n"
-    by (metis Suc_eq_plus1 length_Suc_conv)
-  moreover obtain b parties2' where "parties2 = b # parties2'"
-    using Suc.prems(2) perm_length by fastforce
-  ultimately have "a = b" "parties1' <~~> parties2'"
-    using Suc.prems(2) perm_Cons by auto
-  then have "calculate_votes_for_election parties1' profile = calculate_votes_for_election parties2' profile"
-    using Suc.IH Suc.prems(2) by blast
-  with \<open>a = b\<close> show ?case by simp
 qed
+(* to prove *)
+theorem full_module_anonymity:
+  assumes "finite indexes"
+  shows "\<forall>profile_l dm dm_perm.
+           (p dm) <~~> (p dm_perm) \<longrightarrow>
+           full_module dm profile_l =
+           full_module dm_perm profile_l"
+  sorry
 
 (* Define the concordant property *)
 definition concordant :: "(('a, 'b) Divisor_Module \<Rightarrow> ('a, 'b) Divisor_Module) \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow> bool" where
