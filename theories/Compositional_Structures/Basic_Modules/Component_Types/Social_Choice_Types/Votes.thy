@@ -66,11 +66,12 @@ fun calculate_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \
 
 lemma calculate_votes_permutation:
   fixes
-    p1 :: "'b Parties" and 
-    p2 ::"'b Parties" and 
-    profile ::"'b Profile" and 
+    p1 :: "'b Parties" and
+    p2 ::"'b Parties" and
+    profile ::"'b Profile" and
     votes::"'b Votes"
-  shows "\<forall>p1 p2 profile votes. p1 <~~> p2 \<longrightarrow> calculate_votes p1 profile votes = calculate_votes p2 profile votes"
+  assumes "p1 <~~> p2"
+  shows "calculate_votes p1 profile votes = calculate_votes p2 profile votes"
 proof (cases)
   assume "p1 = []"
   assume "p1 <~~> p2"
@@ -81,6 +82,7 @@ next
   assume "\<not>(p1 = [])"
   then show ?thesis sorry
 qed
+
 
 lemma calculate_votes_permutation_invariant:
   assumes "mset p1 = mset p2"
