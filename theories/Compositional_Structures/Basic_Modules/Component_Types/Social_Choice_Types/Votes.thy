@@ -6,6 +6,8 @@ section \<open>Votes\<close>
 theory Votes
   imports Complex_Main
 HOL.List
+"HOL-Combinatorics.Multiset_Permutations"
+"HOL-Combinatorics.List_Permutation"
 Preference_Relation
 Profile
 Result
@@ -30,7 +32,7 @@ fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
   "generate_list True n = [1..<n]" |
   "generate_list False n = filter (\<lambda>x. x mod 2 = 1) [1..<n]"
 
-(* returns set of elements above "'a" *)
+(* returns set of elements above "'a" 
 definition above_set :: "_ \<Rightarrow> 'a \<Rightarrow> 'a set"
   where "above_set r a \<equiv> above (set r) a"
 
@@ -39,39 +41,60 @@ lemma [code]:
   \<open>above_set [] a = {}\<close>
   \<open>above_set ((x,y)#xs) a = (if x=a then {y} else {}) \<union> above_set xs a\<close>
   by (auto simp: above_set_def above_def)
-
-(* returns the position of the ranking
- ex: a>b>c>d with ''c'' as input will return 3 *)
-fun count_above :: "('a rel) \<Rightarrow> 'a \<Rightarrow> nat" where
-  "count_above r a = card (above r a) + 1"
-
-text \<open> This function adds a new correspondence in function Votes between
-       'a and nat in already existing Votes \<close>
-fun add_new_vote :: "'b => rat => 'b Votes => 'b Votes" where
-  "add_new_vote party cnt votes = (votes(party := cnt))"
+*)
 
 text \<open> this function counts votes for one party and add correspondence to Votes function \<close>
-fun count_votes_for_party :: "'b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes 
+fun count_votes :: "'b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> rat
                                       \<Rightarrow> 'b Votes" where
-  "count_votes_for_party party profile_list votes =
-  (let n_votes = foldr (\<lambda>pref acc. if count_above pref party = 1 
-                                      then acc+1 
-                                  else acc) profile_list 0
-   in add_new_vote party n_votes votes)"
+  "count_votes party [] votes n = votes(party:= n)" |
+  "count_votes party (px # p) votes n =
+   count_votes party p votes (if card (above px party) = 0 
+                                      then n+1 
+                                  else n)"
 
-fun empty_struct_votes :: "('b \<Rightarrow> rat)" where
-  "empty_struct_votes b = 0"
+fun empty_votes :: "('b \<Rightarrow> rat)" where
+  "empty_votes b = 0"
 
 text \<open> This function receives in input the list of parties and the list of preferation 
        relations. The output is the function Votes, in which every party has the 
        correspondent number of votes.  \<close>
-fun calculate_votes_for_election :: "'b list \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes" where
-  "calculate_votes_for_election parties prof =
-      (let votes = empty_struct_votes in (if parties = [] then empty_struct_votes else
-      (foldr (\<lambda>party acc_votes. 
-              count_votes_for_party party prof acc_votes) 
-              parties votes)))"
 
+fun calculate_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
+  "calculate_votes [] profile_list votes = votes" |
+  "calculate_votes (px # p) profile_list votes = 
+      calculate_votes p profile_list (count_votes px profile_list empty_votes 0)"
+
+lemma calculate_votes_permutation:
+  fixes
+    p1 :: "'b Parties" and 
+    p2 ::"'b Parties" and 
+    profile ::"'b Profile" and 
+    votes::"'b Votes"
+  shows "\<forall>p1 p2 profile votes. p1 <~~> p2 \<longrightarrow> calculate_votes p1 profile votes = calculate_votes p2 profile votes"
+proof (cases)
+  assume "p1 = []"
+  assume "p1 <~~> p2"
+  then have "p2 = []" using perm_empty_imp
+    by (simp add: \<open>p1 = []\<close>)
+  then show ?thesis by (simp add: \<open>p1 = []\<close>)
+next
+  assume "\<not>(p1 = [])"
+  then show ?thesis sorry
+qed
+
+lemma calculate_votes_permutation_invariant:
+  assumes "mset p1 = mset p2"
+  shows "calculate_votes p1 profil votes = calculate_votes p2 profil votes"
+proof (induct p1 arbitrary: p2 votes)
+  case Nil
+  then show ?case by (simp add: assms)
+next
+  case (Cons px p1')
+  then obtain p2' where "p2 = px # p2'" "mset p1' = mset p2'"
+    using assms by (metis mset_eq_setD perm_Cons perm_set_eq set_mset_mset)
+  then show ?case
+    by (simp add: Cons.hyps)
+qed
 text \<open> This function receives in input the function Votes and the list of parties. The 
        output is the list of parties with the maximum number of votes.  \<close>
 

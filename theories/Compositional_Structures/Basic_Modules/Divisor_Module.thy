@@ -214,7 +214,7 @@ fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarro
 (* full divisor module function *) 
 fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
 "full_module rec pl = (
-    let sv = calculate_votes_for_election (p rec) pl;
+    let sv = calculate_votes (p rec) pl;
     empty_seats = create_empty_seats (i rec) (p rec)
     in loop_divisor_outer (rec\<lparr>
              s := empty_seats,
