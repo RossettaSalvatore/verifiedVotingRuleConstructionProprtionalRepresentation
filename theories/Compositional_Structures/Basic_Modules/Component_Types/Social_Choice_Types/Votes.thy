@@ -74,15 +74,28 @@ lemma calculate_votes_permutation:
   shows "calculate_votes p1 profile votes = calculate_votes p2 profile votes"
 proof (cases)
   assume "p1 = []"
-  assume "p1 <~~> p2"
   then have "p2 = []" using perm_empty_imp
-    by (simp add: \<open>p1 = []\<close>)
-  then show ?thesis by (simp add: \<open>p1 = []\<close>)
+  using assms by auto
+  then show ?thesis using assms by simp
 next
-  assume "\<not>(p1 = [])"
-  then show ?thesis sorry
+  assume "p1 \<noteq> []"
+  then obtain x p1' where "p1 = x # p1'"
+    by (meson list.exhaust)
+  then obtain p2' where "p2 <~~> x # p2'"
+    using assms by metis
+  then have "p2' <~~> p1'"
+  using \<open>p1 = x # p1'\<close> assms by auto
+  then have "calculate_votes p1 profile votes = calculate_votes (x # p1') profile votes"
+    using assms
+  by (simp add: \<open>p1 = x # p1'\<close>)
+  also have "... = calculate_votes p1' profile (count_votes x profile empty_votes 0)"
+    by simp
+  also have "... = calculate_votes p2' profile (count_votes x profile empty_votes 0)"
+    using assms by simp
+  also have "... = calculate_votes p2 profile votes"
+    using \<open>p2 <~~> x # p2'\<close> by simp
+  finally show ?thesis .
 qed
-
 
 lemma calculate_votes_permutation_invariant:
   assumes "mset p1 = mset p2"
@@ -137,6 +150,5 @@ fun update_votes :: "'b \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow>
        v = votes party
      in
        fract_votes(party := v / rat_of_nat px))"
-
 
 end

@@ -192,7 +192,7 @@ next
   assume "p r \<noteq> []" "ns r > 0"
   then have "ns (main_function r) < ns r" 
     using nseats_decreasing_main_function by blast
-  then show ?case by sorry
+  then show ?thesis by simp
 qed*)
 
 fun seats_assigned :: "char list Termination_Condition" where 
