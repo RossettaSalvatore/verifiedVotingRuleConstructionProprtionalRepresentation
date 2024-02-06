@@ -32,18 +32,7 @@ fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
   "generate_list True n = [1..<n]" |
   "generate_list False n = filter (\<lambda>x. x mod 2 = 1) [1..<n]"
 
-(* returns set of elements above "'a" 
-definition above_set :: "_ \<Rightarrow> 'a \<Rightarrow> 'a set"
-  where "above_set r a \<equiv> above (set r) a"
-
-lemmas [code] = above_set_def[symmetric]
-lemma [code]:
-  \<open>above_set [] a = {}\<close>
-  \<open>above_set ((x,y)#xs) a = (if x=a then {y} else {}) \<union> above_set xs a\<close>
-  by (auto simp: above_set_def above_def)
-*)
-
-text \<open> this function counts votes for one party and add correspondence to Votes function \<close>
+text \<open> This function counts votes for one party and add correspondence to Votes function \<close>
 fun count_votes :: "'b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> rat
                                       \<Rightarrow> 'b Votes" where
   "count_votes party [] votes n = votes(party:= n)" |
@@ -64,6 +53,7 @@ fun calculate_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \
   "calculate_votes (px # p) profile_list votes = 
       calculate_votes p profile_list (count_votes px profile_list empty_votes 0)"
 
+
 lemma calculate_votes_permutation:
   fixes
     p1 :: "'b Parties" and
@@ -72,13 +62,11 @@ lemma calculate_votes_permutation:
     votes::"'b Votes"
   assumes "p1 <~~> p2"
   shows "calculate_votes p1 profile votes = calculate_votes p2 profile votes"
-proof (cases)
-  assume "p1 = []"
-  then have "p2 = []" using perm_empty_imp
-  using assms by auto
-  then show ?thesis using assms by simp
+proof (cases "p1 = []")
+  case True
+  with assms show ?thesis by (simp add: perm_empty_imp)
 next
-  assume "p1 \<noteq> []"
+  case False
   then obtain x p1' where "p1 = x # p1'"
     by (meson list.exhaust)
   then obtain p2' where "p2 <~~> x # p2'"
@@ -91,34 +79,25 @@ next
   also have "... = calculate_votes p1' profile (count_votes x profile empty_votes 0)"
     by simp
   also have "... = calculate_votes p2' profile (count_votes x profile empty_votes 0)"
-    using assms by simp
+    using step by simp
   also have "... = calculate_votes p2 profile votes"
     using \<open>p2 <~~> x # p2'\<close> by simp
   finally show ?thesis .
 qed
 
-lemma calculate_votes_permutation_invariant:
-  assumes "mset p1 = mset p2"
-  shows "calculate_votes p1 profil votes = calculate_votes p2 profil votes"
-proof (induct p1 arbitrary: p2 votes)
-  case Nil
-  then show ?case by (simp add: assms)
-next
-  case (Cons px p1')
-  then obtain p2' where "p2 = px # p2'" "mset p1' = mset p2'"
-    using assms by (metis mset_eq_setD perm_Cons perm_set_eq set_mset_mset)
-  then show ?case
-    by (simp add: Cons.hyps)
-qed
 text \<open> This function receives in input the function Votes and the list of parties. The 
        output is the list of parties with the maximum number of votes.  \<close>
 
-fun find_max_votes :: "'b Votes \<Rightarrow> 'b list \<Rightarrow> 'b list" where
-  "find_max_votes votes parties =
-    (if parties = [] then parties
-     else let max_votes = foldr (\<lambda>party acc. max acc (votes party)) parties 0;
-              mylist = filter (\<lambda>party. votes party = max_votes) parties
-          in if mylist = [] then parties else mylist)"
+fun max_val:: "'b Votes \<Rightarrow> 'b list \<Rightarrow> rat \<Rightarrow> rat" where 
+"max_val v [] m = m" | 
+"max_val v (px # p) m = max_val v p (if (v px) > m then (v px) else m)"
+
+fun max_parties::"rat \<Rightarrow> 'b Votes \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
+"max_parties maxx v [] mvp = mvp" | 
+"max_parties maxx v (px # p) mvp = max_parties maxx v p (if (v px) = maxx then (mvp @ [px]) else mvp)"
+
+fun find_max_votes :: "'b Votes \<Rightarrow> 'b Parties \<Rightarrow> 'b list" where
+  "find_max_votes v p = max_parties (max_val v p 0) v p []"
 
 lemma find_max_votes_not_empty:
   assumes "parties \<noteq> []"
@@ -134,21 +113,16 @@ text \<open> This function counts seats of a given party. \<close>
 
 fun count_seats :: "'b set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
                     'a::linorder set => nat" where
-  "count_seats party seats indexes = 
-    (card {i. i \<in> indexes \<and> seats i = party})"
+  "count_seats p s i = 
+    (card {ix. ix \<in> i \<and> s ix = p})"
 
 text \<open> This function updates the "fractional votes" of the winning party, dividing the starting
        votes by the i-th parameter, where i is the number of seats won by the party. \<close>
 
 fun update_votes :: "'b \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
                             'a::linorder set \<Rightarrow> 'b Votes \<Rightarrow> 
-                            'b Votes \<Rightarrow> nat list \<Rightarrow> 'b Votes" where 
-"update_votes party seats indexes votes fract_votes p = 
-     (let
-       ns = count_seats {party} seats indexes;
-       px = List.nth p ns;
-       v = votes party
-     in
-       fract_votes(party := v / rat_of_nat px))"
+                            'b Votes \<Rightarrow> rat list \<Rightarrow> 'b Votes" where 
+"update_votes party seats i votes fractv factors = 
+     fractv(party := votes party / (List.nth factors (count_seats {party} seats i)))"
 
 end

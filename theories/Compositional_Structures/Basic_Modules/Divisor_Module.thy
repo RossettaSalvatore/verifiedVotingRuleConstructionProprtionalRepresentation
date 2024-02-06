@@ -184,16 +184,10 @@ proof (relation "measure (\<lambda>r. ns r)", goal_cases)
   then show ?case by simp
 next
   case (2 r)
-  then show ?case by sorry
-qed
-(*
-next
-  case (2 r)
-  assume "p r \<noteq> []" "ns r > 0"
   then have "ns (main_function r) < ns r" 
-    using nseats_decreasing_main_function by blast
-  then show ?thesis by simp
-qed*)
+    using nseats_decreasing_main_function by simp
+  then show ?case by simp
+qed
 
 fun seats_assigned :: "char list Termination_Condition" where 
   "seats_assigned result = (
