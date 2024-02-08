@@ -154,6 +154,44 @@ next
   finally show ?thesis .
 qed
 
+(* fatto da
+ lemma lemma_utile:
+  assumes non_empty_parties: "p rec \<noteq> []"
+  assumes n_positive: "ns rec > 0"
+  shows "ns (assigning_seats (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>))
+         < ns (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)"
+proof (cases "length (p rec) \<le> ns rec")
+  case True
+  then have "ns (assigning_seats (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>))
+             = ns rec - length (p rec)"
+    by (auto simp add: Let_def)
+  also have "... < ns rec" using True n_positive non_empty_parties
+    by simp
+  finally show ?thesis .
+next
+  case False
+  then have "ns (assigning_seats (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)) = 0"
+    by (auto simp add: Let_def)
+  also have "... < ns rec" using n_positive
+    by simp
+  finally show ?thesis .
+qed
+*)
+
+lemma lemma_utile:
+  assumes non_empty_parties: "p rec \<noteq> []"
+  assumes n_positive: "ns rec > 0"
+  shows "ns (assigning_seats (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>))
+         < ns (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)"
+proof - 
+  have "ns (assigning_seats rec) < ns rec"
+    using nseats_decreasing_main non_empty_parties n_positive  by simp
+  then obtain rec' where "rec' =  (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)" by simp
+  then have "ns rec = ns rec'" by simp 
+  (* continue... *)
+  then have "assigning_seats rec = assigning_seats rec'" by simp
+  finally show ?thesis by simp
+
 lemma nseats_decreasing_main_function:
   assumes non_empty_parties: "p rec \<noteq> []"
   assumes n_positive: "ns rec > 0"
