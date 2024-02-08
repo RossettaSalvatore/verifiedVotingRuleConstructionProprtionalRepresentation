@@ -4,8 +4,7 @@ section \<open> Divisor Module \<close>
 
 theory Divisor_Module
   imports Complex_Main
-HOL.List
-
+Main
 "Component_Types/Social_Choice_Types/Preference_Relation"
 "Component_Types/Social_Choice_Types/Profile"
 "Component_Types/Social_Choice_Types/Result"
@@ -38,7 +37,7 @@ record ('a::linorder, 'b) Divisor_Module =
   ns :: nat
   v :: "'b Votes"
   fv :: "'b Votes"
-  d :: "nat list"
+  d :: "rat list"
 
 locale typesl = 
   fixes dm :: "('a::linorder, 'b) Divisor_Module"
@@ -162,20 +161,31 @@ lemma nseats_decreasing_main_function:
 proof -
   have "main_function rec = assigning_seats (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)"
     by simp
-  also have "ns ( assigning_seats (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)) < ns rec"
-    using non_empty_parties n_positive
-    by (simp add: Let_def)
+  also have "ns(main_function rec) = ns (assigning_seats (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>))"
+    by simp
+  also have "ns (assigning_seats rec) < ns rec"
+    using nseats_decreasing_main n_positive non_empty_parties by blast
+  also have "ns rec = ns (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)"
+    by simp
+  also have "ns ( assigning_seats (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)) < ns (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)"
+    using nseats_decreasing_main n_positive non_empty_parties 
+    by simp    
+  also have "ns(main_function rec) < ns ((rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>))"
+    by sledgehammer
+  also have "ns ( assigning_seats (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)) < ns (rec\<lparr>p := find_max_votes (fv rec) (p rec)\<rparr>)"
+    using nseats_decreasing_main n_positive non_empty_parties find_max_votes_not_empty
+    by simp
   finally show ?thesis
     using assms nseats_decreasing_main nseats_decreasing by auto
 qed
 
 text \<open>This loop assigns all the seats until either there are no more seats available or
       there are not enough seats for all winning parties (tie). \<close>
-function loop_divisor_outer ::
+function loop_outer ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
   where  
-  "ns r = 0 \<Longrightarrow> loop_divisor_outer r = defer_divisor r" |
-  "ns r > 0 \<Longrightarrow> loop_divisor_outer r = loop_divisor_outer (main_function r)"
+  "ns r = 0  \<Longrightarrow>loop_outer r = defer_divisor r" |
+  "ns r > 0 \<Longrightarrow> loop_outer r = loop_outer (main_function r)"
   by auto
 
 termination
@@ -185,7 +195,7 @@ proof (relation "measure (\<lambda>r. ns r)", goal_cases)
 next
   case (2 r)
   then have "ns (main_function r) < ns r" 
-    using nseats_decreasing_main_function by simp
+    using nseats_decreasing_main_function in_measure wf_measure by simp
   then show ?case by simp
 qed
 
@@ -210,7 +220,7 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
 "full_module rec pl = (
     let sv = calculate_votes (p rec) pl;
     empty_seats = create_empty_seats (i rec) (p rec)
-    in loop_divisor_outer (rec\<lparr>
+    in loop_outer (rec\<lparr>
              s := empty_seats,
              fv := sv
             \<rparr>))"
@@ -243,22 +253,23 @@ fun empty_votes :: "('b \<Rightarrow> rat)" where
 fun empty_seats :: "('a::linorder \<Rightarrow> 'b list)" where
   "empty_seats b = []"
 
-(* to check *)
 theorem votes_anonymous:
   "\<forall>p2 p1 profile.
     mset p1 = mset p2 \<longrightarrow>
     calculate_votes_for_election p1 profile = 
     calculate_votes_for_election p2 profile"
-proof (intro allI impI)
+  sorry
+(*proof (intro allI impI)
   fix p2 p1 profile
   assume "mset p1 = mset p2"
-  then show "calculate_votes_for_election p1 profile = calculate_votes_for_election p2 profile"
+  then show "calculate_votes p1 profile = calculate_votes p2 profile"
   proof -
-    have "calculate_votes_for_election p1 profile = calculate_votes_for_election p2 profile"
-      by (simp add: calculate_votes_for_election_def)
+    have "calculate_votes p1 profile = calculate_votes p2 profile"
+      by (simp add: calculate_votes_def)
     then show ?thesis using `mset p1 = mset p2` by simp
   qed
-qed
+qed*)
+
 (* to prove *)
 theorem full_module_anonymity:
   assumes "finite indexes"
@@ -273,6 +284,12 @@ definition concordant :: "(('a, 'b) Divisor_Module \<Rightarrow> ('a, 'b) Diviso
   "concordant D dm = (\<forall>party1 party2 i.
     (v dm) party1 > (v dm) party2 \<longrightarrow>
     count_seats {party1} (s (D dm)) (i dm) \<ge> count_seats {party2} (s (D dm)) (i dm))"
+
+(* Define monotonicity property *)
+theorem monotonicity_property:
+  shows "\<forall>p r1 r2 i. (v r2) p \<ge> (v r1) p \<longrightarrow>
+             count_seats p (s (loop_outer r2)) i \<ge>
+              count_seats p (s (loop_outer r1)) i"
 
 (* example values *)
 definition pref_rel_a :: "char list Preference_Relation" where

@@ -33,25 +33,24 @@ fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
   "generate_list False n = filter (\<lambda>x. x mod 2 = 1) [1..<n]"
 
 text \<open> This function counts votes for one party and add correspondence to Votes function \<close>
-fun count_votes :: "'b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> rat
-                                      \<Rightarrow> 'b Votes" where
-  "count_votes party [] votes n = votes(party:= n)" |
-  "count_votes party (px # p) votes n =
-   count_votes party p votes (if card (above px party) = 0 
-                                      then n+1 
-                                  else n)"
+fun cnt_votes :: "'b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> rat \<Rightarrow> 'b Votes" where
+  "cnt_votes party [] votes n = votes(party:= n)" |
+  "cnt_votes party (px # profilee) votes n = 
+     (case card (above px party) of
+        0 \<Rightarrow> cnt_votes party profilee votes (n + 1)
+      | _ \<Rightarrow> cnt_votes party profilee votes n)"
 
-fun empty_votes :: "('b \<Rightarrow> rat)" where
-  "empty_votes b = 0"
+fun empty_v :: "('b \<Rightarrow> rat)" where
+  "empty_v b = 0"
 
 text \<open> This function receives in input the list of parties and the list of preferation 
        relations. The output is the function Votes, in which every party has the 
        correspondent number of votes.  \<close>
 
 fun calculate_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
-  "calculate_votes [] profile_list votes = votes" |
-  "calculate_votes (px # p) profile_list votes = 
-      calculate_votes p profile_list (count_votes px profile_list empty_votes 0)"
+  "calculate_votes [] prof votes = votes" |
+  "calculate_votes (party # parties) prof votes = 
+      calculate_votes parties prof (cnt_votes party prof empty_v 0)"
 
 
 lemma calculate_votes_permutation:
@@ -62,7 +61,13 @@ lemma calculate_votes_permutation:
     votes::"'b Votes"
   assumes "p1 <~~> p2"
   shows "calculate_votes p1 profile votes = calculate_votes p2 profile votes"
-proof (cases "p1 = []")
+proof (induction p1)
+  case Nil
+  then show ?case sorry
+next
+  case (Cons a p1)
+  then show ?case sorry
+qed
   case True
   with assms show ?thesis by (simp add: perm_empty_imp)
 next
@@ -90,18 +95,32 @@ text \<open> This function receives in input the function Votes and the list of 
 
 fun max_val:: "'b Votes \<Rightarrow> 'b list \<Rightarrow> rat \<Rightarrow> rat" where 
 "max_val v [] m = m" | 
-"max_val v (px # p) m = max_val v p (if (v px) > m then (v px) else m)"
+"max_val v (px # p) m = max_val v p (if v px > m then (v px) else m)"
 
 fun max_parties::"rat \<Rightarrow> 'b Votes \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-"max_parties maxx v [] mvp = mvp" | 
-"max_parties maxx v (px # p) mvp = max_parties maxx v p (if (v px) = maxx then (mvp @ [px]) else mvp)"
+"max_parties m v [] mvp = mvp" | 
+"max_parties m v (px # p) mvp = max_parties m v p (if (v px) = m then (mvp @ [px]) else mvp)"
+
+lemma max_parties_not_empty:
+  fixes
+  m::"rat" and
+  mvp::"'b Parties" and
+  v::"'b Votes" and
+  p::"'b Parties"
+  assumes "p \<noteq> []"
+  shows "max_parties m v p mvp \<noteq> []"
+  using assms
+  sorry
 
 fun find_max_votes :: "'b Votes \<Rightarrow> 'b Parties \<Rightarrow> 'b list" where
   "find_max_votes v p = max_parties (max_val v p 0) v p []"
 
 lemma find_max_votes_not_empty:
-  assumes "parties \<noteq> []"
-  shows "filter (\<lambda>party. votes party = foldr (\<lambda>party acc. max acc (votes party)) parties 0) parties \<noteq> []"
+  fixes
+  v::"'b Votes" and
+  p::"'b Parties"
+  assumes "p \<noteq> []"
+  shows "find_max_votes v p \<noteq> []"
   using assms
   sorry
 
