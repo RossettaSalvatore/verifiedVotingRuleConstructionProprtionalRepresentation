@@ -69,11 +69,12 @@ next
   case (Cons a p1)
   have "calculate_votes (a # p1) profl votes = 
              calculate_votes p1 profl (cnt_votes a profl empty_v 0)" by simp
-  then have "(a # p1) <~~> (a # p2)" using \<open>p1 <~~> p2\<close> assms cons_perm_eq by simp
   then have "calculate_votes (a # p2) profl votes = 
              calculate_votes p2 profl (cnt_votes a profl empty_v 0)" by simp
   then have "calculate_votes p1 profl (cnt_votes a profl empty_v 0) = 
-             calculate_votes p2 profl (cnt_votes a profl empty_v 0)" using assmsby simp 
+             calculate_votes p2 profl (cnt_votes a profl empty_v 0)" using assms by simp
+  then have "calculate_votes (a # p1) profl votes =
+             calculate_votes (a # p2) profl votes" by simp
   then show ?case by simp
 qed
   case True
