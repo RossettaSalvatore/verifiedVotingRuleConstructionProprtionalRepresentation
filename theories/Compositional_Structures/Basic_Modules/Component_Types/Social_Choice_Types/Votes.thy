@@ -57,16 +57,24 @@ lemma calculate_votes_permutation:
   fixes
     p1 :: "'b Parties" and
     p2 ::"'b Parties" and
-    profile ::"'b Profile" and
+    profl ::"'b Profile" and
     votes::"'b Votes"
   assumes "p1 <~~> p2"
-  shows "calculate_votes p1 profile votes = calculate_votes p2 profile votes"
+  shows "calculate_votes p1 profl votes = calculate_votes p2 profl votes"
 proof (induction p1)
   case Nil
-  then show ?case sorry
+  then have "p2 = []" using assms perm_empty_imp by simp
+  then show ?case by simp
 next
   case (Cons a p1)
-  then show ?case sorry
+  have "calculate_votes (a # p1) profl votes = 
+             calculate_votes p1 profl (cnt_votes a profl empty_v 0)" by simp
+  then have "(a # p1) <~~> (a # p2)" using \<open>p1 <~~> p2\<close> assms cons_perm_eq by simp
+  then have "calculate_votes (a # p2) profl votes = 
+             calculate_votes p2 profl (cnt_votes a profl empty_v 0)" by simp
+  then have "calculate_votes p1 profl (cnt_votes a profl empty_v 0) = 
+             calculate_votes p2 profl (cnt_votes a profl empty_v 0)" using assmsby simp 
+  then show ?case by simp
 qed
   case True
   with assms show ?thesis by (simp add: perm_empty_imp)
