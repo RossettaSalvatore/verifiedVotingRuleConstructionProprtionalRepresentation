@@ -46,12 +46,11 @@ fun empty_v :: "('b \<Rightarrow> rat)" where
 text \<open> This function receives in input the list of parties and the list of preferation 
        relations. The output is the function Votes, in which every party has the 
        correspondent number of votes.  \<close>
-
-(* multiset version 
-fun calc_votes :: "('b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> rat \<Rightarrow> 'b Votes) \<Rightarrow>'b multiset \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
+ 
+(*
+fun calc_votes :: "('b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> rat \<Rightarrow> 'b Votes) \<Rightarrow> 'b Votes \<Rightarrow> 'b multiset  \<Rightarrow> 'b Votes" where
   "calc_votes cnt_v parties prof votes = votes"
 *)
-
 fun calc_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
   "calc_votes [] prof votes = votes" |
   "calc_votes (party # parties) prof votes = 
@@ -75,36 +74,14 @@ next
   then have "(a # p1) <~~> (a # p2')" using assms Cons.prems by auto
   then have "calc_votes (a # p1) profl votes = 
              calc_votes p1 profl (cnt_votes a profl empty_v 0)" using assms by simp
-  then have "calc_votes (a # p2') profl votes = 
-             calc_votes p2' profl (cnt_votes a profl empty_v 0)" using assms by simp
-  then obtain v' where "v' = (cnt_votes a profl empty_v 0)" using assms by simp
-  then have "calc_votes p1 profl v' = 
-             calc_votes p2 profl v'" using assms by simp
-  then have "calc_votes (a # p1) profl votes =
-             calc_votes (a # p2) profl votes" by simp
+  then have "\<dots> = 
+             calc_votes p2' profl (cnt_votes a profl empty_v 0)" using assms
+  by (metis Cons.IH Cons.prems \<open>mset p2 = mset (a # p2')\<close> calc_votes.simps(2) cons_perm_imp_perm list.exhaust mset_zero_iff_right)
+  then have "... = calc_votes (a # p2') profl votes" using assms by simp
+  then have "... = calc_votes p2 profl votes" by simp
   then show ?case by simp
 qed
-  case True
-  with assms show ?thesis by (simp add: perm_empty_imp)
-next
-  case False
-  then obtain x p1' where "p1 = x # p1'"
-    by (meson list.exhaust)
-  then obtain p2' where "p2 <~~> x # p2'"
-    using assms by metis
-  then have "p2' <~~> p1'"
-  using \<open>p1 = x # p1'\<close> assms by auto
-  then have "calculate_votes p1 profile votes = calculate_votes (x # p1') profile votes"
-    using assms
-  by (simp add: \<open>p1 = x # p1'\<close>)
-  also have "... = calculate_votes p1' profile (count_votes x profile empty_votes 0)"
-    by simp
-  also have "... = calculate_votes p2' profile (count_votes x profile empty_votes 0)"
-    using step by simp
-  also have "... = calculate_votes p2 profile votes"
-    using \<open>p2 <~~> x # p2'\<close> by simp
-  finally show ?thesis .
-qed
+
 
 text \<open> This function receives in input the function Votes and the list of parties. The 
        output is the list of parties with the maximum number of votes.  \<close>
