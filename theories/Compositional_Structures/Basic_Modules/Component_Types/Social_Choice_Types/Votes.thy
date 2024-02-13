@@ -67,7 +67,8 @@ proof (induction p1 arbitrary: p2)
   then show ?case by simp
 next
   case (Cons a p1)
-  have "calc_votes (a # p1) profl votes = 
+  obtain p2' where "p2' = mset (a # p2)" by simp
+  then have "calc_votes (a # p1) profl votes = 
              calc_votes p1 profl (cnt_votes a profl empty_v 0)" using assms by simp
   then have "calc_votes (a # p2) profl votes = 
              calc_votes p2 profl (cnt_votes a profl empty_v 0)" using assms by simp
