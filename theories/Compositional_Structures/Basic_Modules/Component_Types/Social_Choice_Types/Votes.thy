@@ -47,11 +47,15 @@ text \<open> This function receives in input the list of parties and the list of
        relations. The output is the function Votes, in which every party has the 
        correspondent number of votes.  \<close>
 
+(* multiset version 
+fun calc_votes :: "('b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> rat \<Rightarrow> 'b Votes) \<Rightarrow>'b multiset \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
+  "calc_votes cnt_v parties prof votes = votes"
+*)
+
 fun calc_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
   "calc_votes [] prof votes = votes" |
   "calc_votes (party # parties) prof votes = 
       calc_votes parties prof (cnt_votes party prof empty_v 0)"
-
 
 lemma calc_votes_permutation:
   fixes
@@ -67,11 +71,12 @@ proof (induction p1 arbitrary: p2)
   then show ?case by simp
 next
   case (Cons a p1)
-  obtain p2' where "p2' = mset (a # p2)" by simp
+  obtain p2' where "p2 <~~> (a # p2')" using assms by (metis Cons.prems)
+  then have "(a # p1) <~~> (a # p2')" using assms Cons.prems by auto
   then have "calc_votes (a # p1) profl votes = 
              calc_votes p1 profl (cnt_votes a profl empty_v 0)" using assms by simp
-  then have "calc_votes (a # p2) profl votes = 
-             calc_votes p2 profl (cnt_votes a profl empty_v 0)" using assms by simp
+  then have "calc_votes (a # p2') profl votes = 
+             calc_votes p2' profl (cnt_votes a profl empty_v 0)" using assms by simp
   then obtain v' where "v' = (cnt_votes a profl empty_v 0)" using assms by simp
   then have "calc_votes p1 profl v' = 
              calc_votes p2 profl v'" using assms by simp
