@@ -47,34 +47,35 @@ text \<open> This function receives in input the list of parties and the list of
        relations. The output is the function Votes, in which every party has the 
        correspondent number of votes.  \<close>
 
-fun calculate_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
-  "calculate_votes [] prof votes = votes" |
-  "calculate_votes (party # parties) prof votes = 
-      calculate_votes parties prof (cnt_votes party prof empty_v 0)"
+fun calc_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
+  "calc_votes [] prof votes = votes" |
+  "calc_votes (party # parties) prof votes = 
+      calc_votes parties prof (cnt_votes party prof empty_v 0)"
 
 
-lemma calculate_votes_permutation:
+lemma calc_votes_permutation:
   fixes
     p1 :: "'b Parties" and
     p2 ::"'b Parties" and
     profl ::"'b Profile" and
     votes::"'b Votes"
   assumes "p1 <~~> p2"
-  shows "calculate_votes p1 profl votes = calculate_votes p2 profl votes"
-proof (induction p1)
+  shows "calc_votes p1 profl votes = calc_votes p2 profl votes"
+  using assms
+proof (induction p1 arbitrary: p2)
   case Nil
-  then have "p2 = []" using assms perm_empty_imp by simp
   then show ?case by simp
 next
   case (Cons a p1)
-  have "calculate_votes (a # p1) profl votes = 
-             calculate_votes p1 profl (cnt_votes a profl empty_v 0)" by simp
-  then have "calculate_votes (a # p2) profl votes = 
-             calculate_votes p2 profl (cnt_votes a profl empty_v 0)" by simp
-  then have "calculate_votes p1 profl (cnt_votes a profl empty_v 0) = 
-             calculate_votes p2 profl (cnt_votes a profl empty_v 0)" using assms by simp
-  then have "calculate_votes (a # p1) profl votes =
-             calculate_votes (a # p2) profl votes" by simp
+  have "calc_votes (a # p1) profl votes = 
+             calc_votes p1 profl (cnt_votes a profl empty_v 0)" using assms by simp
+  then have "calc_votes (a # p2) profl votes = 
+             calc_votes p2 profl (cnt_votes a profl empty_v 0)" using assms by simp
+  then obtain v' where "v' = (cnt_votes a profl empty_v 0)" using assms by simp
+  then have "calc_votes p1 profl v' = 
+             calc_votes p2 profl v'" using assms by simp
+  then have "calc_votes (a # p1) profl votes =
+             calc_votes (a # p2) profl votes" by simp
   then show ?case by simp
 qed
   case True
