@@ -48,24 +48,64 @@ text \<open> This function receives in input the list of parties and the list of
        correspondent number of votes.  \<close>
 
 (* multiset version *)
-fun calc_votes_v2 :: "'b multiset \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> 'b Votes" where
-  "calc_votes_v2 party_multiset profil votes = 
-      fold_mset (\<lambda>party votes. cnt_votes party profil votes 0) votes party_multiset"
+definition my_fold_mset :: "('b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> rat \<Rightarrow> 'b Votes) \<Rightarrow> 'b Votes \<Rightarrow> 'a multiset \<Rightarrow> 'b Votes"
+where
+  "my_fold_mset f v s M = Finite_Set.fold (\<lambda>x. f x) s (set_mset M)"
 
-(* Define the profile *)
-definition profile :: "char list list" where
-  "profile = [''A'', ''B'', ''C'', ''A'', ''C'', ''C'', ''B'']"
+fun calc_votes_mset :: "'b multiset \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> 'b Votes" where
+  "calc_votes_mset party_mset profil vot = 
+      my_fold_mset (\<lambda>party. cnt_votes party profil vot 0) vot party_mset"
 
+(* EXAMPLE *)
 (* Define the party multiset *)
-definition party_multiset :: "char multiset" where
-  "party_multiset = {#A, A, B, C, C, C#}"
+definition party_multiset :: "char list multiset" where
+  "party_multiset = {#''a'', ''b'', ''c''#}"
 
 (* Define the initial votes *)
-definition empty_votes :: "char \<Rightarrow> rat" where
+definition empty_votes :: "char list \<Rightarrow> rat" where
   "empty_votes p = 0"
 
 (* Calculate the votes *)
-value "calc_votes_2 party_multiset profile empty_votes"
+definition pref_rel_a :: "char list Preference_Relation" where
+"pref_rel_a = {(''b'', ''a''), (''d'', ''c''), 
+                (''d'',''a''), (''c'', ''b''), 
+                (''c'',''a''), (''d'', ''b'')}"
+
+definition pref_rel_b :: "char list Preference_Relation" where
+"pref_rel_b = {(''a'', ''b''), (''c'', ''b''), 
+                (''d'', ''b''), (''a'', ''c''), 
+                (''c'', ''d''), (''a'', ''d'')}"
+
+definition pref_rel_c :: "char list Preference_Relation" where
+"pref_rel_c = {(''a'', ''c''), (''b'', ''c''), 
+                (''d'', ''c''), (''a'', ''b''), 
+                (''b'', ''d''), (''a'', ''d'')}"
+
+definition pref_rel_b2 :: "char list Preference_Relation" where
+"pref_rel_b2 = {(''a'', ''b''), (''c'', ''b''), 
+                 (''d'', ''b''), (''c'', ''a''), 
+                 (''a'', ''d''), (''c'', ''d'')}"
+
+definition pref_rel_b3 :: "char list Preference_Relation" where
+"pref_rel_b3 = {(''a'', ''b''), (''c'', ''b''), 
+                 (''d'', ''b''), (''c'', ''a''), 
+                 (''a'', ''d''), (''c'', ''d'')}"
+
+definition pref_rel_d :: "char list Preference_Relation" where
+"pref_rel_d = {(''a'', ''d''), (''b'', ''d''), 
+                (''c'', ''d''), (''a'', ''c''), 
+                (''c'', ''b''), (''a'', ''b'')}"
+
+definition pref_rel_a2 :: "char list Preference_Relation" where
+"pref_rel_a2 = {(''b'', ''a''), (''c'', ''a''), 
+                 (''d'', ''a''), (''b'', ''d''), 
+                 (''b'', ''c''), (''d'', ''c'')}"
+
+definition profile_list :: "char list Profile" where
+"profile_list = [pref_rel_a, pref_rel_b, pref_rel_c, pref_rel_b2, 
+                 pref_rel_b3, pref_rel_d, pref_rel_a2]"
+
+value "calc_votes_mset party_multiset profile_list empty_votes"
 
 fun calc_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
   "calc_votes [] prof votes = votes" |
