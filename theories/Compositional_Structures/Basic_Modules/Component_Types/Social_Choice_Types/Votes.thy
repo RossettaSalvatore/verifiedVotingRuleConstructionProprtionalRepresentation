@@ -47,22 +47,44 @@ text \<open> This function receives in input the list of parties and the list of
        relations. The output is the function Votes, in which every party has the 
        correspondent number of votes.  \<close>
 
-(* multiset version *)
-definition my_fold_mset :: "('b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> rat \<Rightarrow> 'b Votes) \<Rightarrow> 'b Votes \<Rightarrow> 'a multiset \<Rightarrow> 'b Votes"
+(* multiset version
+
+inductive fold_graph :: "('a \<Rightarrow> 'b \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a set \<Rightarrow> 'b \<Rightarrow> bool"
+  for f :: "'a \<Rightarrow> 'b \<Rightarrow> 'b" and z :: 'b
+  where
+    emptyI [intro]: "fold_graph f z {} z"
+  | insertI [intro]: "x \<notin> A \<Longrightarrow> fold_graph f z A y \<Longrightarrow> fold_graph f z (insert x A) (f x y)"
+
+definition fold :: "('a \<Rightarrow> 'b \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a set \<Rightarrow> 'b"
+  where "fold f z A = (if finite A then (THE y. fold_graph f z A y) else z)"
+
+definition fold_mset :: "('a \<Rightarrow> 'b \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a multiset \<Rightarrow> 'b"
 where
-  "my_fold_mset f v s M = Finite_Set.fold (\<lambda>x. f x) s (set_mset M)"
+  "fold_mset f s M = Finite_Set.fold (\<lambda>x. f x ^^ count M x) s (set_mset M)"
+*)
+
+definition remove_some :: "'a multiset \<Rightarrow> 'a multiset" where
+"remove_some M = (if M = {#} then M else let a = SOME x. x \<in> set_mset M in M - {#a#})"
+
+definition my_fold :: "('b \<Rightarrow> 'b \<Rightarrow> rat) \<Rightarrow> 'b Votes \<Rightarrow> 'a set \<Rightarrow> 'b Votes"
+  where "my_fold f z A = (if finite A then z else z)"
+
+fun cnt_votes_multiset :: "'b Profile \<Rightarrow> 'b multiset \<Rightarrow> 'b Votes \<Rightarrow> 'b Votes" where
+  "cnt_votes_multiset profil ms votes = fold_mset (\<lambda>x v. cnt_votes x profil v 0) votes ms"
 
 fun calc_votes_mset :: "'b multiset \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> 'b Votes" where
-  "calc_votes_mset party_mset profil vot = 
-      my_fold_mset (\<lambda>party. cnt_votes party profil vot 0) vot party_mset"
+  "calc_votes_mset party_mset pr vot = 
+      my_fold (\<lambda>party. cnt_votes party pr vot 0) vot (set_mset party_mset)"
 
 (* EXAMPLE *)
 (* Define the party multiset *)
 definition party_multiset :: "char list multiset" where
-  "party_multiset = {#''a'', ''b'', ''c''#}"
+  "party_multiset = {#''a'', ''b'', ''c'', ''d''#}"
+
+value "remove_some party_multiset"
 
 (* Define the initial votes *)
-definition empty_votes :: "char list \<Rightarrow> rat" where
+fun empty_votes :: "char list \<Rightarrow> rat" where
   "empty_votes p = 0"
 
 (* Calculate the votes *)
@@ -101,11 +123,12 @@ definition pref_rel_a2 :: "char list Preference_Relation" where
                  (''d'', ''a''), (''b'', ''d''), 
                  (''b'', ''c''), (''d'', ''c'')}"
 
+(* Define the profile *)
 definition profile_list :: "char list Profile" where
 "profile_list = [pref_rel_a, pref_rel_b, pref_rel_c, pref_rel_b2, 
                  pref_rel_b3, pref_rel_d, pref_rel_a2]"
 
-value "calc_votes_mset party_multiset profile_list empty_votes"
+value "cnt_votes_multiset profile_list party_multiset empty_votes"
 
 fun calc_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
   "calc_votes [] prof votes = votes" |
