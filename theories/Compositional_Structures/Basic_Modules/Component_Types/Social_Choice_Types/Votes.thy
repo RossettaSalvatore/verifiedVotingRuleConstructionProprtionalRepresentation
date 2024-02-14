@@ -46,11 +46,27 @@ fun empty_v :: "('b \<Rightarrow> rat)" where
 text \<open> This function receives in input the list of parties and the list of preferation 
        relations. The output is the function Votes, in which every party has the 
        correspondent number of votes.  \<close>
- 
-(*
-fun calc_votes :: "('b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> rat \<Rightarrow> 'b Votes) \<Rightarrow> 'b Votes \<Rightarrow> 'b multiset  \<Rightarrow> 'b Votes" where
-  "calc_votes cnt_v parties prof votes = votes"
-*)
+
+(* multiset version *)
+fun calc_votes_v2 :: "'b multiset \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> 'b Votes" where
+  "calc_votes_v2 party_multiset profil votes = 
+      fold_mset (\<lambda>party votes. cnt_votes party profil votes 0) votes party_multiset"
+
+(* Define the profile *)
+definition profile :: "char list list" where
+  "profile = [''A'', ''B'', ''C'', ''A'', ''C'', ''C'', ''B'']"
+
+(* Define the party multiset *)
+definition party_multiset :: "char multiset" where
+  "party_multiset = {#A, A, B, C, C, C#}"
+
+(* Define the initial votes *)
+definition empty_votes :: "char \<Rightarrow> rat" where
+  "empty_votes p = 0"
+
+(* Calculate the votes *)
+value "calc_votes_2 party_multiset profile empty_votes"
+
 fun calc_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
   "calc_votes [] prof votes = votes" |
   "calc_votes (party # parties) prof votes = 
