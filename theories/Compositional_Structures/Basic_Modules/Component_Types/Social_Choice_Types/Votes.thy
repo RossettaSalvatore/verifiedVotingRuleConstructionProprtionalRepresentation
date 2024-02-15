@@ -8,6 +8,7 @@ theory Votes
 HOL.List
 "HOL-Combinatorics.Multiset_Permutations"
 "HOL-Combinatorics.List_Permutation"
+(*Smart_Isabelle.Smart_Isabelle*)
 Preference_Relation
 Profile
 Result
@@ -26,6 +27,12 @@ type_synonym 'b Votes = "'b \<Rightarrow> rat"
 text  \<open>Every seat is unique and identified and has a set of parties to which it is assigned.\<close>
 type_synonym ('a, 'b) Seats = "'a \<Rightarrow> 'b set"
 type_synonym Params = "nat list"
+
+fun find_index :: "'a \<Rightarrow> 'a list \<Rightarrow> nat " where
+  "find_index party parties = 0"
+
+fun retrieve_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> 'a list \<Rightarrow> 'a" where
+"retrieve_votes party parties votes = votes ! find_index(\<lambda>x. x = party) parties"
 
 (* function to generate the list of parameters *)
 fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
@@ -63,14 +70,11 @@ where
   "fold_mset f s M = Finite_Set.fold (\<lambda>x. f x ^^ count M x) s (set_mset M)"
 *)
 
-definition remove_some :: "'a multiset \<Rightarrow> 'a multiset" where
-"remove_some M = (if M = {#} then M else let a = SOME x. x \<in> set_mset M in M - {#a#})"
+definition remove_some :: "'a multiset \<Rightarrow> 'a" where
+"remove_some M = (SOME x. x \<in> set_mset M)"
 
 definition my_fold :: "('b \<Rightarrow> 'b \<Rightarrow> rat) \<Rightarrow> 'b Votes \<Rightarrow> 'a set \<Rightarrow> 'b Votes"
   where "my_fold f z A = (if finite A then z else z)"
-
-fun cnt_votes_multiset :: "'b Profile \<Rightarrow> 'b multiset \<Rightarrow> 'b Votes \<Rightarrow> 'b Votes" where
-  "cnt_votes_multiset profil ms votes = fold_mset (\<lambda>x v. cnt_votes x profil v 0) votes ms"
 
 fun calc_votes_mset :: "'b multiset \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> 'b Votes" where
   "calc_votes_mset party_mset pr vot = 
@@ -80,8 +84,6 @@ fun calc_votes_mset :: "'b multiset \<Rightarrow> 'b Profile \<Rightarrow> 'b Vo
 (* Define the party multiset *)
 definition party_multiset :: "char list multiset" where
   "party_multiset = {#''a'', ''b'', ''c'', ''d''#}"
-
-value "remove_some party_multiset"
 
 (* Define the initial votes *)
 fun empty_votes :: "char list \<Rightarrow> rat" where
@@ -135,6 +137,8 @@ fun calc_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Righ
   "calc_votes (party # parties) prof votes = 
       calc_votes parties prof (cnt_votes party prof empty_v 0)"
 
+(*prove "p1 <~~> p2 \<Longrightarrow> (calc_votes p1 profl votes = calc_votes p2 profl votes)"
+*)
 lemma calc_votes_permutation:
   fixes
     p1 :: "'b Parties" and
@@ -182,7 +186,13 @@ lemma max_parties_not_empty:
   assumes "p \<noteq> []"
   shows "max_parties m v p mvp \<noteq> []"
   using assms
-  sorry
+proof (cases)
+  case True
+  then show ?thesis sorry
+next
+  case False
+  then show ?thesis sorry
+qed
 
 fun find_max_votes :: "'b Votes \<Rightarrow> 'b Parties \<Rightarrow> 'b list" where
   "find_max_votes v p = max_parties (max_val v p 0) v p []"
