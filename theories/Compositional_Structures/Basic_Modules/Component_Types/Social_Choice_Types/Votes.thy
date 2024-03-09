@@ -208,11 +208,11 @@ fun max_parties:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightar
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
 "max_parties m v fixed_p [] output = output" | 
 "max_parties m v fixed_p (px # p) output = 
-        max_parties m v fixed_p p (if (retrieve_votes px fixed_p v) = m then ([px] @ output)
+        max_parties m v fixed_p p (if (retrieve_votes px fixed_p v) = m then (output @ [px])
                                    else output)"
 
 (* works 09/03 *)
-value "max_parties (max_val [7, 4, 20] 0) [7, 4, 20]
+value "max_parties (max_val [7, 4, 7] 0) [7, 4, 7]
                      [''partyA'', ''partyB'', ''partyC''] 
                      [''partyA'', ''partyB'', ''partyC'']
                      []"
@@ -260,10 +260,12 @@ fun count_seats :: "'b set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow>
 text \<open> This function updates the "fractional votes" of the winning party, dividing the starting
        votes by the i-th parameter, where i is the number of seats won by the party. \<close>
 
-fun update_votes :: "'b \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
-                            'a::linorder set \<Rightarrow> 'b Votes \<Rightarrow> 
-                            'b Votes \<Rightarrow> rat list \<Rightarrow> 'b Votes" where 
-"update_votes party seats i votes fractv factors = 
-     fractv(party := votes party / (List.nth factors (count_seats {party} seats i)))"
+(* works adapted *)
+fun update_votes :: "'b \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
+                            'a::linorder set \<Rightarrow> rat list \<Rightarrow> 
+                            rat list \<Rightarrow> rat list \<Rightarrow> rat list" where 
+"update_votes party parties seats i votes fractv factors = 
+    (let ix = first_pos(\<lambda>x. x = party) parties in
+     list_update fractv ix ((retrieve_votes party parties votes) / (List.nth factors (count_seats {party} seats i))))"
 
 end
