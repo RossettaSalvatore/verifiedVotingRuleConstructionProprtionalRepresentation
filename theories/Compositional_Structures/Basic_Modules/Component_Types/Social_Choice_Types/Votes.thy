@@ -156,15 +156,6 @@ definition profile_list :: "char list Profile" where
 "profile_list = [pref_rel_a, pref_rel_b, pref_rel_c, pref_rel_b2, 
                  pref_rel_b3, pref_rel_d, pref_rel_a2]"
 
-value "cnt_votes_multiset profile_list party_multiset empty_votes"
-
-(*
-fun calc_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
-  "calc_votes [] prof votes = votes" |
-  "calc_votes (party # parties) prof votes = 
-      calc_votes parties prof (cnt_votes party prof empty_v 0)"
-*)
-
 fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Rightarrow> rat list \<Rightarrow> rat list" where
   "calc_votes [] fixed_parties prof votes = votes" |
   "calc_votes (party # parties) fixed_parties prof votes = 
@@ -206,13 +197,25 @@ qed
 text \<open> This function receives in input the function Votes and the list of parties. The 
        output is the list of parties with the maximum number of votes.  \<close>
 
-fun max_val:: "'b Votes \<Rightarrow> 'b list \<Rightarrow> rat \<Rightarrow> rat" where 
-"max_val v [] m = m" | 
-"max_val v (px # p) m = max_val v p (if v px > m then (v px) else m)"
+(* adapted to list. works 09/03 *)
+fun max_val:: "rat list \<Rightarrow> rat \<Rightarrow> rat" where 
+"max_val [] m = m" | 
+"max_val (px # p) m = max_val p (if px > m then px else m)"
 
-fun max_parties::"rat \<Rightarrow> 'b Votes \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-"max_parties m v [] mvp = mvp" | 
-"max_parties m v (px # p) mvp = max_parties m v p (if (v px) = m then (mvp @ [px]) else mvp)"
+value "max_val [1, 4, 2] 0"
+
+fun max_parties:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties
+                     \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
+"max_parties m v fixed_p [] output = output" | 
+"max_parties m v fixed_p (px # p) output = 
+        max_parties m v fixed_p p (if (retrieve_votes px fixed_p v) = m then ([px] @ output)
+                                   else output)"
+
+(* works 09/03 *)
+value "max_parties (max_val [7, 4, 20] 0) [7, 4, 20]
+                     [''partyA'', ''partyB'', ''partyC''] 
+                     [''partyA'', ''partyB'', ''partyC'']
+                     []"
 
 lemma max_parties_not_empty:
   fixes
