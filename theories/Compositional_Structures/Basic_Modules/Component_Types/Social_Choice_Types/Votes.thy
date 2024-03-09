@@ -17,6 +17,22 @@ begin
 
 (* \<equiv> *)
 
+definition above_set :: "_ \<Rightarrow> 'a \<Rightarrow> 'a set"
+  where "above_set r a \<equiv> above (set r) a"
+
+lemmas [code] = above_set_def[symmetric]
+lemma [code]:
+  \<open>above_set [] a = {}\<close>
+  \<open>above_set ((x,y)#xs) a = (if x=a then {y} else {}) \<union> above_set xs a\<close>
+  by (auto simp: above_set_def above_def)
+
+(* returns the position of the ranking
+ ex: a>b>c>d with ''c'' as input will return 3 *)
+fun count_above :: "('a rel) \<Rightarrow> 'a \<Rightarrow> nat" where
+  "count_above r a = card (above r a)"
+
+value "count_above {(''partyA'', ''partyB''), (''partyA'', ''partyC'')} ''partyC''"
+
 subsection  \<open>Definition\<close>
 text  \<open>Parties is the list of parties, that can be of any type. 
        Votes is a function used to assign a rational number (indeed, the votes) to each party. \<close>
@@ -28,11 +44,16 @@ text  \<open>Every seat is unique and identified and has a set of parties to whi
 type_synonym ('a, 'b) Seats = "'a \<Rightarrow> 'b set"
 type_synonym Params = "nat list"
 
-fun find_index :: "'a \<Rightarrow> 'a list \<Rightarrow> nat " where
-  "find_index party parties = 0"
+primrec first_pos :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> nat" where
+"first_pos P [] = 0"
+| "first_pos P (x # xs) = (if P x then 0 else Suc (first_pos P xs))"
 
-fun retrieve_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> 'a list \<Rightarrow> 'a" where
-"retrieve_votes party parties votes = votes ! find_index(\<lambda>x. x = party) parties"
+value "first_pos (\<lambda>x. x = ''1'') [''0'', ''0'', ''1'']"
+
+fun retrieve_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> rat list \<Rightarrow> rat" where
+"retrieve_votes party parties votes = votes ! (first_pos(\<lambda>x. x = party) parties)"
+
+value "retrieve_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
 
 (* function to generate the list of parameters *)
 fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
@@ -40,12 +61,17 @@ fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
   "generate_list False n = filter (\<lambda>x. x mod 2 = 1) [1..<n]"
 
 text \<open> This function counts votes for one party and add correspondence to Votes function \<close>
-fun cnt_votes :: "'b \<Rightarrow> 'b Profile \<Rightarrow> 'b Votes \<Rightarrow> rat \<Rightarrow> 'b Votes" where
-  "cnt_votes party [] votes n = votes(party:= n)" |
-  "cnt_votes party (px # profilee) votes n = 
-     (case card (above px party) of
-        0 \<Rightarrow> cnt_votes party profilee votes (n + 1)
-      | _ \<Rightarrow> cnt_votes party profilee votes n)"
+
+
+fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> nat \<Rightarrow> rat list \<Rightarrow> rat \<Rightarrow> rat list" where
+  "cnt_votes p [] index votes n = list_update votes index n" |
+  "cnt_votes p (px # profil) index votes n = 
+     (case (count_above px p) of
+        0 \<Rightarrow> cnt_votes p profil index votes (n + 1)
+      | _ \<Rightarrow> cnt_votes p profil index votes n)"
+
+value "cnt_votes ''partyB'' [{(''partyA'', ''partyB'')}]
+         (first_pos (\<lambda>x. x = ''partyB'') [''partyB'', ''partyA'']) [0, 0] 0"
 
 fun empty_v :: "('b \<Rightarrow> rat)" where
   "empty_v b = 0"
@@ -132,10 +158,21 @@ definition profile_list :: "char list Profile" where
 
 value "cnt_votes_multiset profile_list party_multiset empty_votes"
 
+(*
 fun calc_votes :: "'b list \<Rightarrow> 'b Profile \<Rightarrow>'b Votes \<Rightarrow> 'b Votes" where
   "calc_votes [] prof votes = votes" |
   "calc_votes (party # parties) prof votes = 
       calc_votes parties prof (cnt_votes party prof empty_v 0)"
+*)
+
+fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Rightarrow> rat list \<Rightarrow> rat list" where
+  "calc_votes [] fixed_parties prof votes = votes" |
+  "calc_votes (party # parties) fixed_parties prof votes = 
+      (let ix = first_pos (\<lambda>x. x = party) fixed_parties in
+      calc_votes parties fixed_parties prof (cnt_votes party prof ix votes 0))"
+
+(* this works 09/03/24 *)
+value "calc_votes [''a'', ''b''] [''a'', ''b''] profile_list [0, 0]"
 
 (*prove "p1 <~~> p2 \<Longrightarrow> (calc_votes p1 profl votes = calc_votes p2 profl votes)"
 *)
