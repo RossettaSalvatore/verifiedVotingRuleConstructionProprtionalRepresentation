@@ -71,9 +71,6 @@ fun divisor_module :: "('a::linorder, 'b) Divisor_Module \<Rightarrow>
              fv := update_votes (hd(p rec)) (p rec) (s rec) (i rec) (v rec) (fv rec) (d rec)
             \<rparr>)"
 
-lemma divisor_module_not_changing:
-  shows "ns rec = ns (divisor_module rec)"
-
 (* try if divisor module works *)
 (* Example instantiation of the Divisor_Module record 
 definition example_divisor_module :: "(nat, string) Divisor_Module" where
@@ -87,11 +84,11 @@ definition example_divisor_module :: "(nat, string) Divisor_Module" where
       fv = [4/5, 3/5, 1/4],
       d = [5/6, 1/3, 2/7] \<rparr>"
 *)
-lemma divisor_module_length:
+(*lemma divisor_module_length:
   assumes non_empty_parties: "p rec \<noteq> []"
   shows "length (p (divisor_module rec)) < length (p rec)"
   using assms by (simp add:Let_def)
-
+*)
 
 fun defer_divisor :: "('a::linorder, 'b) Divisor_Module 
                       \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
@@ -213,11 +210,24 @@ text \<open>This loop assigns all the seats until either there are no more seats
 function loop_outer ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
   where  
-  "ns r = 0  \<Longrightarrow>loop_outer r = defer_divisor r" |
+  "ns r = 0  \<Longrightarrow>loop_outer r = r" |
   "ns r > 0 \<Longrightarrow> loop_outer r = loop_outer (assigning_seats r)"
   by auto
-termination by (relation "measure (\<lambda>r. ns r)")
-               (auto simp add:  divisor_module_length Let_def)
+termination loop_outer
+proof (relation "measure (ns :: ('a::linorder, 'b) Divisor_Module \<Rightarrow> nat)")
+  show "wf (measure (ns :: ('a::linorder, 'b) Divisor_Module \<Rightarrow> nat))"
+    by simp
+next
+  fix r :: "('a::linorder, 'b) Divisor_Module"
+  assume "ns r > 0"
+  then have "ns (assigning_seats r) < ns r"
+    by (simp add:nseats_decreasing)
+  then show "(assigning_seats r, r) \<in> measure ns"
+    by auto
+qed
+
+lemma loop_decreasing:
+  shows "ns (loop_outer r) < ns (loop_outer (assigning_seats r))"   
 
 (* to adapt after adapting lemma used *)
 termination
@@ -396,7 +406,7 @@ definition parties_list :: "char list list" where
 definition parties_list_perm :: "char list list" where
 "parties_list_perm = [''b'', ''d'', ''c'', ''a'']"
 
-definition parameters_list :: "nat list" where
+definition parameters_list :: "rat list" where
 "parameters_list = [1, 2, 3]"
 
 definition seats_set :: "nat set" where
@@ -405,5 +415,5 @@ definition seats_set :: "nat set" where
 definition create_divisor_module :: "nat Result \<Rightarrow> char list Parties \<Rightarrow> nat set \<Rightarrow> (nat, char list) Seats \<Rightarrow> nat \<Rightarrow> rat list \<Rightarrow> rat list \<Rightarrow> rat list \<Rightarrow> (nat, char list) Divisor_Module" where
   "create_divisor_module resu pu iu su nsu vu fvu du = \<lparr> res = resu, p = pu, i = iu, s = su, ns = nsu, v = vu, fv = fvu, d = du \<rparr>"
 
-(* value "full_module (create_divisor_module ({1}, {1}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 empty_votes empty_votes parameters_list) profile_list" *)
+value "full_module (create_divisor_module ({1}, {1}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [] [] parameters_list) profile_list"
 end
