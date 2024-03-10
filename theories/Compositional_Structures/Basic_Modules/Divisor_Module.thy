@@ -207,13 +207,17 @@ text \<open>This loop assigns all the seats until either there are no more seats
 *)
 *)
 
-function loop_outer ::
+function loop_o ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
   where  
-  "ns r = 0  \<Longrightarrow>loop_outer r = r" |
-  "ns r > 0 \<Longrightarrow> loop_outer r = loop_outer (assigning_seats r)"
+  "ns r = 0  \<Longrightarrow>loop_o r = r" |
+  "ns r > 0 \<Longrightarrow> loop_o r = loop_o (assigning_seats r)"
   by auto
-termination loop_outer
+termination by (relation "measure (\<lambda>r. ns r)")
+               (auto simp add: nseats_decreasing)
+
+
+(* termination loop_outer
 proof (relation "measure (ns :: ('a::linorder, 'b) Divisor_Module \<Rightarrow> nat)")
   show "wf (measure (ns :: ('a::linorder, 'b) Divisor_Module \<Rightarrow> nat))"
     by simp
@@ -224,12 +228,12 @@ next
     by (simp add:nseats_decreasing)
   then show "(assigning_seats r, r) \<in> measure ns"
     by auto
-qed
+qed *)
 
 lemma loop_decreasing:
   shows "ns (loop_outer r) < ns (loop_outer (assigning_seats r))"   
 
-(* to adapt after adapting lemma used *)
+(* to adapt after adapting lemma used 
 termination
 proof (relation "measure (\<lambda>r. ns r)", goal_cases)
   case (1)
@@ -240,7 +244,7 @@ next
   then have "ns (assigning_seats r\<lparr>p :=  find_max_votes (fv r) (p r)\<rparr>) <  ns r\<lparr>p :=  find_max_votes (fv r) (p r)\<rparr>" by simp
   then show ?case by simp
 qed
-
+*)
 fun seats_assigned :: "char list Termination_Condition" where 
   "seats_assigned result = (
     case result of 

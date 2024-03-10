@@ -237,6 +237,7 @@ qed
 fun find_max_votes :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b list" where
   "find_max_votes v p = max_parties (max_val v 0) v p p []"
 
+
 lemma find_max_votes_not_empty:
   fixes
   v::"rat list" and
