@@ -211,10 +211,44 @@ function loop_o ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
   where  
   "ns r = 0  \<Longrightarrow>loop_o r = r" |
-  "ns r > 0 \<Longrightarrow> loop_o r = loop_o (assigning_seats r)"
+  "\<not>(ns r = 0) \<Longrightarrow> loop_o r = loop_o (assigning_seats r)"
   by auto
 termination by (relation "measure (\<lambda>r. ns r)")
                (auto simp add: nseats_decreasing)
+
+
+
+fun f_ex :: "nat \<Rightarrow> nat" where "f_ex n = n - 1"
+
+function loop_ex ::
+  "nat \<Rightarrow> nat"
+  where  
+  "r = 0  \<Longrightarrow>loop_ex r = r" |
+  "\<not>(r = 0) \<Longrightarrow> loop_ex r = loop_ex (f_ex r)"
+  by auto
+termination by (relation "measure (\<lambda>r. r)")
+               (auto)
+
+value "loop_ex 3"
+
+lemma loop_o_cases:
+  "loop_o r = (
+     if ns r = 0 then r
+     else loop_o (assigning_seats r))"
+proof (cases "ns r = 0")
+  case True
+  then show ?thesis by simp
+next
+  case False
+  then show ?thesis by simp
+qed
+
+lemma loop_o_termination:
+  "ns r > 0 \<Longrightarrow> loop_o r = loop_o (assigning_seats r)"
+proof (induction r rule: loop_o.induct)
+  case (2 r)
+  then show ?case by simp
+qed simp
 
 
 (* termination loop_outer
@@ -232,7 +266,7 @@ qed *)
 
 lemma loop_decreasing:
   shows "ns (loop_outer r) < ns (loop_outer (assigning_seats r))"   
-
+  sorry
 (* to adapt after adapting lemma used 
 termination
 proof (relation "measure (\<lambda>r. ns r)", goal_cases)
@@ -267,7 +301,7 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
 "full_module rec pl = (
     let sv = calc_votes (p rec) (p rec) pl [];
     empty_seats = create_empty_seats (i rec) (p rec)
-    in loop_outer (rec\<lparr>
+    in loop_o (rec\<lparr>
              s := empty_seats,
              fv := sv
             \<rparr>))"
@@ -416,8 +450,14 @@ definition parameters_list :: "rat list" where
 definition seats_set :: "nat set" where
 "seats_set = {1, 2, 3}"
 
-definition create_divisor_module :: "nat Result \<Rightarrow> char list Parties \<Rightarrow> nat set \<Rightarrow> (nat, char list) Seats \<Rightarrow> nat \<Rightarrow> rat list \<Rightarrow> rat list \<Rightarrow> rat list \<Rightarrow> (nat, char list) Divisor_Module" where
+definition create_divisor_module :: "nat Result \<Rightarrow> char list Parties \<Rightarrow>
+                                     nat set \<Rightarrow> (nat, char list) Seats \<Rightarrow> nat \<Rightarrow> rat list \<Rightarrow>
+                                     rat list \<Rightarrow> rat list \<Rightarrow> (nat, char list) Divisor_Module"
+  where
   "create_divisor_module resu pu iu su nsu vu fvu du = \<lparr> res = resu, p = pu, i = iu, s = su, ns = nsu, v = vu, fv = fvu, d = du \<rparr>"
 
-value "full_module (create_divisor_module ({1}, {1}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [] [] parameters_list) profile_list"
+(* se i seats assegnati sono vuoti c'è un error 
+   se i voti sono una lista nulla c'è un error 
+*)
+value "full_module (create_divisor_module ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0] [0, 0, 0] parameters_list) profile_list"
 end
