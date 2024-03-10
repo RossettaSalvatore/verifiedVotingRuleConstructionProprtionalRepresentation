@@ -64,7 +64,7 @@ text \<open> This function counts votes for one party and add correspondence to 
 
 
 fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> nat \<Rightarrow> rat list \<Rightarrow> rat \<Rightarrow> rat list" where
-  "cnt_votes p [] index votes n = list_update votes index n" |
+  "cnt_votes p [] index votes n = votes @ [n]" |
   "cnt_votes p (px # profil) index votes n = 
      (case (count_above px p) of
         0 \<Rightarrow> cnt_votes p profil index votes (n + 1)
@@ -163,7 +163,7 @@ fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Righ
       calc_votes parties fixed_parties prof (cnt_votes party prof ix votes 0))"
 
 (* this works 09/03/24 *)
-value "calc_votes [''a'', ''b''] [''a'', ''b''] profile_list [0, 0]"
+value "calc_votes [''a'', ''b''] [''a'', ''b''] profile_list []"
 
 (*prove "p1 <~~> p2 \<Longrightarrow> (calc_votes p1 profl votes = calc_votes p2 profl votes)"
 *)
@@ -172,9 +172,9 @@ lemma calc_votes_permutation:
     p1 :: "'b Parties" and
     p2 ::"'b Parties" and
     profl ::"'b Profile" and
-    votes::"'b Votes"
+    votes::"rat list"
   assumes "p1 <~~> p2"
-  shows "calc_votes p1 profl votes = calc_votes p2 profl votes"
+  shows "calc_votes p1 p1 profl votes = calc_votes p2 p2 profl votes"
   using assms
 proof (induction p1 arbitrary: p2)
   case Nil
@@ -183,8 +183,8 @@ next
   case (Cons a p1)
   obtain p2' where "p2 <~~> (a # p2')" using assms by (metis Cons.prems)
   then have "(a # p1) <~~> (a # p2')" using assms Cons.prems by auto
-  then have "calc_votes (a # p1) profl votes = 
-             calc_votes p1 profl (cnt_votes a profl empty_v 0)" using assms by simp
+  then have "calc_votes (a # p1) p1 profl votes = 
+             calc_votes p1 p1 profl (cnt_votes a profl [] 0)" using assms by simp
   then have "\<dots> = 
              calc_votes p2' profl (cnt_votes a profl empty_v 0)" using assms
   by (metis Cons.IH Cons.prems \<open>mset p2 = mset (a # p2')\<close> calc_votes.simps(2) cons_perm_imp_perm list.exhaust mset_zero_iff_right)
@@ -234,12 +234,12 @@ next
   then show ?thesis sorry
 qed
 
-fun find_max_votes :: "'b Votes \<Rightarrow> 'b Parties \<Rightarrow> 'b list" where
-  "find_max_votes v p = max_parties (max_val v p 0) v p []"
+fun find_max_votes :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b list" where
+  "find_max_votes v p = max_parties (max_val v 0) v p p []"
 
 lemma find_max_votes_not_empty:
   fixes
-  v::"'b Votes" and
+  v::"rat list" and
   p::"'b Parties"
   assumes "p \<noteq> []"
   shows "find_max_votes v p \<noteq> []"
