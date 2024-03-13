@@ -234,7 +234,7 @@ next
   then show ?thesis sorry
 qed
 
-fun find_max_votes :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b list" where
+fun find_max_votes :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "find_max_votes v p = max_parties (max_val v 0) v p p []"
 
 
