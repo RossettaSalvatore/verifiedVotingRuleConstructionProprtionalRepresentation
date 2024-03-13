@@ -62,7 +62,7 @@ fun divisor_module :: "('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        ('a::linorder, 'b) Divisor_Module" where 
 "divisor_module rec =
   (let 
-    seat = Min (ass_r (res rec));
+    seat = Min (disp_r (res rec));
     new_as = ass_r (res rec) \<union> {seat};
     new_di =  disp_r (res rec) - {seat}
      in rec\<lparr> res := (new_as, {}, new_di),
@@ -117,7 +117,7 @@ fun assign_seat :: "('a::linorder, 'b) Divisor_Module
 "assign_seat rec = (
       let winners = find_max_votes (fv rec) (p rec) in
       if length winners \<le> (ns rec) then
-         (divisor_module (rec\<lparr>p := winners\<rparr>))\<lparr>ns := ns rec - 1\<rparr>
+         (divisor_module (rec))\<lparr>ns := ns rec - 1\<rparr>
       else
          rec\<lparr> s := create_seats (disp_r (res rec)) (s rec) (set (p rec)), ns := 0 \<rparr>)"
 
@@ -190,13 +190,6 @@ termination by (relation "measure (\<lambda>r. x r)")
 lemma [code]: \<open>loop_ex r = (if x r = 0 then r else loop_ex (f_ex r))\<close>
   by (cases r) auto
 
-
-lemma loop_o_termination:
-  "ns r > 0 \<Longrightarrow> loop_o r = loop_o (assigning_seats r)"
-proof (induction r rule: loop_o.induct)
-  case (2 r)
-  then show ?case by simp
-qed simp
 
 
 (* termination loop_outer
@@ -410,8 +403,11 @@ definition create_divisor_module :: "nat Result \<Rightarrow> char list Parties 
    se i voti sono una lista nulla c'è un error 
   al momento assegna tutti i seat indicati a tutti i partiti.
   ho cambiato in assigning_seats quando chiamo divisor module a p passo i winners
+  adesso ho aggiustato che passa i seat correttamente dai disputed agli assegnati
+  bisogna fare in modo che si assegni correttamente al partito vincitore
 *)
 value "s (create_divisor_module ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0] [0, 0, 0] parameters_list)"
 
+value "find_max_votes [2, 3, 2, 3] [''a'', ''b'', ''c'', ''d'']"
 value "full_module (create_divisor_module ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0, 0] [0, 0, 0, 0] parameters_list) profile_list"
 end
