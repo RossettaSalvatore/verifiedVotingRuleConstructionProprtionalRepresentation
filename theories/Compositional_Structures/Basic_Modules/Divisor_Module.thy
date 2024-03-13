@@ -215,6 +215,8 @@ function loop_o ::
   by auto
 termination by (relation "measure (\<lambda>r. ns r)")
                (auto simp add: nseats_decreasing)
+lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assigning_seats r))\<close>
+  by (cases r) auto
 
 
 
@@ -228,6 +230,10 @@ function loop_ex ::
   by auto
 termination by (relation "measure (\<lambda>r. r)")
                (auto)
+lemma [code]: \<open>loop_ex r = (if r = 0 then r else loop_ex (f_ex r))\<close>
+  by (cases r) auto
+
+value \<open>loop_ex 5\<close>
 
 value "loop_ex 3"
 
@@ -303,6 +309,7 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
     empty_seats = create_empty_seats (i rec) (p rec)
     in loop_o (rec\<lparr>
              s := empty_seats,
+             v := sv,
              fv := sv
             \<rparr>))"
 
@@ -458,6 +465,7 @@ definition create_divisor_module :: "nat Result \<Rightarrow> char list Parties 
 
 (* se i seats assegnati sono vuoti c'è un error 
    se i voti sono una lista nulla c'è un error 
+  al momento assegna tutti i seat indicati a tutti i partiti
 *)
 value "full_module (create_divisor_module ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0] [0, 0, 0] parameters_list) profile_list"
 end
