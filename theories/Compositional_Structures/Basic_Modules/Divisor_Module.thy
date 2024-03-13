@@ -308,10 +308,10 @@ theorem full_module_anonymity:
 (* Define the concordant property *)
 definition concordant :: "(('a, 'b) Divisor_Module \<Rightarrow> ('a, 'b) Divisor_Module) \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow> bool" where
   "concordant D dm = (\<forall>party1 party2 i.
-    retrieve_votes party1 (p dm) (v dm) > retrieve_votes party2 (p dm) (v dm) \<longrightarrow>
+    get_votes party1 (p dm) (v dm) > get_votes party2 (p dm) (v dm) \<longrightarrow>
     count_seats [party1] (s (D dm)) (i dm) \<ge> count_seats [party2] (s (D dm)) (i dm))"
 
-value "retrieve_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
+value "get_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
 (*
 fun count_seats :: "'b set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
                     'a::linorder set => nat" where
@@ -379,6 +379,12 @@ definition pref_rel_a2 :: "char list Preference_Relation" where
                  (''d'', ''a''), (''b'', ''d''), 
                  (''b'', ''c''), (''d'', ''c'')}"
 
+
+definition pref_rel_a3 :: "char list Preference_Relation" where
+"pref_rel_a3 = {(''b'', ''a''), (''c'', ''a''), 
+                 (''d'', ''a''), (''b'', ''d''), 
+                 (''b'', ''c''), (''d'', ''c'')}"
+
 definition profile_list :: "char list Profile" where
 "profile_list = [pref_rel_a, pref_rel_b, pref_rel_c, pref_rel_b2, 
                  pref_rel_b3, pref_rel_d, pref_rel_a2]"
@@ -414,7 +420,7 @@ value "s (create_divisor_module ({0}, {0}, {1, 2, 3}) parties_list seats_set (cr
 value "find_max_votes [2, 3, 2, 3] [''a'', ''b'', ''c'', ''d'']"
 value "full_module (create_divisor_module ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0, 0] [0, 0, 0, 0] parameters_list) profile_list"
 
-value "full_module (create_divisor_module ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0, 0] [0, 0, 0, 0] parameters_list) profile_list"
+value "s (full_module (create_divisor_module ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0, 0] [0, 0, 0, 0] parameters_list) profile_list)"
 
 value "assign_seat (2::nat) [''a'', ''b''] empty_seats"
 end

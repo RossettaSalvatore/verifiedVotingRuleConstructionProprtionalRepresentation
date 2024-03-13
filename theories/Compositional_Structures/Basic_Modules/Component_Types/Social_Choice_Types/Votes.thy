@@ -50,10 +50,10 @@ primrec first_pos :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow
 
 value "first_pos (\<lambda>x. x = ''1'') [''0'', ''0'', ''1'']"
 
-fun retrieve_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> rat list \<Rightarrow> rat" where
-"retrieve_votes party parties votes = votes ! (first_pos(\<lambda>x. x = party) parties)"
+fun get_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> rat list \<Rightarrow> rat" where
+"get_votes party parties votes = votes ! (first_pos(\<lambda>x. x = party) parties)"
 
-value "retrieve_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
+value "get_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
 
 (* function to generate the list of parameters *)
 fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
@@ -265,8 +265,9 @@ text \<open> This function updates the "fractional votes" of the winning party, 
 fun update_votes :: "'b \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
                             'a::linorder set \<Rightarrow> rat list \<Rightarrow> 
                             rat list \<Rightarrow> rat list \<Rightarrow> rat list" where 
-"update_votes party parties seats i votes fractv factors = 
-    (let ix = first_pos(\<lambda>x. x = party) parties in
-     list_update fractv ix ((retrieve_votes party parties votes) / (List.nth factors (count_seats [party] seats i))))"
+"update_votes p ps seats i votes fractv factors = 
+    (let ix = first_pos(\<lambda>x. x = p) ps;
+     new_votes = get_votes p ps votes / List.nth factors (count_seats [p] seats i) in
+     list_update fractv ix new_votes)"
 
 end
