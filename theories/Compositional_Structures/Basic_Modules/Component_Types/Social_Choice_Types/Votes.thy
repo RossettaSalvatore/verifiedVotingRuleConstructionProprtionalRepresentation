@@ -267,7 +267,7 @@ fun update_votes :: "'b \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) S
                             rat list \<Rightarrow> rat list \<Rightarrow> rat list" where 
 "update_votes p ps seats i votes fractv factors = 
     (let index = first_pos(\<lambda>x. x = p) ps;
-     n_seats = count_seats [p] seats i + 1;
+     n_seats = count_seats [p] seats i;
      new_votes = get_votes p ps votes / List.nth factors n_seats in
      list_update fractv index new_votes)"
 

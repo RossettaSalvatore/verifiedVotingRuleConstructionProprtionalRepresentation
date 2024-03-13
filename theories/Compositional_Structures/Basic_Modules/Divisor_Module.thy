@@ -64,11 +64,12 @@ fun divisor_module :: "('a::linorder, 'b) Divisor_Module \<Rightarrow>
   (let 
     winner = hd (find_max_votes (fv rec) (p rec));
     seat = Min (disp_r (res rec));
+    new_s = assign_seat seat [winner] (s rec);
     new_as = ass_r (res rec) \<union> {seat};
     new_di =  disp_r (res rec) - {seat}
      in rec\<lparr> res := (new_as, {}, new_di),
-             s := assign_seat seat [winner] (s rec),
-             fv := update_votes winner (p rec) (s rec) (i rec) (v rec) (fv rec) (d rec)
+             s := new_s,
+             fv := update_votes winner (p rec) new_s (i rec) (v rec) (fv rec) (d rec)
             \<rparr>)"
 
 (* try if divisor module works *)
