@@ -247,9 +247,9 @@ lemma find_max_votes_not_empty:
   using assms
   sorry
 
-fun assign_seat :: "'a::linorder \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats 
+fun update_seat :: "'a::linorder \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats 
                     \<Rightarrow> ('a::linorder, 'b) Seats" where
-  "assign_seat seat_n winner seats = seats(seat_n := winner)"
+  "update_seat seat_n winner seats = seats(seat_n := winner)"
 
 text \<open> This function counts seats of a given party. \<close>
 

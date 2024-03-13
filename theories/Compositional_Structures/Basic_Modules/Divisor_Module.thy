@@ -64,7 +64,7 @@ fun divisor_module :: "('a::linorder, 'b) Divisor_Module \<Rightarrow>
   (let 
     winner = hd (find_max_votes (fv rec) (p rec));
     seat = Min (disp_r (res rec));
-    new_s = assign_seat seat [winner] (s rec);
+    new_s = update_seat seat [winner] (s rec);
     new_as = ass_r (res rec) \<union> {seat};
     new_di =  disp_r (res rec) - {seat}
      in rec\<lparr> res := (new_as, {}, new_di),
@@ -111,7 +111,7 @@ fun create_seats :: "'a::linorder set \<Rightarrow> ('a::linorder, 'b) Seats \<R
     (\<lambda>x. if x \<in> def then pa else seats x)"
                           
 text \<open>This function checks whether there are enough seats for all the winning parties.
-      - If yes, assign one seat to each party.
+      - If yes, assign one seat to the first party in the queue.
       - If not, assign all remaining seats to the winning parties, making these seats 
         "disputed".\<close>
 fun assign_seats :: "('a::linorder, 'b) Divisor_Module
@@ -161,6 +161,8 @@ next
   finally show ?thesis .
 qed
 
+                  
+text \<open>This loop applies the same functions until no more seats are available.\<close>
 function loop_o ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
   where  
@@ -241,7 +243,11 @@ fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarro
 
 (* full divisor module function
   calcola voti correttamente  *) 
-fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
+text \<open>This function takes in input the parameters and calculates
+       the final output of the election.\<close>
+
+fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<Rightarrow>
+                   ('a::linorder, 'b) Divisor_Module" where
 "full_module rec pl = (
     let sv = calc_votes (p rec) (p rec) pl [];
     empty_seats = create_empty_seats (i rec) (p rec)
@@ -250,8 +256,6 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
              v := sv,
              fv := sv
             \<rparr>))"
-
-
 
 (* Define a set *)
 definition my_set :: "nat set" where
@@ -306,7 +310,8 @@ theorem full_module_anonymity:
   sorry
 
 (* Define the concordant property *)
-definition concordant :: "(('a, 'b) Divisor_Module \<Rightarrow> ('a, 'b) Divisor_Module) \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow> bool" where
+definition concordant :: "(('a, 'b) Divisor_Module \<Rightarrow> ('a, 'b) Divisor_Module) \<Rightarrow>
+                           ('a::linorder, 'b) Divisor_Module \<Rightarrow> bool" where
   "concordant D dm = (\<forall>party1 party2 i.
     get_votes party1 (p dm) (v dm) > get_votes party2 (p dm) (v dm) \<longrightarrow>
     count_seats [party1] (s (D dm)) (i dm) \<ge> count_seats [party2] (s (D dm)) (i dm))"
@@ -338,7 +343,7 @@ theorem monotonicity_property:
   v' :: "rat list" and
   s :: "('a, 'b) Seats" and
   s' :: "('a, 'b) Seats"
-  shows "\<forall>p parties v v' s s' i. retrieve_votes p parties v' \<ge> retrieve_votes p parties v \<longrightarrow>
+  shows "\<forall>p parties v v' s s' i. get_votes p parties v' \<ge> get_votes p parties v \<longrightarrow>
              count_seats [p] s' i \<ge>
               count_seats [p] s i"
   sorry
@@ -359,46 +364,15 @@ definition pref_rel_c :: "char list Preference_Relation" where
                 (''d'', ''c''), (''a'', ''b''), 
                 (''b'', ''d''), (''a'', ''d'')}"
 
-definition pref_rel_b2 :: "char list Preference_Relation" where
-"pref_rel_b2 = {(''a'', ''b''), (''c'', ''b''), 
-                 (''d'', ''b''), (''c'', ''a''), 
-                 (''a'', ''d''), (''c'', ''d'')}"
-
-definition pref_rel_b3 :: "char list Preference_Relation" where
-"pref_rel_b3 = {(''a'', ''b''), (''c'', ''b''), 
-                 (''d'', ''b''), (''c'', ''a''), 
-                 (''a'', ''d''), (''c'', ''d'')}"
-
 definition pref_rel_d :: "char list Preference_Relation" where
 "pref_rel_d = {(''a'', ''d''), (''b'', ''d''), 
                 (''c'', ''d''), (''a'', ''c''), 
                 (''c'', ''b''), (''a'', ''b'')}"
 
-definition pref_rel_a2 :: "char list Preference_Relation" where
-"pref_rel_a2 = {(''b'', ''a''), (''c'', ''a''), 
-                 (''d'', ''a''), (''b'', ''d''), 
-                 (''b'', ''c''), (''d'', ''c'')}"
-
-
-definition pref_rel_a3 :: "char list Preference_Relation" where
-"pref_rel_a3 = {(''b'', ''a''), (''c'', ''a''), 
-                 (''d'', ''a''), (''b'', ''d''), 
-                 (''b'', ''c''), (''d'', ''c'')}"
-
-
-definition pref_rel_a4 :: "char list Preference_Relation" where
-"pref_rel_a4 = {(''b'', ''a''), (''c'', ''a''), 
-                 (''d'', ''a''), (''b'', ''d''), 
-                 (''b'', ''c''), (''d'', ''c'')}"
-
-definition pref_rel_a5 :: "char list Preference_Relation" where
-"pref_rel_a5 = {(''b'', ''a''), (''c'', ''a''), 
-                 (''d'', ''a''), (''b'', ''d''), 
-                 (''b'', ''c''), (''d'', ''c'')}"
-
 definition profile_list :: "char list Profile" where
 "profile_list = [pref_rel_a, pref_rel_b, pref_rel_c,
-                 pref_rel_d, pref_rel_a2, pref_rel_a4, pref_rel_a3, pref_rel_a5]"
+                 pref_rel_d, pref_rel_a, pref_rel_a, 
+                 pref_rel_a, pref_rel_a]"
 
 definition parties_list :: "char list list" where
 "parties_list = [''a'', ''b'', ''c'', ''d'']"
@@ -412,26 +386,26 @@ definition parameters_list :: "rat list" where
 definition seats_set :: "nat set" where
 "seats_set = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}"
 
-definition create_divisor_module :: "nat Result \<Rightarrow> char list Parties \<Rightarrow>
+definition create_record :: "nat Result \<Rightarrow> char list Parties \<Rightarrow>
                                      nat set \<Rightarrow> (nat, char list) Seats \<Rightarrow> nat \<Rightarrow> rat list \<Rightarrow>
-                                     rat list \<Rightarrow> rat list \<Rightarrow> (nat, char list) Divisor_Module"
+                                     rat list \<Rightarrow> (nat, char list) Divisor_Module"
   where
-  "create_divisor_module resu pu iu su nsu vu fvu du = \<lparr> res = resu, p = pu, i = iu, s = su, ns = nsu, v = vu, fv = fvu, d = du \<rparr>"
+  "create_record cr cp ci cs cns cv cd = \<lparr> res = cr, p = cp, i = ci, s = cs, ns = cns, v = cv, fv = cv, d = cd \<rparr>"
 
 (* - se i seats assegnati sono vuoti c'è un error 
    - se i voti sono una lista nulla c'è un error 
-  - al momento assegna tutti i seat indicati a tutti i partiti.
-  - ho cambiato in assigning_seats quando chiamo divisor module a p passo i winners
-  - adesso ho aggiustato che passa i seat correttamente dai disputed agli assegnati
-  - bisogna fare in modo che si assegni correttamente al partito vincitore
-sto cercando di assegnare il seat al winner
+  - al momento assegna tutti i seat indicati a tutti i partiti. (RISOLTO)
+  - ho cambiato in assigning_seats quando chiamo divisor module a p passo i winners (RISOLTO)
+  - adesso ho aggiustato che passa i seat correttamente dai disputed agli assegnati (RISOLTO)
+  - bisogna fare in modo che si assegni correttamente al partito vincitore (RISOLTO)
+  - sto cercando di assegnare il seat al winner (RISOLTO)
 *)
-value "s (create_divisor_module ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0] [0, 0, 0] parameters_list)"
+value "s (create_record ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0] parameters_list)"
 
 value "find_max_votes [2, 3, 2, 3] [''a'', ''b'', ''c'', ''d'']"
-value "full_module (create_divisor_module ({0}, {0}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}) parties_list seats_set (create_empty_seats seats_set parties_list) 10 [0, 0, 0, 0] [0, 0, 0, 0] parameters_list) profile_list"
+value "full_module (create_record ({0}, {0}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}) parties_list seats_set (create_empty_seats seats_set parties_list) 10 [0, 0, 0, 0] [0, 0, 0, 0] parameters_list) profile_list"
 
-value "s (full_module (create_divisor_module ({0}, {0}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}) parties_list seats_set (create_empty_seats seats_set parties_list) 10 [0, 0, 0, 0] [0, 0, 0, 0] parameters_list) profile_list)"
+value "s (full_module (create_record ({0}, {0}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}) parties_list seats_set (create_empty_seats seats_set parties_list) 10 [0, 0, 0, 0] [0, 0, 0, 0] parameters_list) profile_list)"
 
 value "assign_seat (2::nat) [''a'', ''b''] empty_seats"
 end
