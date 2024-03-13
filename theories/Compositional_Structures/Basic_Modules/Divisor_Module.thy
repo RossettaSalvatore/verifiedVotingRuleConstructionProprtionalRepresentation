@@ -62,12 +62,14 @@ fun divisor_module :: "('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        ('a::linorder, 'b) Divisor_Module" where 
 "divisor_module rec =
   (let 
+    winners = find_max_votes (fv rec) (p rec);
+    winner = hd winners;
     seat = Min (disp_r (res rec));
     new_as = ass_r (res rec) \<union> {seat};
     new_di =  disp_r (res rec) - {seat}
      in rec\<lparr> res := (new_as, {}, new_di),
-             s := assign_seat seat (hd(p rec)) (s rec),
-             fv := update_votes (hd (p rec)) (p rec) (s rec) (i rec) (v rec) (fv rec) (d rec)
+             s := assign_seat seat [winner] (s rec),
+             fv := update_votes winner (p rec) (s rec) (i rec) (v rec) (fv rec) (d rec)
             \<rparr>)"
 
 (* try if divisor module works *)
@@ -103,23 +105,23 @@ function loop_divisor ::
 termination by (relation "measure (\<lambda>rec. ns rec)")
                (auto simp add: divisor_module_length Let_def)
 *)
-fun create_seats :: "'a::linorder set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 'b set \<Rightarrow>
+fun create_seats :: "'a::linorder set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 'b list \<Rightarrow>
                       ('a::linorder, 'b) Seats" where
-  "create_seats def seats p_set=
-    (\<lambda>x. if x \<in> def then p_set else seats x)"
-
+  "create_seats def seats pa =
+    (\<lambda>x. if x \<in> def then pa else seats x)"
+                          
 text \<open>This function checks whether there are enough seats for all the winning parties.
       - If yes, assign one seat to each party.
       - If not, assign all remaining seats to the winning parties, making these seats 
         "disputed".\<close>
-fun assign_seat :: "('a::linorder, 'b) Divisor_Module
+fun assign_seats :: "('a::linorder, 'b) Divisor_Module
                         \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
-"assign_seat rec = (
+"assign_seats rec = (
       let winners = find_max_votes (fv rec) (p rec) in
       if length winners \<le> (ns rec) then
-         (divisor_module (rec))\<lparr>ns := ns rec - 1\<rparr>
+         (divisor_module rec)\<lparr>ns := ns rec - 1\<rparr>
       else
-         rec\<lparr> s := create_seats (disp_r (res rec)) (s rec) (set (p rec)), ns := 0 \<rparr>)"
+         rec\<lparr> s := create_seats (disp_r (res rec)) (s rec) (p rec), ns := 0 \<rparr>)"
 
 (*
 fun a_seat :: "my_rec \<Rightarrow> my_rec" where
@@ -142,17 +144,17 @@ lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (a_seat r))\<clo
 lemma nseats_decreasing:
   assumes non_empty_parties: "p rec \<noteq> []"
   assumes n_positive: "(ns rec) > 0"
-  shows "ns (assign_seat rec) < ns rec"
+  shows "ns (assign_seats rec) < ns rec"
 proof (cases "length (find_max_votes (fv rec) (p rec)) \<le> ns rec")
   case True
-  then have "ns (assign_seat rec) = ns rec - 1"
+  then have "ns (assign_seats rec) = ns rec - 1"
     by (auto simp add: Let_def)
   also have "... < ns rec" using True n_positive non_empty_parties
     by simp
   finally show ?thesis .
 next
   case False
-  then have "ns (assign_seat rec) = 0"
+  then have "ns (assign_seats rec) = 0"
     by (auto simp add: Let_def)
   also have "... < ns rec" using n_positive
     by simp
@@ -163,14 +165,14 @@ function loop_o ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
   where  
   "ns r = 0  \<Longrightarrow>loop_o r = r" |
-  "\<not>(ns r = 0) \<Longrightarrow> loop_o r = loop_o (assign_seat r)"
+  "\<not>(ns r = 0) \<Longrightarrow> loop_o r = loop_o (assign_seats r)"
   by auto
 termination by (relation "measure (\<lambda>r. ns r)")
                (auto simp add: nseats_decreasing)
-lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seat r))\<close>
+lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
   by (cases r) auto
 
-
+(*
 record rec_ex =
   x :: nat
   b :: "char list list"
@@ -190,7 +192,7 @@ termination by (relation "measure (\<lambda>r. x r)")
 lemma [code]: \<open>loop_ex r = (if x r = 0 then r else loop_ex (f_ex r))\<close>
   by (cases r) auto
 
-
+*)
 
 (* termination loop_outer
 proof (relation "measure (ns :: ('a::linorder, 'b) Divisor_Module \<Rightarrow> nat)")
@@ -234,7 +236,7 @@ fun t_inner :: "'b Termination_Condition" where
 
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
   "create_empty_seats indexes parties =
-    (\<lambda>i. if i \<in> indexes then set parties else {})"
+    (\<lambda>i. if i \<in> indexes then parties else [])"
 
 
 (* full divisor module function
@@ -307,7 +309,7 @@ theorem full_module_anonymity:
 definition concordant :: "(('a, 'b) Divisor_Module \<Rightarrow> ('a, 'b) Divisor_Module) \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow> bool" where
   "concordant D dm = (\<forall>party1 party2 i.
     retrieve_votes party1 (p dm) (v dm) > retrieve_votes party2 (p dm) (v dm) \<longrightarrow>
-    count_seats {party1} (s (D dm)) (i dm) \<ge> count_seats {party2} (s (D dm)) (i dm))"
+    count_seats [party1] (s (D dm)) (i dm) \<ge> count_seats [party2] (s (D dm)) (i dm))"
 
 value "retrieve_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
 (*
@@ -337,8 +339,8 @@ theorem monotonicity_property:
   s :: "('a, 'b) Seats" and
   s' :: "('a, 'b) Seats"
   shows "\<forall>p parties v v' s s' i. retrieve_votes p parties v' \<ge> retrieve_votes p parties v \<longrightarrow>
-             count_seats {p} s' i \<ge>
-              count_seats {p} s i"
+             count_seats [p] s' i \<ge>
+              count_seats [p] s i"
   sorry
 
 (* example values *)
@@ -399,15 +401,20 @@ definition create_divisor_module :: "nat Result \<Rightarrow> char list Parties 
   where
   "create_divisor_module resu pu iu su nsu vu fvu du = \<lparr> res = resu, p = pu, i = iu, s = su, ns = nsu, v = vu, fv = fvu, d = du \<rparr>"
 
-(* se i seats assegnati sono vuoti c'è un error 
-   se i voti sono una lista nulla c'è un error 
-  al momento assegna tutti i seat indicati a tutti i partiti.
-  ho cambiato in assigning_seats quando chiamo divisor module a p passo i winners
-  adesso ho aggiustato che passa i seat correttamente dai disputed agli assegnati
-  bisogna fare in modo che si assegni correttamente al partito vincitore
+(* - se i seats assegnati sono vuoti c'è un error 
+   - se i voti sono una lista nulla c'è un error 
+  - al momento assegna tutti i seat indicati a tutti i partiti.
+  - ho cambiato in assigning_seats quando chiamo divisor module a p passo i winners
+  - adesso ho aggiustato che passa i seat correttamente dai disputed agli assegnati
+  - bisogna fare in modo che si assegni correttamente al partito vincitore
+sto cercando di assegnare il seat al winner
 *)
 value "s (create_divisor_module ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0] [0, 0, 0] parameters_list)"
 
 value "find_max_votes [2, 3, 2, 3] [''a'', ''b'', ''c'', ''d'']"
 value "full_module (create_divisor_module ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0, 0] [0, 0, 0, 0] parameters_list) profile_list"
+
+value "full_module (create_divisor_module ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0, 0] [0, 0, 0, 0] parameters_list) profile_list"
+
+value "assign_seat (2::nat) [''a'', ''b''] empty_seats"
 end

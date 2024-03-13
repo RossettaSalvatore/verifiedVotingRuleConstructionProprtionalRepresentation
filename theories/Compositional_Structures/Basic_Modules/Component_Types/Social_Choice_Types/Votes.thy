@@ -41,7 +41,7 @@ type_synonym 'b Parties = "'b list"
 type_synonym 'b Votes = "'b \<Rightarrow> rat"
                 
 text  \<open>Every seat is unique and identified and has a set of parties to which it is assigned.\<close>
-type_synonym ('a, 'b) Seats = "'a \<Rightarrow> 'b set"
+type_synonym ('a, 'b) Seats = "'a \<Rightarrow> 'b list"
 type_synonym Params = "nat list"
 
 primrec first_pos :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> nat" where
@@ -247,13 +247,13 @@ lemma find_max_votes_not_empty:
   using assms
   sorry
 
-fun assign_seat :: "'a::linorder \<Rightarrow> 'b  \<Rightarrow> ('a::linorder, 'b) Seats 
+fun assign_seat :: "'a::linorder \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats 
                     \<Rightarrow> ('a::linorder, 'b) Seats" where
-  "assign_seat seat_n winner seats = (\<lambda>n. if n = seat_n then {winner} else seats n)"
+  "assign_seat seat_n winner seats = seats(seat_n := winner)"
 
 text \<open> This function counts seats of a given party. \<close>
 
-fun count_seats :: "'b set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
+fun count_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
                     'a::linorder set => nat" where
   "count_seats p s i = 
     (card {ix. ix \<in> i \<and> s ix = p})"
@@ -267,6 +267,6 @@ fun update_votes :: "'b \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) S
                             rat list \<Rightarrow> rat list \<Rightarrow> rat list" where 
 "update_votes party parties seats i votes fractv factors = 
     (let ix = first_pos(\<lambda>x. x = party) parties in
-     list_update fractv ix ((retrieve_votes party parties votes) / (List.nth factors (count_seats {party} seats i))))"
+     list_update fractv ix ((retrieve_votes party parties votes) / (List.nth factors (count_seats [party] seats i))))"
 
 end
