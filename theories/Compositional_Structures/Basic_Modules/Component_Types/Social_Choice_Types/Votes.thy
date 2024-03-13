@@ -208,7 +208,7 @@ fun max_parties:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightar
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
 "max_parties m v fixed_p [] output = output" | 
 "max_parties m v fixed_p (px # p) output = 
-        max_parties m v fixed_p p (if (retrieve_votes px fixed_p v) = m then (output @ [px])
+        max_parties m v fixed_p p (if (get_votes px fixed_p v) = m then (output @ [px])
                                    else output)"
 
 (* works 09/03 *)
@@ -266,8 +266,9 @@ fun update_votes :: "'b \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) S
                             'a::linorder set \<Rightarrow> rat list \<Rightarrow> 
                             rat list \<Rightarrow> rat list \<Rightarrow> rat list" where 
 "update_votes p ps seats i votes fractv factors = 
-    (let ix = first_pos(\<lambda>x. x = p) ps;
-     new_votes = get_votes p ps votes / List.nth factors (count_seats [p] seats i) in
-     list_update fractv ix new_votes)"
+    (let index = first_pos(\<lambda>x. x = p) ps;
+     n_seats = count_seats [p] seats i + 1;
+     new_votes = get_votes p ps votes / List.nth factors n_seats in
+     list_update fractv index new_votes)"
 
 end
