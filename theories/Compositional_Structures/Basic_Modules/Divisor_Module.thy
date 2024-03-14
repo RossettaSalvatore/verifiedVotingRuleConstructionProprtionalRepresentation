@@ -388,14 +388,14 @@ definition profile_list :: "char list Profile" where
                  pref_rel_d, pref_rel_a, pref_rel_a, 
                  pref_rel_a, pref_rel_a]"
 
-definition parties_list :: "char list list" where
-"parties_list = [''a'', ''b'', ''c'', ''d'']"
+definition parties :: "char list list" where
+"parties = [''a'', ''b'', ''c'', ''d'']"
 
 definition parties_list_perm :: "char list list" where
 "parties_list_perm = [''b'', ''d'', ''c'', ''a'']"
 
-definition parameters_list :: "rat list" where
-"parameters_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"
+definition factors :: "rat list" where
+"factors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"
 
 definition seats_set :: "nat set" where
 "seats_set = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}"
@@ -408,27 +408,24 @@ fun start_votes :: "'a list \<Rightarrow> rat list" where
 definition start_tuple :: "nat \<Rightarrow> nat Result" where
   "start_tuple n = ({}, {}, {1..n})"
 
-definition create_record :: "char list Parties \<Rightarrow>
-                                     nat set \<Rightarrow> (nat, char list) Seats \<Rightarrow> nat \<Rightarrow>
+definition create_record :: "char list Parties \<Rightarrow> nat \<Rightarrow>
                                      rat list \<Rightarrow> (nat, char list) Divisor_Module"
   where
-  "create_record cp ci cs cns cd = \<lparr> res = start_tuple cns, p = cp, i = ci, s = cs, ns = cns, 
+  "create_record cp cns cd = \<lparr> res = start_tuple cns, p = cp, i = {1..cns}, s = create_empty_seats {1..cns} cp, ns = cns, 
                                            v = start_votes cp, fv = start_votes cp, d = cd \<rparr>"
 
-(* - se i seats disputati sono vuoti c'è un error 
-   - se i voti sono una lista nulla c'è un error 
+(* - se i partiti è una lista vuota c'è un errore
   - al momento assegna tutti i seat indicati a tutti i partiti. (RISOLTO)
   - ho cambiato in assigning_seats quando chiamo divisor module a p passo i winners (RISOLTO)
   - adesso ho aggiustato che passa i seat correttamente dai disputed agli assegnati (RISOLTO)
   - bisogna fare in modo che si assegni correttamente al partito vincitore (RISOLTO)
   - sto cercando di assegnare il seat al winner (RISOLTO)
 *)
-value "s (create_record parties_list seats_set (create_empty_seats seats_set parties_list) 3 parameters_list)"
+value "s (create_record parties 3 factors)"
 
-value "find_max_votes [2, 3, 2, 3] [''a'', ''b'', ''c'', ''d'']"
-value "full_module (create_record parties_list seats_set (create_empty_seats seats_set parties_list) 10 parameters_list) profile_list"
+value "full_module (create_record parties 10 factors) profile_list"
 
-value "s (full_module (create_record parties_list seats_set (create_empty_seats seats_set parties_list) 10 parameters_list) profile_list) a"
+value "s (full_module (create_record parties 10 factors) profile_list) a"
 
 value "assign_seat (2::nat) [''a'', ''b''] empty_seats"
 
