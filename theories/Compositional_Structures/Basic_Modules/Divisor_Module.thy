@@ -59,30 +59,40 @@ text \<open> This function updates the "fractional votes" of the winning party, 
        votes by the i-th parameter, where i is the number of seats won by the party. \<close>
 
 (* works adapted *)
-fun update_votes2 ::  "'b \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
+fun update_votes2 ::  "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        rat list" where 
 "update_votes2 winner r = 
-    (let index = get_index(\<lambda>x. x = winner) (p r);
-     n_seats = count_seats [winner] (s r) (i r);
-     new_v = get_votes winner (p r) (v r) / ((d r) ! n_seats) in
+    (let index = get_index(\<lambda>x. x = (hd winner)) (p r);
+     n_seats = count_seats winner (s r) (i r);
+     new_v = get_votes (hd winner) (p r) (v r) / (d r ! n_seats) in
      list_update (fv r) index new_v)"
 
 text \<open> This function moves one seat from the disputed set to the assigned set. Moreover,
        returns the record with updated Seats function and "fractional" Votes entry 
        for the winning party. \<close>
 
-fun divisor_module :: "'b \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
+fun divisor_module :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        ('a::linorder, 'b) Divisor_Module" where 
 "divisor_module winner rec =
   (let 
     seat = Min (disp_r (res rec));
-    new_s = update_seat seat [winner] (s rec);
+    new_s = update_seat seat winner (s rec);
     new_as = ass_r (res rec) \<union> {seat};
     new_fv = update_votes2 winner (rec\<lparr>s:= new_s\<rparr>);
     new_di =  disp_r (res rec) - {seat}
      in rec\<lparr> res := (new_as, {}, new_di),
              s := new_s,
              fv := new_fv
+            \<rparr>)"
+
+fun break_tie :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
+                       ('a::linorder, 'b) Divisor_Module" where 
+"break_tie winners rec =
+  (let 
+    seat = Min (disp_r (res rec));
+    new_s = update_seat seat winners (s rec)
+     in rec\<lparr>
+             s := new_s
             \<rparr>)"
 
 (* try if divisor module works *)
@@ -131,10 +141,10 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
                         \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
 "assign_seats rec = (
       let winners = find_max_votes (fv rec) (p rec) in
-      if length winners \<le> (ns rec) then
-         (divisor_module (hd winners) rec)\<lparr>ns := ns rec - 1\<rparr>
+      if length winners \<le> ns rec then
+         (divisor_module [hd winners] rec)\<lparr>ns := ns rec - 1\<rparr>
       else
-         rec\<lparr> s := create_seats (disp_r (res rec)) (s rec) (p rec), ns := 0 \<rparr>)"
+         (break_tie winners rec)\<lparr>ns := 0\<rparr>)"
 
 (*
 fun a_seat :: "my_rec \<Rightarrow> my_rec" where
@@ -383,10 +393,10 @@ definition pref_rel_d :: "char list Preference_Relation" where
                 (''c'', ''d''), (''a'', ''c''), 
                 (''c'', ''b''), (''a'', ''b'')}"
 
-definition profile_list :: "char list Profile" where
-"profile_list = [pref_rel_a, pref_rel_b, pref_rel_c,
+definition pref :: "char list Profile" where
+"pref = [pref_rel_a, pref_rel_b, pref_rel_c,
                  pref_rel_d, pref_rel_a, pref_rel_a, 
-                 pref_rel_a, pref_rel_a]"
+                 pref_rel_a, pref_rel_b]"
 
 definition parties :: "char list list" where
 "parties = [''a'', ''b'', ''c'', ''d'']"
@@ -404,15 +414,12 @@ fun start_votes :: "'a list \<Rightarrow> rat list" where
   "start_votes [] = []" |
   "start_votes (x # xs) = 0 # start_votes xs"
 
-
-definition start_tuple :: "nat \<Rightarrow> nat Result" where
-  "start_tuple n = ({}, {}, {1..n})"
-
-definition create_record :: "char list Parties \<Rightarrow> nat \<Rightarrow>
+definition new_record :: "char list Parties \<Rightarrow> nat \<Rightarrow>
                                      rat list \<Rightarrow> (nat, char list) Divisor_Module"
   where
-  "create_record cp cns cd = \<lparr> res = start_tuple cns, p = cp, i = {1..cns}, s = create_empty_seats {1..cns} cp, ns = cns, 
-                                           v = start_votes cp, fv = start_votes cp, d = cd \<rparr>"
+  "new_record cp cns cd = \<lparr> res =  ({}, {}, {1..cns}), p = cp, i = {1..cns}, 
+                               s = create_empty_seats {1..cns} cp, ns = cns, 
+                               v = start_votes cp, fv = start_votes cp, d = cd \<rparr>"
 
 (* - se i partiti è una lista vuota c'è un errore
   - al momento assegna tutti i seat indicati a tutti i partiti. (RISOLTO)
@@ -421,11 +428,11 @@ definition create_record :: "char list Parties \<Rightarrow> nat \<Rightarrow>
   - bisogna fare in modo che si assegni correttamente al partito vincitore (RISOLTO)
   - sto cercando di assegnare il seat al winner (RISOLTO)
 *)
-value "s (create_record parties 3 factors)"
+value "s (new_record parties 3 factors)"
 
-value "full_module (create_record parties 10 factors) profile_list"
+value "full_module (new_record parties 10 factors) pref"
 
-value "s (full_module (create_record parties 10 factors) profile_list) a"
+value "s (full_module (new_record parties 10 factors) pref) x"
 
 value "assign_seat (2::nat) [''a'', ''b''] empty_seats"
 
