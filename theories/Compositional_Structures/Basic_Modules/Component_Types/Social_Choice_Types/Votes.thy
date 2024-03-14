@@ -44,14 +44,14 @@ text  \<open>Every seat is unique and identified and has a set of parties to whi
 type_synonym ('a, 'b) Seats = "'a \<Rightarrow> 'b list"
 type_synonym Params = "nat list"
 
-primrec first_pos :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> nat" where
-"first_pos P [] = 0"
-| "first_pos P (x # xs) = (if P x then 0 else Suc (first_pos P xs))"
+primrec get_index :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> nat" where
+"get_index P [] = 0"
+| "get_index P (x # xs) = (if P x then 0 else Suc (get_index P xs))"
 
-value "first_pos (\<lambda>x. x = ''1'') [''0'', ''0'', ''1'']"
+value "get_index (\<lambda>x. x = ''1'') [''0'', ''0'', ''1'']"
 
 fun get_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> rat list \<Rightarrow> rat" where
-"get_votes party parties votes = votes ! (first_pos(\<lambda>x. x = party) parties)"
+"get_votes party parties votes = votes ! (get_index(\<lambda>x. x = party) parties)"
 
 value "get_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
 
@@ -159,7 +159,7 @@ definition profile_list :: "char list Profile" where
 fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Rightarrow> rat list \<Rightarrow> rat list" where
   "calc_votes [] fixed_parties prof votes = votes" |
   "calc_votes (party # parties) fixed_parties prof votes = 
-      (let ix = first_pos (\<lambda>x. x = party) fixed_parties in
+      (let ix = get_index (\<lambda>x. x = party) fixed_parties in
       calc_votes parties fixed_parties prof (cnt_votes party prof ix votes 0))"
 
 (* this works 09/03/24 *)
@@ -257,18 +257,5 @@ fun count_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow>
                     'a::linorder set => nat" where
   "count_seats p s i = 
     (card {ix. ix \<in> i \<and> s ix = p})"
-
-text \<open> This function updates the "fractional votes" of the winning party, dividing the starting
-       votes by the i-th parameter, where i is the number of seats won by the party. \<close>
-
-(* works adapted *)
-fun update_votes :: "'b \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
-                            'a::linorder set \<Rightarrow> rat list \<Rightarrow> 
-                            rat list \<Rightarrow> rat list \<Rightarrow> rat list" where 
-"update_votes p ps seats i votes fractv factors = 
-    (let index = first_pos(\<lambda>x. x = p) ps;
-     n_seats = count_seats [p] seats i;
-     new_votes = get_votes p ps votes / List.nth factors n_seats in
-     list_update fractv index new_votes)"
 
 end
