@@ -54,15 +54,28 @@ abbreviation disp_r :: "'a Result \<Rightarrow> 'a set" where
 
 subsection \<open> Definition \<close>
 
+
+text \<open> This function updates the "fractional votes" of the winning party, dividing the starting
+       votes by the i-th parameter, where i is the number of seats won by the party. \<close>
+
+(* works adapted *)
+fun update_votes :: "'b \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
+                            'a::linorder set \<Rightarrow> rat list \<Rightarrow> 
+                            rat list \<Rightarrow> rat list \<Rightarrow> rat list" where 
+"update_votes pa ps seats ii votes fractv factors = 
+    (let index = first_pos(\<lambda>x. x = pa) ps;
+     n_seats = count_seats [pa] seats ii;
+     new_votes = get_votes pa ps votes / List.nth factors n_seats in
+     list_update fractv index new_votes)"
+
 text \<open> This function moves one seat from the disputed set to the assigned set. Moreover,
        returns the record with updated Seats function and "fractional" Votes entry 
        for the winning party. \<close>
 
-fun divisor_module :: "('a::linorder, 'b) Divisor_Module \<Rightarrow>
+fun divisor_module :: "'b \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        ('a::linorder, 'b) Divisor_Module" where 
-"divisor_module rec =
+"divisor_module winner rec =
   (let 
-    winner = hd (find_max_votes (fv rec) (p rec));
     seat = Min (disp_r (res rec));
     new_s = update_seat seat [winner] (s rec);
     new_as = ass_r (res rec) \<union> {seat};
@@ -119,7 +132,7 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
 "assign_seats rec = (
       let winners = find_max_votes (fv rec) (p rec) in
       if length winners \<le> (ns rec) then
-         (divisor_module rec\<lparr>p := winners\<rparr>)\<lparr>ns := ns rec - 1\<rparr>
+         (divisor_module (hd winners) rec)\<lparr>ns := ns rec - 1\<rparr>
       else
          rec\<lparr> s := create_seats (disp_r (res rec)) (s rec) (p rec), ns := 0 \<rparr>)"
 
@@ -390,9 +403,10 @@ definition create_record :: "nat Result \<Rightarrow> char list Parties \<Righta
                                      nat set \<Rightarrow> (nat, char list) Seats \<Rightarrow> nat \<Rightarrow> rat list \<Rightarrow>
                                      rat list \<Rightarrow> (nat, char list) Divisor_Module"
   where
-  "create_record cr cp ci cs cns cv cd = \<lparr> res = cr, p = cp, i = ci, s = cs, ns = cns, v = cv, fv = cv, d = cd \<rparr>"
+  "create_record cr cp ci cs cns cv cd = \<lparr> res = cr, p = cp, i = ci, s = cs, ns = cns, 
+                                           v = cv, fv = cv, d = cd \<rparr>"
 
-(* - se i seats assegnati sono vuoti c'è un error 
+(* - se i seats disputati sono vuoti c'è un error 
    - se i voti sono una lista nulla c'è un error 
   - al momento assegna tutti i seat indicati a tutti i partiti. (RISOLTO)
   - ho cambiato in assigning_seats quando chiamo divisor module a p passo i winners (RISOLTO)
@@ -403,9 +417,9 @@ definition create_record :: "nat Result \<Rightarrow> char list Parties \<Righta
 value "s (create_record ({0}, {0}, {1, 2, 3}) parties_list seats_set (create_empty_seats seats_set parties_list) 3 [0, 0, 0] parameters_list)"
 
 value "find_max_votes [2, 3, 2, 3] [''a'', ''b'', ''c'', ''d'']"
-value "full_module (create_record ({0}, {0}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}) parties_list seats_set (create_empty_seats seats_set parties_list) 10 [0, 0, 0, 0] [0, 0, 0, 0] parameters_list) profile_list"
+value "full_module (create_record ({}, {}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}) parties_list seats_set (create_empty_seats seats_set parties_list) 10 [0, 0, 0, 0] parameters_list) profile_list"
 
-value "s (full_module (create_record ({0}, {0}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}) parties_list seats_set (create_empty_seats seats_set parties_list) 10 [0, 0, 0, 0] [0, 0, 0, 0] parameters_list) profile_list)"
+value "s (full_module (create_record ({0}, {0}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}) parties_list seats_set (create_empty_seats seats_set parties_list) 10 [0, 0, 0, 0] parameters_list) profile_list) a"
 
 value "assign_seat (2::nat) [''a'', ''b''] empty_seats"
 end
