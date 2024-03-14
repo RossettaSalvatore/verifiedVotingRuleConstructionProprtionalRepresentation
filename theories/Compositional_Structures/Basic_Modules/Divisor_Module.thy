@@ -119,7 +119,7 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
 "assign_seats rec = (
       let winners = find_max_votes (fv rec) (p rec) in
       if length winners \<le> (ns rec) then
-         (divisor_module rec)\<lparr>ns := ns rec - 1\<rparr>
+         (divisor_module rec\<lparr>p := winners\<rparr>)\<lparr>ns := ns rec - 1\<rparr>
       else
          rec\<lparr> s := create_seats (disp_r (res rec)) (s rec) (p rec), ns := 0 \<rparr>)"
 
@@ -170,7 +170,7 @@ function loop_o ::
   "\<not>(ns r = 0) \<Longrightarrow> loop_o r = loop_o (assign_seats r)"
   by auto
 termination by (relation "measure (\<lambda>r. ns r)")
-               (auto simp add: nseats_decreasing)
+               (auto simp add: Let_def nseats_decreasing)
 lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
   by (cases r) auto
 
