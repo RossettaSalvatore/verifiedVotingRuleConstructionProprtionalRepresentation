@@ -142,7 +142,7 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
 "assign_seats rec = (
       let winners = find_max_votes (fv rec) (p rec) in
       if length winners \<le> ns rec then
-         (divisor_module [hd winners] rec)\<lparr>ns := ns rec - 1\<rparr>
+         (divisor_module [hd winners] rec)\<lparr>ns := (ns rec) - 1\<rparr>
       else
          (break_tie winners rec)\<lparr>ns := 0\<rparr>)"
 
@@ -184,7 +184,8 @@ next
   finally show ?thesis .
 qed
 
-                  
+
+(* termination condition *)
 text \<open>This loop applies the same functions until no more seats are available.\<close>
 function loop_o ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"

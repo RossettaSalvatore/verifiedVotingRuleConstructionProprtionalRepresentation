@@ -76,6 +76,24 @@ value "cnt_votes ''partyB'' [{(''partyA'', ''partyB'')}]
 fun empty_v :: "('b \<Rightarrow> rat)" where
   "empty_v b = 0"
 
+(* lemma from zulip *)
+lemma perm_induct:
+  assumes "P [] []"
+  assumes "\<And>x xs ys. P (x # xs) (x # ys)"
+  assumes "\<And>x y xs ys. P (x # y # xs) (y # x # ys)"
+  assumes "\<And>xs ys zs. P xs ys \<Longrightarrow> P ys zs \<Longrightarrow> P xs zs"
+  shows "mset xs = mset ys \<Longrightarrow> P xs ys"
+proof (induction xs arbitrary: ys)
+  case Nil
+  then show ?case
+    using assms by auto
+next
+  case (Cons x xs)
+  then show ?case
+    using assms
+    by (metis neq_Nil_conv perm_empty2)
+qed
+
 text \<open> This function receives in input the list of parties and the list of preferation 
        relations. The output is the function Votes, in which every party has the 
        correspondent number of votes.  \<close>
@@ -159,8 +177,9 @@ definition profile_list :: "char list Profile" where
 fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Rightarrow> rat list \<Rightarrow> rat list" where
   "calc_votes [] fixed_parties prof votes = votes" |
   "calc_votes (party # parties) fixed_parties prof votes = 
-      (let ix = get_index (\<lambda>x. x = party) fixed_parties in
-      calc_votes parties fixed_parties prof (cnt_votes party prof ix votes 0))"
+      (let ix = get_index(\<lambda>x. x = party) fixed_parties;
+       new_v =  (cnt_votes party prof ix votes 0) in
+      calc_votes parties fixed_parties prof new_v)"
 
 (* this works 09/03/24 *)
 value "calc_votes [''a'', ''b''] [''a'', ''b''] profile_list []"
@@ -172,7 +191,7 @@ lemma calc_votes_permutation:
     p1 :: "'b Parties" and
     p2 ::"'b Parties" and
     profl ::"'b Profile" and
-    votes::"rat list"
+    votes:: "rat list"
   assumes "p1 <~~> p2"
   shows "calc_votes p1 p1 profl votes = calc_votes p2 p2 profl votes"
   using assms
@@ -183,9 +202,9 @@ next
   case (Cons a p1)
   obtain p2' where "p2 <~~> (a # p2')" using assms by (metis Cons.prems)
   then have "(a # p1) <~~> (a # p2')" using assms Cons.prems by auto
-  then have "calc_votes (a # p1) p1 profl votes = 
-             calc_votes p1 p1 profl (cnt_votes a profl [] 0)" using assms by simp
-  then have "\<dots> = 
+  then have "calc_votes (a # p1) (a # p1) profl votes = 
+             calc_votes p1 (a # p1) profl (cnt_votes a profl [] 0)" using assms by simp
+  also have "\<dots> = 
              calc_votes p2' profl (cnt_votes a profl empty_v 0)" using assms
   by (metis Cons.IH Cons.prems \<open>mset p2 = mset (a # p2')\<close> calc_votes.simps(2) cons_perm_imp_perm list.exhaust mset_zero_iff_right)
   then have "... = calc_votes (a # p2') profl votes" using assms by simp
