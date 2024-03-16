@@ -60,8 +60,7 @@ fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
   "generate_list True n = [1..<n]" |
   "generate_list False n = filter (\<lambda>x. x mod 2 = 1) [1..<n]"
 
-text \<open> This function counts votes for one party and add correspondence to Votes function \<close>
-
+text \<open> This function counts votes for one party and add returns the number of votes \<close>
 
 fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> rat \<Rightarrow> rat" where
   "cnt_votes p [] n = n" |
@@ -112,6 +111,12 @@ definition fold_mset :: "('a \<Rightarrow> 'b \<Rightarrow> 'b) \<Rightarrow> 'b
 where
   "fold_mset f s M = Finite_Set.fold (\<lambda>x. f x ^^ count M x) s (set_mset M)"
 *)
+fun update_at_index :: "rat list \<Rightarrow> nat \<Rightarrow> rat \<Rightarrow> rat list" where
+  "update_at_index [] _ _ = []" |
+  "update_at_index (x # xs) 0 n = n # xs" |
+  "update_at_index (x # xs) (Suc i) n = x # update_at_index xs i n"
+
+value "update_at_index [1, 2, 3, 4] 1 5"
 
 definition remove_some :: "'a multiset \<Rightarrow> 'a" where
 "remove_some M = (SOME x. x \<in> set_mset M)"
@@ -173,11 +178,32 @@ definition profile_list :: "char list Profile" where
 "profile_list = [pref_rel_a, pref_rel_b, pref_rel_c, pref_rel_b2, 
                  pref_rel_b3, pref_rel_d, pref_rel_a2]"
 
-fun calc_votes :: "'a list \<Rightarrow> 'a Profile \<Rightarrow> rat list \<Rightarrow> rat list" where
-  "calc_votes [] prof votes = votes" |
-  "calc_votes (party # parties) prof votes = 
-      (let number_of_votes_for_party = cnt_votes party prof 0 in
-      calc_votes parties prof (votes @ [number_of_votes_for_party]))"
+fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Rightarrow> rat list \<Rightarrow> rat list" where
+  "calc_votes [] ps prof votes = votes" |
+  "calc_votes (party # parties) ps prof votes = 
+      (let n = cnt_votes party prof 0;
+       i = get_index(\<lambda>x. x = party) ps;
+       new_v =  update_at_index votes i n in
+      calc_votes parties ps prof new_v)"
+
+lemma simp_votes:
+  fixes
+    parties:: "'b Parties" and
+    profile:: "'b Profile"
+  shows "\<forall> party. party \<in> set parties \<longrightarrow> 
+         calc_votes parties parties profile [] ! get_index(\<lambda>x. x = party) parties =
+         cnt_votes party profile 0"
+  by sledgehammer
+
+lemma votes_perm:
+  fixes
+    parties:: "'b Parties" and
+    parties':: "'b Parties" and
+    profile:: "'b Profile"
+  assumes "mset parties = mset parties'"
+  shows "\<forall> party. party \<in> set parties \<longrightarrow> (calc_votes parties profile []) ! get_index(\<lambda>x. x = party) parties = calc_votes parties' profile [] ! get_index(\<lambda>x. x = party) parties'"
+  by (metis assms perm_set_eq simp_votes) 
+
 
 (* this works 09/03/24 *)
 value "(calc_votes [''a'', ''b''] profile_list [])! (get_index(\<lambda>x. x = ''a'') [''a'', ''b''])"
