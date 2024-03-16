@@ -63,15 +63,14 @@ fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
 text \<open> This function counts votes for one party and add correspondence to Votes function \<close>
 
 
-fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> nat \<Rightarrow> rat list \<Rightarrow> rat \<Rightarrow> rat list" where
-  "cnt_votes p [] index votes n = votes @ [n]" |
-  "cnt_votes p (px # profil) index votes n = 
+fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> rat list \<Rightarrow> rat \<Rightarrow> rat list" where
+  "cnt_votes p [] votes n = votes @ [n]" |
+  "cnt_votes p (px # profil) votes n = 
      (case (count_above px p) of
-        0 \<Rightarrow> cnt_votes p profil index votes (n + 1)
-      | _ \<Rightarrow> cnt_votes p profil index votes n)"
+        0 \<Rightarrow> cnt_votes p profil votes (n + 1)
+      | _ \<Rightarrow> cnt_votes p profil votes n)"
 
-value "cnt_votes ''partyB'' [{(''partyA'', ''partyB'')}]
-         (first_pos (\<lambda>x. x = ''partyB'') [''partyB'', ''partyA'']) [0, 0] 0"
+value "cnt_votes ''partyB'' [{(''partyA'', ''partyB'')}] [0] 0"
 
 fun empty_v :: "('b \<Rightarrow> rat)" where
   "empty_v b = 0"
@@ -186,6 +185,7 @@ value "calc_votes [''a'', ''b''] [''a'', ''b''] profile_list []"
 
 (*prove "p1 <~~> p2 \<Longrightarrow> (calc_votes p1 profl votes = calc_votes p2 profl votes)"
 *)
+
 lemma calc_votes_permutation:
   fixes
     p1 :: "'b Parties" and
@@ -253,16 +253,16 @@ next
   then show ?thesis sorry
 qed
 
-fun find_max_votes :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-  "find_max_votes v p = max_parties (max_val v 0) v p p []"
-
+fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
+  "get_winners v p = max_parties (max_val v 0) v p p []"
+                                                    
 
 lemma find_max_votes_not_empty:
   fixes
   v::"rat list" and
   p::"'b Parties"
   assumes "p \<noteq> []"
-  shows "find_max_votes v p \<noteq> []"
+  shows "get_winners v p \<noteq> []"
   using assms
   sorry
 

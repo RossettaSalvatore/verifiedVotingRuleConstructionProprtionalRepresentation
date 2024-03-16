@@ -140,7 +140,7 @@ text \<open>This function checks whether there are enough seats for all the winn
 fun assign_seats :: "('a::linorder, 'b) Divisor_Module
                         \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
 "assign_seats rec = (
-      let winners = find_max_votes (fv rec) (p rec) in
+      let winners = get_winners (fv rec) (p rec) in
       if length winners \<le> ns rec then
          (divisor_module [hd winners] rec)\<lparr>ns := (ns rec) - 1\<rparr>
       else
