@@ -274,7 +274,7 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
                    ('a::linorder, 'b) Divisor_Module" where
 
 "full_module rec pl = (
-    let sv = calc_votes (p rec) pl [];
+    let sv = calc_votes (p rec) (p rec) pl [];
     empty_seats = create_empty_seats (i rec) (p rec)
     in loop_o (rec\<lparr>
              s := empty_seats,
