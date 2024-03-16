@@ -168,7 +168,7 @@ lemma nseats_decreasing:
   assumes non_empty_parties: "p rec \<noteq> []"
   assumes n_positive: "(ns rec) > 0"
   shows "ns (assign_seats rec) < ns rec"
-proof (cases "length (find_max_votes (fv rec) (p rec)) \<le> ns rec")
+proof (cases "length (get_winners (fv rec) (p rec)) \<le> ns rec")
   case True
   then have "ns (assign_seats rec) = ns rec - 1"
     by (auto simp add: Let_def)
@@ -274,7 +274,7 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
                    ('a::linorder, 'b) Divisor_Module" where
 
 "full_module rec pl = (
-    let sv = calc_votes (p rec) (p rec) pl [];
+    let sv = calc_votes (p rec) pl [];
     empty_seats = create_empty_seats (i rec) (p rec)
     in loop_o (rec\<lparr>
              s := empty_seats,

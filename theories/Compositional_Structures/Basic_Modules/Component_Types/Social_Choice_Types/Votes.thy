@@ -63,14 +63,14 @@ fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
 text \<open> This function counts votes for one party and add correspondence to Votes function \<close>
 
 
-fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> rat list \<Rightarrow> rat \<Rightarrow> rat list" where
-  "cnt_votes p [] votes n = votes @ [n]" |
-  "cnt_votes p (px # profil) votes n = 
+fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> rat \<Rightarrow> rat" where
+  "cnt_votes p [] n = n" |
+  "cnt_votes p (px # profil) n = 
      (case (count_above px p) of
-        0 \<Rightarrow> cnt_votes p profil votes (n + 1)
-      | _ \<Rightarrow> cnt_votes p profil votes n)"
+        0 \<Rightarrow> cnt_votes p profil (n + 1)
+      | _ \<Rightarrow> cnt_votes p profil n)"
 
-value "cnt_votes ''partyB'' [{(''partyA'', ''partyB'')}] [0] 0"
+value "cnt_votes ''partyB'' [{(''partyA'', ''partyB'')}] 0"
 
 fun empty_v :: "('b \<Rightarrow> rat)" where
   "empty_v b = 0"
@@ -173,15 +173,15 @@ definition profile_list :: "char list Profile" where
 "profile_list = [pref_rel_a, pref_rel_b, pref_rel_c, pref_rel_b2, 
                  pref_rel_b3, pref_rel_d, pref_rel_a2]"
 
-fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Rightarrow> rat list \<Rightarrow> rat list" where
-  "calc_votes [] fixed_parties prof votes = votes" |
-  "calc_votes (party # parties) fixed_parties prof votes = 
-      (let ix = get_index(\<lambda>x. x = party) fixed_parties;
-       new_v =  (cnt_votes party prof ix votes 0) in
-      calc_votes parties fixed_parties prof new_v)"
+fun calc_votes :: "'a list \<Rightarrow> 'a Profile \<Rightarrow> rat list \<Rightarrow> rat list" where
+  "calc_votes [] prof votes = votes" |
+  "calc_votes (party # parties) prof votes = 
+      (let number_of_votes_for_party = cnt_votes party prof 0 in
+      calc_votes parties prof (votes @ [number_of_votes_for_party]))"
 
 (* this works 09/03/24 *)
-value "calc_votes [''a'', ''b''] [''a'', ''b''] profile_list []"
+value "(calc_votes [''a'', ''b''] profile_list [])! (get_index(\<lambda>x. x = ''a'') [''a'', ''b''])"
+value "(calc_votes [''b'', ''a''] profile_list [])! (get_index(\<lambda>x. x = ''a'') [''b'', ''a''])"
 
 (*prove "p1 <~~> p2 \<Longrightarrow> (calc_votes p1 profl votes = calc_votes p2 profl votes)"
 *)
