@@ -189,9 +189,11 @@ fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Righ
 lemma simp_votes:
   fixes
     parties:: "'b Parties" and
+    fparties::"'b Parties" and
+    party::"'b" and
     profile:: "'b Profile"
-  shows "\<forall> party. party \<in> set parties \<longrightarrow> 
-         calc_votes parties parties profile [] ! get_index(\<lambda>x. x = party) parties =
+  assumes "party \<in> set parties"
+  shows "calc_votes parties fparties profile [] ! get_index(\<lambda>x. x = party) fparties =
          cnt_votes party profile 0"
   by sledgehammer
 
@@ -239,6 +241,8 @@ next
 qed
 
 
+
+
 text \<open> This function receives in input the function Votes and the list of parties. The 
        output is the list of parties with the maximum number of votes.  \<close>
 
@@ -255,6 +259,17 @@ fun max_parties:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightar
 "max_parties m v fixed_p (px # p) output = 
         max_parties m v fixed_p p (if (get_votes px fixed_p v) = m then (output @ [px])
                                    else output)"
+
+lemma max_parties_perm:
+  fixes
+parties::"'b Parties" and
+parties'::"'b Parties" and
+v::"rat list" and
+v'::"rat list"
+assumes "mset parties = mset parties'"
+assumes "mset v = mset v'"
+shows "max_parties m v parties parties output = max_parties m v' parties' parties' output"
+  using assms
 
 (* works 09/03 *)
 value "max_parties (max_val [7, 4, 7] 0) [7, 4, 7]
@@ -302,5 +317,16 @@ fun count_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow>
                     'a::linorder set => nat" where
   "count_seats p s i = 
     (card {ix. ix \<in> i \<and> s ix = p})"
+
+lemma anonymous_total:
+  fixes
+parties::"'b Parties" and
+parties'::"'b Parties" and
+votes::"rat list" and
+votes'::"rat list"
+assumes "mset parties = mset parties'"
+assumes "mset votes = mset votes'"
+shows "get_winners votes parties = get_winners votes' parties'"
+  by sledgehammer
 
 end
