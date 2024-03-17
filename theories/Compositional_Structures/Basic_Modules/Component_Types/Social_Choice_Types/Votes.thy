@@ -38,20 +38,26 @@ text  \<open>Parties is the list of parties, that can be of any type.
        Votes is a function used to assign a rational number (indeed, the votes) to each party. \<close>
 
 type_synonym 'b Parties = "'b list"
-type_synonym 'b Votes = "'b \<Rightarrow> rat"
-                
+
 text  \<open>Every seat is unique and identified and has a set of parties to which it is assigned.\<close>
 type_synonym ('a, 'b) Seats = "'a \<Rightarrow> 'b list"
+type_synonym 'b Votes = "'b \<Rightarrow> rat"
+
 type_synonym Params = "nat list"
+
 
 primrec get_index :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> nat" where
 "get_index P [] = 0"
 | "get_index P (x # xs) = (if P x then 0 else Suc (get_index P xs))"
 
-value "get_index (\<lambda>x. x = ''1'') [''0'', ''0'', ''1'']"
+primrec get_index_upd :: "'a \<Rightarrow> 'a list \<Rightarrow> nat" where
+"get_index_upd p [] = 0"
+| "get_index_upd p (x # xs) = (if x = p then 0 else Suc (get_index_upd p xs))"
+
+value "get_index_upd ''3'' [''0'', ''2'', ''1'', ''4'', ''3'', ''5'']"
 
 fun get_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> rat list \<Rightarrow> rat" where
-"get_votes party parties votes = votes ! (get_index(\<lambda>x. x = party) parties)"
+"get_votes party parties votes = votes ! (get_index_upd party parties)"
 
 value "get_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
 
@@ -69,7 +75,17 @@ fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> rat \<Rightarrow> ra
         0 \<Rightarrow> cnt_votes p profil (n + 1)
       | _ \<Rightarrow> cnt_votes p profil n)"
 
-value "cnt_votes ''partyB'' [{(''partyA'', ''partyB'')}] 0"
+lemma cnt_votes_perm_parties:
+  fixes
+    p::"'b" and
+    parties::"'b Parties" and
+    parties'::"'b Parties" and
+    profile:: "'b Profile"
+  assumes "mset parties = mset parties'" 
+  shows "cnt_votes p profile 0 = cnt_votes p profile 0"
+  sorry
+
+value "cnt_votes ''partyA'' [{(''partyA'', ''partyB'')}] 0"
 
 fun empty_v :: "('b \<Rightarrow> rat)" where
   "empty_v b = 0"
@@ -110,13 +126,27 @@ definition fold :: "('a \<Rightarrow> 'b \<Rightarrow> 'b) \<Rightarrow> 'b \<Ri
 definition fold_mset :: "('a \<Rightarrow> 'b \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a multiset \<Rightarrow> 'b"
 where
   "fold_mset f s M = Finite_Set.fold (\<lambda>x. f x ^^ count M x) s (set_mset M)"
+
 *)
+
+(* non cambia aggiustare, non funziona perché controlla sempre il primo indice *)
 fun update_at_index :: "rat list \<Rightarrow> nat \<Rightarrow> rat \<Rightarrow> rat list" where
   "update_at_index [] _ _ = []" |
-  "update_at_index (x # xs) 0 n = n # xs" |
-  "update_at_index (x # xs) (Suc i) n = x # update_at_index xs i n"
+  "update_at_index (x # xs) i n = (if i = 0 then n # xs else x # update_at_index xs (i - 1) n)"
 
-value "update_at_index [] 1 5"
+lemma upd_lemma_helper:
+  fixes 
+  votes::"rat list" and
+  i::"nat" and
+  n::"rat" and
+  p::"'b" and
+  ps::"'b Parties"
+assumes "n > 0"
+assumes "p \<in> set ps"
+shows "(update_at_index2 p ps votes n) ! get_index_upd p ps = n"
+  sorry
+
+value "update_at_index [2, 2, 2] 1 5"
 
 definition remove_some :: "'a multiset \<Rightarrow> 'a" where
 "remove_some M = (SOME x. x \<in> set_mset M)"
@@ -171,28 +201,30 @@ definition pref_rel_a2 :: "char list Preference_Relation" where
 
 (* Define the profile *)
 definition profile_list :: "char list Profile" where
-"profile_list = [pref_rel_a, pref_rel_b, pref_rel_c, pref_rel_b2, 
-                 pref_rel_b3, pref_rel_d, pref_rel_a2]"
+"profile_list = [pref_rel_a, pref_rel_b, pref_rel_c, pref_rel_b, 
+                 pref_rel_b, pref_rel_d, pref_rel_a]"
 
 (* update_at_index added here bring error in full_module *)
 fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Rightarrow> rat list \<Rightarrow> rat list" where
   "calc_votes [] ps prof votes = votes" |
   "calc_votes (party # parties) ps prof votes = 
       (let n = cnt_votes party prof 0;
-       i = get_index(\<lambda>x. x = party) ps;
-       new_v = update_at_index votes i n in
-      calc_votes parties ps prof (votes @ [n]))"
+       i = get_index_upd party ps in
+      calc_votes parties ps prof (update_at_index votes i n))"
 
 lemma simp_votes:
   fixes
     parties:: "'b Parties" and
     fparties::"'b Parties" and
     party::"'b" and
-    profile:: "'b Profile"
+    profile:: "'b Profile" and
+    votes::"rat list"
   assumes "party \<in> set parties"
-  shows "calc_votes parties fparties profile [] ! get_index(\<lambda>x. x = party) fparties =
+  assumes "parties = fparties"
+  assumes "votes ! get_index_upd party fparties = cnt_votes party profile 0"
+  shows "calc_votes parties fparties profile votes ! get_index_upd party fparties =
          cnt_votes party profile 0"
-  sorry
+sorry
 
 lemma votes_perm:
   fixes
@@ -201,17 +233,18 @@ lemma votes_perm:
     profile:: "'b Profile"
   assumes "mset parties = mset parties'"
   shows "\<forall> party. party \<in> set parties \<longrightarrow> (calc_votes parties parties profile []) !
-                                            get_index(\<lambda>x. x = party) parties
- = calc_votes parties' parties' profile [] ! get_index(\<lambda>x. x = party) parties'"
-  by (metis assms perm_set_eq simp_votes) 
+                                            get_index_upd party parties
+ = calc_votes parties' parties' profile [] ! get_index_upd party parties'"
+  sorry
 
 (* this works 09/03/24 *)
-value "(calc_votes [''a'', ''b''] profile_list [])! (get_index(\<lambda>x. x = ''a'') [''a'', ''b''])"
-value "(calc_votes [''b'', ''a''] profile_list [])! (get_index(\<lambda>x. x = ''a'') [''b'', ''a''])"
+value "(calc_votes [''a'', ''b''] [''a'', ''b''] profile_list [0, 0])! (get_index_upd ''a'' [''a'', ''b''])"
+value "(calc_votes [''b'', ''a''] [''a'', ''b''] profile_list [0, 0])! (get_index_upd ''a'' [''b'', ''a''])"
 
 (*prove "p1 <~~> p2 \<Longrightarrow> (calc_votes p1 profl votes = calc_votes p2 profl votes)"
 *)
 
+(*
 lemma calc_votes_permutation:
   fixes
     p1 :: "'b Parties" and
@@ -229,17 +262,15 @@ next
   obtain p2' where "p2 <~~> (a # p2')" using assms by (metis Cons.prems)
   then have "(a # p1) <~~> (a # p2')" using assms Cons.prems by auto
   then have "calc_votes (a # p1) (a # p1) profl votes = 
-             calc_votes p1 (a # p1) profl (cnt_votes a profl [] 0)" using assms by simp
+             calc_votes p1 (a # p1) profl  (votes @ [cnt_votes a profl 0])" using assms by simp
   also have "\<dots> = 
-             calc_votes p2' profl (cnt_votes a profl empty_v 0)" using assms
+             calc_votes p2' (a # p2') profl  (votes @ [cnt_votes a profl 0])" using assms
   by (metis Cons.IH Cons.prems \<open>mset p2 = mset (a # p2')\<close> calc_votes.simps(2) cons_perm_imp_perm list.exhaust mset_zero_iff_right)
   then have "... = calc_votes (a # p2') profl votes" using assms by simp
   then have "... = calc_votes p2 profl votes" by simp
   then show ?case by simp
 qed
-
-
-
+*)
 
 text \<open> This function receives in input the function Votes and the list of parties. The 
        output is the list of parties with the maximum number of votes.  \<close>
@@ -251,13 +282,16 @@ fun max_val:: "rat list \<Rightarrow> rat \<Rightarrow> rat" where
 
 value "max_val [1, 4, 2] 0"
 
+value "max_val [4, 2, 1] 0" 
+
 fun max_parties:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-"max_parties m v fixed_p [] output = output" | 
-"max_parties m v fixed_p (px # p) output = 
-        max_parties m v fixed_p p (if (get_votes px fixed_p v) = m then (output @ [px])
+"max_parties m v fp [] output = output" | 
+"max_parties m v fp (px # p) output = 
+        max_parties m v fp p (if v ! (get_index_upd px fp) = m then (output @ [px])
                                    else output)"
 
+(*
 lemma max_parties_perm:
   fixes
 parties::"'b Parties" and
@@ -268,15 +302,18 @@ assumes "mset parties = mset parties'"
 assumes "length parties = length v"
 assumes "mset v = mset v'"
 shows "max_parties m v parties parties output = max_parties m v' parties' parties' output"
-  using assms
+  sorry
+*)
 
 (* works 09/03 *)
-value "max_parties (max_val [7, 4, 7] 0) [7, 4, 7]
-                     [''partyA'', ''partyB'', ''partyC''] 
-                     [''partyA'', ''partyB'', ''partyC'']
+value "max_parties   7 [7, 4, 5] 
+                     [''a'', ''b'', ''c''] 
+                     [''a'', ''b'', ''c'']
                      []"
 
-lemma max_parties_not_empty:
+value "cnt_votes ''a'' profile_list 0"
+
+(*lemma max_parties_not_empty:
   fixes
   m::"rat" and
   mvp::"'b Parties" and
@@ -284,17 +321,16 @@ lemma max_parties_not_empty:
   p::"'b Parties"
   assumes "p \<noteq> []"
   shows "max_parties m v p mvp \<noteq> []"
-  using assms
 proof (cases)
   case True
   then show ?thesis sorry
 next
   case False
   then show ?thesis sorry
-qed
+qed*)
 
-fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-  "get_winners v p = max_parties (max_val v 0) v p p []"
+fun get_winners :: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
+  "get_winners m v p = max_parties m v p p []"
                                                     
 
 lemma find_max_votes_not_empty:
@@ -329,48 +365,21 @@ shows "get_winners votes parties = get_winners votes' parties'"
   sorry
 
 
-(* ----------- Prova anonimita con votes function -------------- *)
-fun calc_votes_VARIANT :: "'a list \<Rightarrow> 'a Profile \<Rightarrow> 'a Votes \<Rightarrow> 'a Votes" where
-  "calc_votes_VARIANT [] prof votes = votes" |
-  "calc_votes_VARIANT (party # parties) prof votes = 
-      (let n = cnt_votes party prof 0 in
-      calc_votes_VARIANT parties prof (votes(party := n)))"
+(* ----------- Prova anonimita con votes function dovrebbe funzionare -------------- *)
 
 
-fun max_val_VARIANT:: "'b Votes \<Rightarrow> 'b Parties \<Rightarrow> rat \<Rightarrow> rat" where 
-"max_val_VARIANT v [] m = m" | 
-"max_val_VARIANT v (px # p) m = max_val_VARIANT v p (if v px > m then v px else m)"
+(* posso provre ad usare questa funzione per provare che le entry nei voti sono uguali 
+anche se l'ordine dei partiti è diverso dal momento che per lo stesso party ottengo che
+il numero di voti è dato da questa funzione? *)
+(* fun svotes:: "'a Votes" where "svotes s = s" *)
 
 
-fun max_parties_VARIANT:: "rat \<Rightarrow> 'b Votes \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties
-                     \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-"max_parties_VARIANT m v fixed_p [] output = output" | 
-"max_parties_VARIANT m v fixed_p (px # p) output = 
-        max_parties_VARIANT m v fixed_p p (if v px = m then (output @ [px])
-                                   else output)"
+fun f :: "nat \<Rightarrow> nat" where
+"f x = x + 1"
 
-lemma votes_equal:
-  fixes
-  prof::"'b Profile" and
-  parties::"'b Parties" and
-  parties'::"'b Parties"
-assumes "parties = parties'"
-  shows "(calc_votes_VARIANT parties prof votes)
-                                 =  (calc_votes_VARIANT parties' prof votes)"
-  using assms
-  by simp
+(* use cnt_votes function which is like party \<Rightarrow> party profile 0) *)
 
-lemma max_parties_perm_VARIANT:
-  fixes
-  parties::"'b Parties" and
-  parties'::"'b Parties" and
-  votes::"'b Votes" and
-  votes'::"'b Votes"
-assumes "mset parties = mset parties'"
-assumes "votes = votes'" 
-shows "max_parties_VARIANT m (calc_votes_VARIANT parties prof votes)
-         parties parties =
-       max_parties_VARIANT m (calc_votes_VARIANT parties' prof votes')
-         parties' parties'"
-
+(* Define a list of functions *)
+definition function_list :: "(nat \<Rightarrow> nat) list" where
+  "function_list = [f, f, f]"
 end

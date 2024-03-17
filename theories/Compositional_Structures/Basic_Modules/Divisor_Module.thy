@@ -31,6 +31,7 @@ begin
 text \<open> This record contains the list of parameters used in the whole divisor module.  \<close>
 record ('a::linorder, 'b) Divisor_Module =
   res :: "'a::linorder Result"
+  pro::"'b Profile"
   p :: "'b Parties"
   i :: "'a::linorder set"
   s :: "('a::linorder, 'b) Seats"
@@ -140,7 +141,7 @@ text \<open>This function checks whether there are enough seats for all the winn
 fun assign_seats :: "('a::linorder, 'b) Divisor_Module
                         \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
 "assign_seats rec = (
-      let winners = get_winners (fv rec) (p rec) in
+      let winners = get_winners (pro rec) (p rec) in
       if length winners \<le> ns rec then
          (divisor_module [hd winners] rec)\<lparr>ns := (ns rec) - 1\<rparr>
       else
@@ -274,7 +275,7 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
                    ('a::linorder, 'b) Divisor_Module" where
 
 "full_module rec pl = (
-    let sv = calc_votes (p rec) (p rec) pl [];
+    let sv = calc_votes (p rec) (p rec) pl [0, 0, 0, 0, 0];
     empty_seats = create_empty_seats (i rec) (p rec)
     in loop_o (rec\<lparr>
              s := empty_seats,
@@ -415,10 +416,10 @@ fun start_votes :: "'a list \<Rightarrow> rat list" where
   "start_votes [] = []" |
   "start_votes (x # xs) = 0 # start_votes xs"
 
-definition new_record :: "char list Parties \<Rightarrow> nat \<Rightarrow>
+definition new_record :: "char list Parties \<Rightarrow> char list Profile \<Rightarrow> nat \<Rightarrow>
                                      rat list \<Rightarrow> (nat, char list) Divisor_Module"
   where
-  "new_record cp cns cd = \<lparr> res =  ({}, {}, {1..cns}), p = cp, i = {1..cns}, 
+  "new_record cp cpro cns cd = \<lparr> res =  ({}, {}, {1..cns}), pro = cpro, p = cp, i = {1..cns}, 
                                s = create_empty_seats {1..cns} cp, ns = cns, 
                                v = start_votes cp, fv = start_votes cp, d = cd \<rparr>"
 
