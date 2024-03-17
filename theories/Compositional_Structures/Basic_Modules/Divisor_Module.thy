@@ -37,7 +37,7 @@ record ('a::linorder, 'b) Divisor_Module =
   ns :: nat
   v :: "rat list"
   fv :: "rat list"
-  d :: "rat list"
+  d :: "nat list"
 
 locale typesl = 
   fixes dm :: "('a::linorder, 'b) Divisor_Module"
@@ -64,7 +64,15 @@ fun update_votes2 ::  "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \
 "update_votes2 winner r = 
     (let index = get_index(\<lambda>x. x = (hd winner)) (p r);
      n_seats = count_seats winner (s r) (i r);
-     new_v = get_votes (hd winner) (p r) (v r) / (d r ! n_seats) in
+     new_v = get_votes (hd winner) (p r) (v r) / of_int(d r ! n_seats) in
+     list_update (fv r) index new_v)"
+
+fun update_votes22 ::  "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow> nat \<Rightarrow>
+                       rat list" where 
+"update_votes22 winner r n = 
+    (let index = get_index(\<lambda>x. x = (hd winner)) (p r);
+     n_seats = count_seats winner (s r) (i r);
+     new_v = get_votes (hd winner) (p r) (v r) / of_int n in
      list_update (fv r) index new_v)"
 
 text \<open> This function moves one seat from the disputed set to the assigned set. Moreover,
@@ -277,6 +285,17 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
              fv := sv
             \<rparr>))"
 
+(* ns è un numero naturale *)
+(* i divisor sono numeri interi *)
+fun dhondt :: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<Rightarrow>
+                   ('a::linorder, 'b) Divisor_Module" where
+"dhondt rec pr = full_module (rec\<lparr>d := upt 1 (ns rec)\<rparr>) pr"
+
+fun saintelague:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<Rightarrow>
+                   ('a::linorder, 'b) Divisor_Module" where
+"saintelague rec pr = full_module (rec\<lparr>d := (filter (\<lambda>x. x mod 2 = 1)
+ (upt 1 ( 2 * (ns rec))))\<rparr>) pr"
+
 (* Define a set *)
 definition my_set :: "nat set" where
   "my_set = {1, 2, 3, 4, 5}"
@@ -400,7 +419,7 @@ definition parties :: "char list list" where
 definition parties_list_perm :: "char list list" where
 "parties_list_perm = [''b'', ''d'', ''c'', ''a'']"
 
-definition factors :: "rat list" where
+definition factors :: "nat list" where
 "factors = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]"
 
 definition seats_set :: "nat set" where
@@ -410,12 +429,11 @@ fun start_votes :: "'a list \<Rightarrow> rat list" where
   "start_votes [] = []" |
   "start_votes (x # xs) = 0 # start_votes xs"
 
-definition new_record :: "char list Parties \<Rightarrow> nat \<Rightarrow>
-                                     rat list \<Rightarrow> (nat, char list) Divisor_Module"
+definition new_record :: "char list Parties \<Rightarrow> nat \<Rightarrow> (nat, char list) Divisor_Module"
   where
-  "new_record cp cns cd = \<lparr> res =  ({}, {}, {1..cns}), p = cp, i = {1..cns}, 
+  "new_record cp cns = \<lparr> res =  ({}, {}, {1..cns}), p = cp, i = {1..cns}, 
                                s = create_empty_seats {1..cns} cp, ns = cns, 
-                               v = start_votes cp, fv = start_votes cp, d = cd \<rparr>"
+                               v = start_votes cp, fv = start_votes cp, d = [] \<rparr>"
 
 (* - se i partiti è una lista vuota c'è un errore
   - al momento assegna tutti i seat indicati a tutti i partiti. (RISOLTO)
@@ -424,12 +442,8 @@ definition new_record :: "char list Parties \<Rightarrow> nat \<Rightarrow>
   - bisogna fare in modo che si assegni correttamente al partito vincitore (RISOLTO)
   - sto cercando di assegnare il seat al winner (RISOLTO)
 *)
-value "s (new_record parties 3 factors)"
 
-value "full_module (new_record parties 10 factors) pref"
+value "dhondt (new_record parties 10) pref"
 
-value "s (full_module (new_record parties 10 factors) pref) x"
-
-value "assign_seat (2::nat) [''a'', ''b''] empty_seats"
-
+value "saintelague (new_record parties 10) pref"
 end
