@@ -154,6 +154,22 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
       else
          (break_tie winners rec)\<lparr>ns := 0\<rparr>)"
 
+lemma assign_seats_major:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  party1::"'b" and
+  party2::"'b" and
+  parties::"'b list" and
+  votes::"rat list" and
+  votes1::"rat" and
+  votes2::"rat" and
+  i::"'a::linorder set"
+assumes "votes1 > votes2"
+assumes "\<not>(i = {})"
+assumes "count_seats [party1] (s rec) i = count_seats [party2] (s rec) i"
+assumes "votes1 = get_votes party1 parties votes"
+assumes "votes2 = get_votes party2 parties votes"
+shows "count_seats [party1] (s (assign_seats rec)) i \<ge> count_seats [party2] (s (assign_seats rec)) i"
 (*
 fun a_seat :: "my_rec \<Rightarrow> my_rec" where
 "a_seat r =
@@ -206,27 +222,6 @@ termination by (relation "measure (\<lambda>r. ns r)")
 lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
   by (cases r) auto
 
-(*
-record rec_ex =
-  x :: nat
-  b :: "char list list"
-
-fun f2_ex :: "nat \<Rightarrow> char list list" where "f2_ex n = [''c'']"
-
-fun f_ex :: "rec_ex \<Rightarrow> rec_ex" where "f_ex r = r\<lparr>x := (x r) - 1, b := f2_ex 1\<rparr>"
-
-function loop_ex ::
- "rec_ex \<Rightarrow> rec_ex"
- where  
-  "x r = 0  \<Longrightarrow>loop_ex r = r" |
-  "\<not>(x r = 0) \<Longrightarrow> loop_ex r = loop_ex (f_ex r)"
-  by auto
-termination by (relation "measure (\<lambda>r. x r)")
-               (auto)
-lemma [code]: \<open>loop_ex r = (if x r = 0 then r else loop_ex (f_ex r))\<close>
-  by (cases r) auto
-
-*)
 
 (* termination loop_outer
 proof (relation "measure (ns :: ('a::linorder, 'b) Divisor_Module \<Rightarrow> nat)")
@@ -339,21 +334,25 @@ theorem votes_anonymous:
   qed
 qed*)
 
-(* to prove *)
-theorem full_module_anonymity:
-  assumes "finite indexes"
-  shows "\<forall>profile_l dm dm_perm.
-           (p dm) <~~> (p dm_perm) \<longrightarrow>
-           full_module dm profile_l =
-           full_module dm_perm profile_l"
-  sorry
-
 (* Define the concordant property *)
 definition concordant :: "(('a, 'b) Divisor_Module \<Rightarrow> ('a, 'b) Divisor_Module) \<Rightarrow>
                            ('a::linorder, 'b) Divisor_Module \<Rightarrow> bool" where
   "concordant D dm = (\<forall>party1 party2 i.
     get_votes party1 (p dm) (v dm) > get_votes party2 (p dm) (v dm) \<longrightarrow>
     count_seats [party1] (s (D dm)) (i dm) \<ge> count_seats [party2] (s (D dm)) (i dm))"
+
+theorem full_module_concordant:
+  fixes
+    rec:: "('a::linorder, 'b) Divisor_Module" and
+    pl::"'b Profile" and 
+    indexes::"'a::linorder set" and
+    se::"('a::linorder, 'b) Seats" and
+    party::"'b" and
+    fparties::"'b Parties" 
+  assumes "se = (s (full_module rec pl))"
+  assumes "votes ! get_index_upd party fparties = cnt_votes party pl 0"
+  shows "cnt_votes p1 pl 0 > cnt_votes p2 pl 0 ==> 
+          count_seats [p1] se indexes \<ge> count_seats [p2] se indexes"
 
 value "get_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
 (*

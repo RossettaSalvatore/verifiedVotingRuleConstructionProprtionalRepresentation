@@ -129,21 +129,30 @@ where
 
 *)
 
-(* non cambia aggiustare, non funziona perché controlla sempre il primo indice *)
+(* funziona  *)
 fun update_at_index :: "rat list \<Rightarrow> nat \<Rightarrow> rat \<Rightarrow> rat list" where
   "update_at_index [] _ _ = []" |
   "update_at_index (x # xs) i n = (if i = 0 then n # xs else x # update_at_index xs (i - 1) n)"
 
+lemma update_at_index:
+  fixes
+  xs::"rat list" and
+  i::"nat" and
+  n::"rat"
+  shows "(update_at_index xs i n) ! i = n"
+
+value "list_update [''a'', ''b'', ''d''] 2 ''c''"
+ 
 lemma upd_lemma_helper:
   fixes 
-  votes::"rat list" and
+  v::"rat list" and
   i::"nat" and
   n::"rat" and
   p::"'b" and
   ps::"'b Parties"
 assumes "n > 0"
 assumes "p \<in> set ps"
-shows "(update_at_index2 p ps votes n) ! get_index_upd p ps = n"
+shows "(update_at_index p ps v n) ! get_index_upd p ps = n"
   sorry
 
 value "update_at_index [2, 2, 2] 1 5"
@@ -356,6 +365,28 @@ fun count_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow>
                     'a::linorder set => nat" where
   "count_seats p s i = 
     (card {ix. ix \<in> i \<and> s ix = p})"
+
+
+(* 
+fun max_parties:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties
+                     \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
+"max_parties m v fp [] output = output" | 
+"max_parties m v fp (px # p) output = 
+        max_parties m v fp p (if v ! (get_index_upd px fp) = m then (output @ [px])
+                                   else output)"
+*)
+lemma max_parties_concordant:
+  fixes
+    m:: "rat" and votes1::"rat" and votes2::"rat" and s::"('a::linorder, 'b) Seats" and v:: "rat list" and fp:: "'b Parties" and
+    p::"'b Parties" and party1::"'b" and party2::"'b" and px:: "'b" and prof::"'b list Profile" and i::"'a::linorder set"
+  assumes "fp = p"
+  assumes "ns1 = ns2"
+  assumes "votes1 = cnt_votes fp prof 0 / ns1"
+  assumes "votes2 = cnt_votes fp prof 0 / ns2"
+  assumes "votes1 > votes2"
+  assumes "(v ! (get_index_upd party1 fp)) = votes1"
+  assumes "(v ! (get_index_upd party2 fp)) = votes2"
+  shows "party1 \<in> set output \<longrightarrow> party2 \<in> set output"
 
 lemma anonymous_total:
   fixes
