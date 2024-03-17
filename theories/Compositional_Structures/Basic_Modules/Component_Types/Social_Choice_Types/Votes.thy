@@ -284,6 +284,9 @@ value "max_val [1, 4, 2] 0"
 
 value "max_val [4, 2, 1] 0" 
 
+fun max_val_wrap:: "rat list \<Rightarrow> rat" where 
+"max_val_wrap v = max_val v 0"
+
 fun max_parties:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
 "max_parties m v fp [] output = output" | 
@@ -329,8 +332,9 @@ next
   then show ?thesis sorry
 qed*)
 
-fun get_winners :: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-  "get_winners m v p = max_parties m v p p []"
+fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
+  "get_winners v p = 
+    (let m = max_val_wrap v in max_parties m v p p [])"
                                                     
 
 lemma find_max_votes_not_empty:
