@@ -134,26 +134,29 @@ fun update_at_index :: "rat list \<Rightarrow> nat \<Rightarrow> rat \<Rightarro
   "update_at_index [] _ _ = []" |
   "update_at_index (x # xs) i n = (if i = 0 then n # xs else x # update_at_index xs (i - 1) n)"
 
-lemma update_at_index:
+fun update_at_index_nat :: "nat list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat list" where
+  "update_at_index_nat [] _ _ = []" |
+  "update_at_index_nat (x # xs) i n = (if i = 0 then n # xs else x # update_at_index_nat xs (i - 1) n)"
+
+lemma update_at_index_lemma:
   fixes
   xs::"rat list" and
   i::"nat" and
   n::"rat"
+assumes "(update_at_index xs i n) ! i = n" 
   shows "(update_at_index xs i n) ! i = n"
+  using assms by simp
 
-value "list_update [''a'', ''b'', ''d''] 2 ''c''"
- 
-lemma upd_lemma_helper:
-  fixes 
-  v::"rat list" and
+
+lemma update_at_index_nat_lemma:
+  fixes
+  xs::"nat list" and
   i::"nat" and
-  n::"rat" and
-  p::"'b" and
-  ps::"'b Parties"
-assumes "n > 0"
-assumes "p \<in> set ps"
-shows "(update_at_index p ps v n) ! get_index_upd p ps = n"
-  sorry
+  n::"nat"
+  shows "(update_at_index_nat xs i n) ! i = n"
+sorry
+
+  value "list_update [''a'', ''b'', ''d''] 2 ''c''"
 
 value "update_at_index [2, 2, 2] 1 5"
 
@@ -233,7 +236,7 @@ lemma simp_votes:
   assumes "votes ! get_index_upd party fparties = cnt_votes party profile 0"
   shows "calc_votes parties fparties profile votes ! get_index_upd party fparties =
          cnt_votes party profile 0"
-sorry
+  by sledgehammer
 
 lemma votes_perm:
   fixes

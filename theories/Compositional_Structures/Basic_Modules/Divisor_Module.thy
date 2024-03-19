@@ -37,6 +37,7 @@ record ('a::linorder, 'b) Divisor_Module =
   ns :: nat
   v :: "rat list"
   fv :: "rat list"
+  sl :: "nat list" 
   d :: "nat list"
 
 locale typesl = 
@@ -87,11 +88,48 @@ fun divisor_module :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \
     new_s = update_seat seat winner (s rec);
     new_as = ass_r (res rec) \<union> {seat};
     new_fv = update_votes2 winner (rec\<lparr>s:= new_s\<rparr>);
+    index =  get_index_upd (hd winner) (p rec);
+    curr_ns = (sl rec) ! index;
+    new_sl = update_at_index_nat (sl rec) index ( (sl rec) ! index + 1);
     new_di =  disp_r (res rec) - {seat}
-     in rec\<lparr> res := (new_as, {}, new_di),
-             s := new_s,
-             fv := new_fv
+     in \<lparr>res = (new_as, {}, new_di),
+             p = (p rec),
+             i = (i rec),
+             s = new_s,
+             ns = (ns rec),
+             v = (v rec),
+             fv = new_fv,
+             sl = new_sl,
+             d = (d rec)
             \<rparr>)"
+
+
+(* should work *)
+lemma divisor_module_increase_seats:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  winner::"'b list" and 
+  index::"nat" and
+  ix::"nat" and
+  slp::"nat list" and
+  curr_ns::"nat" and
+  new_as::"'a::linorder set" and
+  new_di::"'a::linorder set" and
+  new_s::"('a::linorder, 'b) Seats" and
+  new_fv::"rat list" and
+  new_sl::"nat list"
+assumes i_def: "let index = get_index_upd (hd winner) (p rec) in True"
+assumes "sl (divisor_module winner rec) = update_at_index_nat (sl rec) index ((sl rec) ! index + 1)"
+assumes curr_def: "let curr_ns = (sl rec) ! index in True"
+shows "(sl (divisor_module winner rec)) ! index =
+       (sl rec) ! index + 1"
+proof -
+  have "sl (divisor_module winner rec) ! index = 
+        update_at_index_nat (sl rec) index ((sl rec) ! index + 1) ! index" using assms by simp
+  then have "... = ((sl rec) ! index + 1)" using update_at_index_nat_lemma by simp
+  then show ?thesis
+  using \<open>sl (divisor_module winner rec) ! index = update_at_index_nat (sl rec) index (sl rec ! index + 1) ! index\<close> by auto
+qed
 
 fun break_tie :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        ('a::linorder, 'b) Divisor_Module" where 
@@ -170,6 +208,7 @@ assumes "count_seats [party1] (s rec) i = count_seats [party2] (s rec) i"
 assumes "votes1 = get_votes party1 parties votes"
 assumes "votes2 = get_votes party2 parties votes"
 shows "count_seats [party1] (s (assign_seats rec)) i \<ge> count_seats [party2] (s (assign_seats rec)) i"
+  sorry
 (*
 fun a_seat :: "my_rec \<Rightarrow> my_rec" where
 "a_seat r =
@@ -428,11 +467,16 @@ fun start_votes :: "'a list \<Rightarrow> rat list" where
   "start_votes [] = []" |
   "start_votes (x # xs) = 0 # start_votes xs"
 
+fun start_seats_list :: "'a list \<Rightarrow> nat list" where
+  "start_seats_list [] = []" |
+  "start_seats_list (x # xs) = 0 # start_seats_list xs"
+
 definition new_record :: "char list Parties \<Rightarrow> nat \<Rightarrow> (nat, char list) Divisor_Module"
   where
   "new_record cp cns = \<lparr> res =  ({}, {}, {1..cns}), p = cp, i = {1..cns}, 
                                s = create_empty_seats {1..cns} cp, ns = cns, 
-                               v = start_votes cp, fv = start_votes cp, d = [] \<rparr>"
+                               v = start_votes cp, fv = start_votes cp,
+                               sl = start_seats_list cp, d = [] \<rparr>"
 
 (* - se i partiti è una lista vuota c'è un errore
   - al momento assegna tutti i seat indicati a tutti i partiti. (RISOLTO)
