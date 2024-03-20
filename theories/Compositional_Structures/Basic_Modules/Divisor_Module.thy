@@ -147,16 +147,7 @@ qed
 lemma divisor_module_increase_seats:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
-  winner::"'b list" and 
-  index::"nat" and
-  ix::"nat" and
-  slp::"nat list" and
-  curr_ns::"nat" and
-  new_as::"'a::linorder set" and
-  new_di::"'a::linorder set" and
-  new_s::"('a::linorder, 'b) Seats" and
-  new_fv::"rat list" and
-  new_sl::"nat list"
+  winner::"'b list"
 assumes i_def: "index = get_index_upd (hd winner) (p rec)"
 shows "(sl (divisor_module winner rec)) ! index =
        (sl rec) ! index + 1"
