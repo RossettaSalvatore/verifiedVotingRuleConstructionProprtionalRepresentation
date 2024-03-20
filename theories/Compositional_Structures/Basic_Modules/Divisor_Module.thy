@@ -157,12 +157,13 @@ lemma divisor_module_increase_seats:
   new_s::"('a::linorder, 'b) Seats" and
   new_fv::"rat list" and
   new_sl::"nat list"
-assumes i_def: "let index = get_index_upd (hd winner) (p rec) in True"
-assumes "sl (divisor_module winner rec) = update_at_index_nat (sl rec) index ((sl rec) ! index + 1)"
+assumes i_def: "index = get_index_upd (hd winner) (p rec)"
 shows "(sl (divisor_module winner rec)) ! index =
        (sl rec) ! index + 1"
 proof -
-  have "sl (divisor_module winner rec) ! index = 
+  have "sl (divisor_module winner rec) =  update_at_index_nat (sl rec) index ((sl rec) ! index + 1)" 
+    using divisor_module_sl_update assms by blast
+  then have "sl (divisor_module winner rec) ! index = 
         update_at_index_nat (sl rec) index ((sl rec) ! index + 1) ! index" using assms by simp
   then have "... = ((sl rec) ! index + 1)" using update_at_index_nat_lemma by simp
   then show ?thesis
