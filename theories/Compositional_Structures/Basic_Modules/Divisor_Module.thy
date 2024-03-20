@@ -252,22 +252,9 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
                          d = (d rec'')
                         \<rparr>)"
 
-(* write proof that under assumption that length winners < ns rec
-   the winner (the head of winners) gets its seats increased,
-   while the other parties will have the same number of seats
-*)
-
-(* are assumptions enough? check 
-   pretty sure i should change assign seat not to have (ns := ns - 1).
-   posso mettere divisor_module in un rec' e poi creare alla fine 
-   \<lparr> \<rparr> passando tutti i parametri da rec' e per ns metto ns = ns rec' - 1 
-*)
-(* va aggiustato *)
 lemma assign_seats_update:
   fixes
-  rec::"('a::linorder, 'b) Divisor_Module" and
-  rec'::"('a::linorder, 'b) Divisor_Module" and
-  winners::"'b list"
+  rec::"('a::linorder, 'b) Divisor_Module"
   defines winners_def: "winners \<equiv> get_winners (fv rec) (p rec)"
   defines rec'_def: "rec' \<equiv> divisor_module [hd winners] rec"
   assumes "length winners \<le> ns rec"
@@ -286,9 +273,6 @@ lemma assign_seats_seats_increased:
    fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
   rec'::"('a::linorder, 'b) Divisor_Module" and
-  party::"'b" and
-  winners::"'b list" and
-  votes::"rat list" and
   index::"nat"
 defines "winners \<equiv> get_winners (fv rec) (p rec)" 
 defines "party \<equiv> hd winners"
@@ -338,40 +322,22 @@ proof -
   by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma)
 qed
 
+(* i dont think this is true, skip to loop *)
 lemma assign_seats_major:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
-  party1::"'b" and
-  party2::"'b" and
+  party1::"'b" and party2::"'b" and
   parties::"'b list" and
   votes::"rat list" and
-  votes1::"rat" and
-  votes2::"rat" and
   i::"'a::linorder set"
+defines "votes1 \<equiv> get_votes party1 parties votes"
+defines "votes2 \<equiv> get_votes party2 parties votes"
 assumes "votes1 > votes2"
 assumes "\<not>(i = {})"
 assumes "count_seats [party1] (s rec) i = count_seats [party2] (s rec) i"
-assumes "votes1 = get_votes party1 parties votes"
-assumes "votes2 = get_votes party2 parties votes"
 shows "count_seats [party1] (s (assign_seats rec)) i \<ge> count_seats [party2] (s (assign_seats rec)) i"
   sorry
-(*
-fun a_seat :: "my_rec \<Rightarrow> my_rec" where
-"a_seat r =
-      let win = \<dots> in
-        (div r\<lparr>p := win\<rparr>)\<lparr>ns := ns r - 1\<rparr>"
 
-function loop_o ::
-  "my_rec \<Rightarrow> my_rec"
-  where  
-  "ns r = 0  \<Longrightarrow> loop_o r = r" |
-  "\<not>(ns r = 0) \<Longrightarrow> loop_o r = loop_o (a_seat r)"
-  by auto
-termination by (relation "measure (\<lambda>r. ns r)")
-               (auto simp add: lemma1)
-lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (a_seat r))\<close>
-  by (cases r) auto
-*)
 
 lemma nseats_decreasing:
   assumes non_empty_parties: "p rec \<noteq> []"
@@ -393,8 +359,6 @@ next
   finally show ?thesis .
 qed
 
-
-(* termination condition *)
 text \<open>This loop applies the same functions until no more seats are available.\<close>
 function loop_o ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
@@ -407,46 +371,9 @@ termination by (relation "measure (\<lambda>r. ns r)")
 lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
   by (cases r) auto
 
-
-(* termination loop_outer
-proof (relation "measure (ns :: ('a::linorder, 'b) Divisor_Module \<Rightarrow> nat)")
-  show "wf (measure (ns :: ('a::linorder, 'b) Divisor_Module \<Rightarrow> nat))"
-    by simp
-next
-  fix r :: "('a::linorder, 'b) Divisor_Module"
-  assume "ns r > 0"
-  then have "ns (assigning_seats r) < ns r"
-    by (simp add:nseats_decreasing)
-  then show "(assigning_seats r, r) \<in> measure ns"
-    by auto
-qed *)
-
-lemma loop_decreasing:
-  shows "ns (loop_outer r) < ns (loop_outer (assigning_seats r))"   
-  sorry
-(* to adapt after adapting lemma used 
-termination
-proof (relation "measure (\<lambda>r. ns r)", goal_cases)
-  case (1)
-  then show ?case by simp
-next
-  case (2 r)
-  then have "loop_outer r = loop_outer (assigning_seats r\<lparr>p :=  find_max_votes (fv r) (p r)\<rparr>)" by simp
-  then have "ns (assigning_seats r\<lparr>p :=  find_max_votes (fv r) (p r)\<rparr>) <  ns r\<lparr>p :=  find_max_votes (fv r) (p r)\<rparr>" by simp
-  then show ?case by simp
-qed
-*)
-
-fun t_inner :: "'b Termination_Condition" where 
-  "t_inner result = (
-    case result of 
-      (lp, _, _) \<Rightarrow> lp = {} 
-  )"
-
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
   "create_empty_seats indexes parties =
     (\<lambda>i. if i \<in> indexes then parties else [])"
-
 
 (* full divisor module function
   calcola voti correttamente  *) 
@@ -457,13 +384,19 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
                    ('a::linorder, 'b) Divisor_Module" where
 
 "full_module rec pl = (
-    let sv = calc_votes (p rec) (p rec) pl [0, 0, 0, 0, 0];
+    let sv = calc_votes (p rec) (p rec) pl (v rec);
     empty_seats = create_empty_seats (i rec) (p rec)
-    in loop_o (rec\<lparr>
-             s := empty_seats,
-             v := sv,
-             fv := sv
-            \<rparr>))"
+    in loop_o \<lparr> 
+             res = res rec,
+             p = p rec,
+             i = i rec,
+             s = empty_seats,
+             ns = ns rec,
+             v = sv,
+             fv = sv,
+             sl = sl rec,
+             d = d rec
+            \<rparr>)"
 
 (* ns è un numero naturale *)
 (* i divisor sono numeri interi *)
@@ -473,8 +406,8 @@ fun dhondt :: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<Righ
 
 fun saintelague:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<Rightarrow>
                    ('a::linorder, 'b) Divisor_Module" where
-"saintelague rec pr = full_module (rec\<lparr>d := (filter (\<lambda>x. x mod 2 = 1)
- (upt 1 ( 2 * (ns rec))))\<rparr>) pr"
+"saintelague rec pr = full_module (rec\<lparr>d := filter (\<lambda>x. x mod 2 = 1)
+                                            (upt 1 (2*ns rec))\<rparr>) pr"
 
 (* Define a set *)
 definition my_set :: "nat set" where
@@ -496,8 +429,6 @@ function take_one_element :: "'a set \<Rightarrow> 'a option" where
 "take_one_element my_et = (if my_et = {} then None else Some (SOME x. x \<in> my_et))"
 value "take_one_element {''a'',''bb'', ''c''}"
 *)
-fun empty_votes :: "('b \<Rightarrow> rat)" where
-  "empty_votes b = 0"
 
 fun empty_seats :: "('a::linorder \<Rightarrow> 'b list)" where
   "empty_seats b = []"
@@ -508,16 +439,6 @@ theorem votes_anonymous:
     calculate_votes_for_election p1 profile = 
     calculate_votes_for_election p2 profile"
   sorry
-(*proof (intro allI impI)
-  fix p2 p1 profile
-  assume "mset p1 = mset p2"
-  then show "calculate_votes p1 profile = calculate_votes p2 profile"
-  proof -
-    have "calculate_votes p1 profile = calculate_votes p2 profile"
-      by (simp add: calculate_votes_def)
-    then show ?thesis using `mset p1 = mset p2` by simp
-  qed
-qed*)
 
 (* Define the concordant property *)
 definition concordant :: "(('a, 'b) Divisor_Module \<Rightarrow> ('a, 'b) Divisor_Module) \<Rightarrow>
@@ -534,29 +455,12 @@ theorem full_module_concordant:
     se::"('a::linorder, 'b) Seats" and
     party::"'b" and
     fparties::"'b Parties" 
-  assumes "se = (s (full_module rec pl))"
-  assumes "votes ! get_index_upd party fparties = cnt_votes party pl 0"
-  shows "cnt_votes p1 pl 0 > cnt_votes p2 pl 0 ==> 
-          count_seats [p1] se indexes \<ge> count_seats [p2] se indexes"
+  assumes "sl' (s (full_module rec pl))"
+  defines "rec' = full_module rec"
+  shows "cnt_votes party1 pl 0 > cnt_votes party2 pl 0 \<Longrightarrow> 
+          sl (rec')! index1 \<ge> sl rec' ! index2"
 
 value "get_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
-(*
-fun count_seats :: "'b set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
-                    'a::linorder set => nat" where
-  "count_seats p s i = 
-    (card {ix. ix \<in> i \<and> s ix = p})"
-
-theorem loop_comp_sound:
-  fixes
-    m :: "'a Electoral_Module" and
-    t :: "'a Termination_Condition"
-  assumes "electoral_module m"
-  shows "electoral_module (m \<circlearrowleft>\<^sub>t)"
-  using def_mod_sound loop_comp_helper_imp_partit assms
-        loop_composition.simps electoral_module_def
-  by metis
-
-*)
 
 (* Define monotonicity property *)
 theorem monotonicity_property:
