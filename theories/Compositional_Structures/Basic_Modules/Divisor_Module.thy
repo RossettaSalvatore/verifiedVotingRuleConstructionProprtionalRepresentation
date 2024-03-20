@@ -447,6 +447,7 @@ definition concordant :: "(('a, 'b) Divisor_Module \<Rightarrow> ('a, 'b) Diviso
     get_votes party1 (p dm) (v dm) > get_votes party2 (p dm) (v dm) \<longrightarrow>
     count_seats [party1] (s (D dm)) (i dm) \<ge> count_seats [party2] (s (D dm)) (i dm))"
 
+(* if one party has more votes than another than it will have at least the same seats *)
 theorem full_module_concordant:
   fixes
     rec:: "('a::linorder, 'b) Divisor_Module" and
@@ -454,12 +455,15 @@ theorem full_module_concordant:
     indexes::"'a::linorder set" and
     se::"('a::linorder, 'b) Seats" and
     party::"'b" and
-    fparties::"'b Parties" 
-  assumes "sl' (s (full_module rec pl))"
-  defines "rec' = full_module rec"
+    parties::"'b Parties" 
+  defines "sl' \<equiv> sl (full_module rec pl)"
+  assumes "party1 \<in> set parties"
+  assumes "party2 \<in> set parties"
+  defines "rec' \<equiv> full_module rec pl"
+  defines "index1 \<equiv> get_index_upd party1 parties"
   shows "cnt_votes party1 pl 0 > cnt_votes party2 pl 0 \<Longrightarrow> 
-          sl (rec')! index1 \<ge> sl rec' ! index2"
-
+          sl' ! index1 \<ge> sl' ! index2"
+ 
 value "get_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
 
 (* Define monotonicity property *)
