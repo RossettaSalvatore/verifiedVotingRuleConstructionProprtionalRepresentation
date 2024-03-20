@@ -103,6 +103,45 @@ fun divisor_module :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \
              d = (d rec)
             \<rparr>)"
 
+(* should work *)
+lemma divisor_module_sl_update:
+  fixes winner :: "'b list" and 
+        rec :: "('a::linorder, 'b) Divisor_Module" and
+        index::"nat"
+      assumes i_def "index = get_index_upd (hd winner) (p rec)"
+  shows "sl (divisor_module winner rec) = 
+         update_at_index_nat (sl rec) index ((sl rec) ! index + 1)"
+proof -
+  define seat new_s new_as new_fv index curr_ns new_sl new_di 
+    where "seat = Min (disp_r (res rec))" and
+          "new_s = update_seat seat winner (s rec)" and
+          "new_as = ass_r (res rec) \<union> {seat}" and
+          "new_fv = update_votes2 winner (rec\<lparr>s:= new_s\<rparr>)" and
+          "index =  get_index_upd (hd winner) (p rec)" and
+          "curr_ns = (sl rec) ! index" and
+          "new_sl = update_at_index_nat (sl rec) index (curr_ns + 1)" and
+          "new_di =  disp_r (res rec) - {seat}"
+  have "(divisor_module winner rec) =  \<lparr>res = (new_as, {}, new_di),
+             p = (p rec),
+             i = (i rec),
+             s = new_s,
+             ns = (ns rec),
+             v = (v rec),
+             fv = new_fv,
+             sl = new_sl,
+             d = (d rec)
+            \<rparr>" 
+    unfolding divisor_module.simps new_sl_def Let_def
+  using curr_ns_def index_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
+  then have "sl(divisor_module winner rec) = new_sl" 
+    by simp
+  also have "... = update_at_index_nat (sl rec) index (curr_ns + 1)" 
+    unfolding new_sl_def by simp
+  also have "... =  update_at_index_nat (sl rec) index ((sl rec) ! index + 1)"
+      unfolding new_sl_def using curr_ns_def by simp
+  finally show ?thesis
+  using index_def assms by blast
+qed
 
 (* should work *)
 lemma divisor_module_increase_seats:
@@ -120,7 +159,6 @@ lemma divisor_module_increase_seats:
   new_sl::"nat list"
 assumes i_def: "let index = get_index_upd (hd winner) (p rec) in True"
 assumes "sl (divisor_module winner rec) = update_at_index_nat (sl rec) index ((sl rec) ! index + 1)"
-assumes curr_def: "let curr_ns = (sl rec) ! index in True"
 shows "(sl (divisor_module winner rec)) ! index =
        (sl rec) ! index + 1"
 proof -
