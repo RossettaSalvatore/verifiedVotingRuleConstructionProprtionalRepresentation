@@ -108,7 +108,7 @@ lemma divisor_module_sl_update:
   fixes winner :: "'b list" and 
         rec :: "('a::linorder, 'b) Divisor_Module" and
         index::"nat"
-      assumes i_def "index = get_index_upd (hd winner) (p rec)"
+  defines i_def: "index \<equiv> get_index_upd (hd winner) (p rec)"
   shows "sl (divisor_module winner rec) = 
          update_at_index_nat (sl rec) index ((sl rec) ! index + 1)"
 proof -
@@ -148,7 +148,7 @@ lemma divisor_module_increase_seats:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
   winner::"'b list"
-assumes i_def: "index = get_index_upd (hd winner) (p rec)"
+defines i_def: "index \<equiv> get_index_upd (hd winner) (p rec)"
 shows "(sl (divisor_module winner rec)) ! index =
        (sl rec) ! index + 1"
 proof -
@@ -268,9 +268,9 @@ lemma assign_seats_update:
   rec::"('a::linorder, 'b) Divisor_Module" and
   rec'::"('a::linorder, 'b) Divisor_Module" and
   winners::"'b list"
-  assumes "winners = get_winners (fv rec) (p rec)"
+  defines winners_def: "winners \<equiv> get_winners (fv rec) (p rec)"
+  defines rec'_def: "rec' \<equiv> divisor_module [hd winners] rec"
   assumes "length winners \<le> ns rec"
-  assumes "rec' = divisor_module [hd winners] rec"
   shows "assign_seats rec = \<lparr>res = (res rec'),
                             p = (p rec'),
                             i = (i rec'),
