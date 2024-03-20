@@ -164,12 +164,22 @@ qed
 fun break_tie :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        ('a::linorder, 'b) Divisor_Module" where 
 "break_tie winners rec =
-  (let 
-    seat = Min (disp_r (res rec));
-    new_s = update_seat seat winners (s rec)
-     in rec\<lparr>
-             s := new_s
-            \<rparr>)"
+          \<lparr>res = (res rec),
+             p = (p rec),
+             i = (i rec),
+             s = update_seat (Min (disp_r (res rec))) winners (s rec),
+             ns = (ns rec),
+             v = (v rec),
+             fv = (fv rec),
+             sl = (sl rec),
+             d = (d rec)
+            \<rparr>"
+
+lemma break_tie_lemma:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  winner::"'b list"
+shows "sl (break_tie winner rec) = sl rec" by simp
 
 (* try if divisor module works *)
 (* Example instantiation of the Divisor_Module record 
@@ -221,6 +231,29 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
          (divisor_module [hd winners] rec)\<lparr>ns := (ns rec) - 1\<rparr>
       else
          (break_tie winners rec)\<lparr>ns := 0\<rparr>)"
+
+(* write proof that under assumption that length winners < ns rec
+   the winner (the head of winners) gets its seats increased,
+   while the other parties will have the same number of seats
+*)
+
+(* are assumptions enough? check 
+   pretty sure i should change assign seat not to have (ns := ns - 1).
+   posso mettere divisor_module in un rec' e poi creare alla fine 
+   \<lparr> \<rparr> passando tutti i parametri da rec' e per ns metto ns = ns rec' - 1 
+*)
+lemma assign_seats_seats_increased:
+   fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  party::"'b" and
+  winners::"'b list" and
+  votes::"rat list" and
+  index::"nat"
+assumes "length winners \<le> ns rec"  
+assumes "party = hd winners"
+assumes i_def "index = get_index_upd party (p rec)"
+shows "sl (assign_seats rec) ! index = sl rec ! index + 1"
+  sorry
 
 lemma assign_seats_major:
   fixes
