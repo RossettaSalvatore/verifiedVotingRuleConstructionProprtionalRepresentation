@@ -371,6 +371,25 @@ termination by (relation "measure (\<lambda>r. ns r)")
 lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
   by (cases r) auto
 
+lemma loop_o_concordant:
+  fixes 
+  r:: "('a::linorder, 'b) Divisor_Module" and
+  index1::"nat" and index2::"nat" and
+  pl::"'b Profile"
+  assumes "p1 \<in> set ps"
+  assumes "p2 \<in> set ps"
+  defines "r' \<equiv> loop_o r"
+  defines "i1 \<equiv> get_index_upd p1 ps"
+  defines "i2 \<equiv> get_index_upd p2 ps"
+  defines "v1 \<equiv> (v r) ! i1"
+  shows "(v r) ! i1 > (v r) ! i2 \<Longrightarrow> 
+          (sl r') ! i1 \<ge> (sl r') ! i2"
+proof(induction v1)
+  case 
+  then show ?case sorry
+qed
+  sorry
+
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
   "create_empty_seats indexes parties =
     (\<lambda>i. if i \<in> indexes then parties else [])"
@@ -461,10 +480,13 @@ theorem full_module_concordant:
   assumes "party2 \<in> set parties"
   defines "rec' \<equiv> full_module rec pl"
   defines "index1 \<equiv> get_index_upd party1 parties"
+  defines "index2 \<equiv> get_index_upd party2 parties"
   shows "cnt_votes party1 pl 0 > cnt_votes party2 pl 0 \<Longrightarrow> 
           sl' ! index1 \<ge> sl' ! index2"
+proof -
+qed
  
-value "get_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
+value "get_votes ''partyA'' [''partyA'', ''partyB''] [4, 5]"
 
 (* Define monotonicity property *)
 theorem monotonicity_property:
