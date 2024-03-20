@@ -314,7 +314,7 @@ proof -
   by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma)
 qed
 
-(* i dont think this is true, skip to loop *)
+(* i dont think this is true, skip to loop 
 lemma assign_seats_major:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
@@ -329,7 +329,7 @@ assumes "\<not>(i = {})"
 assumes "count_seats [party1] (s rec) i = count_seats [party2] (s rec) i"
 shows "count_seats [party1] (s (assign_seats rec)) i \<ge> count_seats [party2] (s (assign_seats rec)) i"
   sorry
-
+*)
 
 lemma nseats_decreasing:
   assumes non_empty_parties: "p rec \<noteq> []"
@@ -363,6 +363,9 @@ termination by (relation "measure (\<lambda>r. ns r)")
 lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
   by (cases r) auto
 
+
+(* is it possible to induct on v1 considering case base 1? otherwise
+  consider v2 and case base 0 *)
 lemma loop_o_concordant:
   fixes 
   r:: "('a::linorder, 'b) Divisor_Module" and
@@ -374,9 +377,19 @@ lemma loop_o_concordant:
   defines "i1 \<equiv> get_index_upd p1 ps"
   defines "i2 \<equiv> get_index_upd p2 ps"
   defines "v1 \<equiv> (v r) ! i1"
-  shows "(v r) ! i1 > (v r) ! i2 \<Longrightarrow> 
+  defines "v2 \<equiv> (v r) ! i2"
+  defines "fv1 \<equiv> v1 / (sl r) ! i1"
+  defines "fv2 \<equiv> v2 / (sl r) ! i2"
+  shows "v1 > v2 \<Longrightarrow>
           (sl r') ! i1 \<ge> (sl r') ! i2"
-  sorry
+proof(induction v2)
+  case 0
+  then have "v1 > 0" by simp
+  then show ?case sorry
+next
+  case (Suc v2)
+  then show ?case sorry
+qed
 
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
   "create_empty_seats indexes parties =
