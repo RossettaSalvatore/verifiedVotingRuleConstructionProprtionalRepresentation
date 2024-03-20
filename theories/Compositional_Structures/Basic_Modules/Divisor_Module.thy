@@ -35,7 +35,7 @@ record ('a::linorder, 'b) Divisor_Module =
   i :: "'a::linorder set"
   s :: "('a::linorder, 'b) Seats"
   ns :: nat
-  v :: "rat list"
+  v :: "nat list"
   fv :: "rat list"
   sl :: "nat list" 
   d :: "nat list"
@@ -65,15 +65,7 @@ fun update_votes2 ::  "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \
 "update_votes2 winner r = 
     (let index = get_index(\<lambda>x. x = (hd winner)) (p r);
      n_seats = count_seats winner (s r) (i r);
-     new_v = get_votes (hd winner) (p r) (v r) / of_int(d r ! n_seats) in
-     list_update (fv r) index new_v)"
-
-fun update_votes22 ::  "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow> nat \<Rightarrow>
-                       rat list" where 
-"update_votes22 winner r n = 
-    (let index = get_index(\<lambda>x. x = (hd winner)) (p r);
-     n_seats = count_seats winner (s r) (i r);
-     new_v = get_votes (hd winner) (p r) (v r) / of_int n in
+     new_v = of_nat(get_votes (hd winner) (p r) (v r)) / of_int(d r ! n_seats) in
      list_update (fv r) index new_v)"
 
 text \<open> This function moves one seat from the disputed set to the assigned set. Moreover,
@@ -384,10 +376,6 @@ lemma loop_o_concordant:
   defines "v1 \<equiv> (v r) ! i1"
   shows "(v r) ! i1 > (v r) ! i2 \<Longrightarrow> 
           (sl r') ! i1 \<ge> (sl r') ! i2"
-proof(induction v1)
-  case 
-  then show ?case sorry
-qed
   sorry
 
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
@@ -399,11 +387,16 @@ fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarro
 text \<open>This function takes in input the parameters and calculates
        the final output of the election.\<close>
 
+fun start_fract_votes :: "nat list \<Rightarrow> rat list" where
+  "start_fract_votes [] = []" |
+  "start_fract_votes (nn # nns) = (of_nat nn) # start_fract_votes nns"
+
 fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<Rightarrow>
                    ('a::linorder, 'b) Divisor_Module" where
 
 "full_module rec pl = (
     let sv = calc_votes (p rec) (p rec) pl (v rec);
+    sfv = start_fract_votes sv;
     empty_seats = create_empty_seats (i rec) (p rec)
     in loop_o \<lparr> 
              res = res rec,
@@ -412,7 +405,7 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
              s = empty_seats,
              ns = ns rec,
              v = sv,
-             fv = sv,
+             fv = sfv,
              sl = sl rec,
              d = d rec
             \<rparr>)"
@@ -539,7 +532,7 @@ definition factors :: "nat list" where
 definition seats_set :: "nat set" where
 "seats_set = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10}"
 
-fun start_votes :: "'a list \<Rightarrow> rat list" where
+fun start_votes :: "'a list \<Rightarrow> nat list" where
   "start_votes [] = []" |
   "start_votes (x # xs) = 0 # start_votes xs"
 
@@ -551,7 +544,7 @@ definition new_record :: "char list Parties \<Rightarrow> nat \<Rightarrow> (nat
   where
   "new_record cp cns = \<lparr> res =  ({}, {}, {1..cns}), p = cp, i = {1..cns}, 
                                s = create_empty_seats {1..cns} cp, ns = cns, 
-                               v = start_votes cp, fv = start_votes cp,
+                               v = start_votes cp, fv = [],
                                sl = start_seats_list cp, d = [] \<rparr>"
 
 (* - se i partiti è una lista vuota c'è un errore

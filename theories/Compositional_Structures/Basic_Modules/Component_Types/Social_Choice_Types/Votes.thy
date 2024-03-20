@@ -56,7 +56,7 @@ primrec get_index_upd :: "'a \<Rightarrow> 'a list \<Rightarrow> nat" where
 
 value "get_index_upd ''3'' [''0'', ''2'', ''1'', ''4'', ''3'', ''5'']"
 
-fun get_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> rat list \<Rightarrow> rat" where
+fun get_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> nat list \<Rightarrow> nat" where
 "get_votes party parties votes = votes ! (get_index_upd party parties)"
 
 value "get_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
@@ -68,7 +68,7 @@ fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
 
 text \<open> This function counts votes for one party and add returns the number of votes \<close>
 
-fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> rat \<Rightarrow> rat" where
+fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> nat \<Rightarrow> nat" where
   "cnt_votes p [] n = n" |
   "cnt_votes p (px # profil) n = 
      (case (count_above px p) of
@@ -217,12 +217,12 @@ definition profile_list :: "char list Profile" where
                  pref_rel_b, pref_rel_d, pref_rel_a]"
 
 (* update_at_index added here bring error in full_module *)
-fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Rightarrow> rat list \<Rightarrow> rat list" where
+fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Rightarrow> nat list \<Rightarrow> nat list" where
   "calc_votes [] ps prof votes = votes" |
   "calc_votes (party # parties) ps prof votes = 
       (let n = cnt_votes party prof 0;
        i = get_index_upd party ps in
-      calc_votes parties ps prof (update_at_index votes i n))"
+      calc_votes parties ps prof (update_at_index_nat votes i n))"
 
 lemma simp_votes:
   fixes
