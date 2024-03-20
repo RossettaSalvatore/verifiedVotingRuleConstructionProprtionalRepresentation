@@ -227,10 +227,30 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
                         \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
 "assign_seats rec = (
       let winners = get_winners (fv rec) (p rec) in
-      if length winners \<le> ns rec then
-         (divisor_module [hd winners] rec)\<lparr>ns := (ns rec) - 1\<rparr>
+      if length winners \<le> ns rec then 
+        let rec' =  (divisor_module [hd winners] rec) in
+        \<lparr>res = (res rec'),
+             p = (p rec'),
+             i = (i rec'),
+             s = (s rec'),
+             ns = ((ns rec') - 1),
+             v = (v rec'),
+             fv = (fv rec'),
+             sl = (sl rec'),
+             d = (d rec')
+            \<rparr>
       else
-         (break_tie winners rec)\<lparr>ns := 0\<rparr>)"
+         let rec' = (break_tie winners rec) in
+           \<lparr>res = (res rec),
+             p = (p rec'),
+             i = (i rec'),
+             s = (s rec'),
+             ns = 0,
+             v = (v rec'),
+             fv = (fv rec'),
+             sl = (sl rec'),
+             d = (d rec')
+            \<rparr>)"
 
 (* write proof that under assumption that length winners < ns rec
    the winner (the head of winners) gets its seats increased,
