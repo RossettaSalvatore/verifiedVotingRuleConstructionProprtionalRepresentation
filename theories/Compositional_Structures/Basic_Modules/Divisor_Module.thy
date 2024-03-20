@@ -229,28 +229,28 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
       let winners = get_winners (fv rec) (p rec) in
       if length winners \<le> ns rec then 
         let rec' =  (divisor_module [hd winners] rec) in
-        \<lparr>res = (res rec'),
-             p = (p rec'),
-             i = (i rec'),
-             s = (s rec'),
-             ns = ((ns rec') - 1),
-             v = (v rec'),
-             fv = (fv rec'),
-             sl = (sl rec'),
-             d = (d rec')
-            \<rparr>
+                    \<lparr>res = (res rec'),
+                         p = (p rec'),
+                         i = (i rec'),
+                         s = (s rec'),
+                         ns = ((ns rec') - 1),
+                         v = (v rec'),
+                         fv = (fv rec'),
+                         sl = (sl rec'),
+                         d = (d rec')
+                        \<rparr>
       else
-         let rec' = (break_tie winners rec) in
-           \<lparr>res = (res rec),
-             p = (p rec'),
-             i = (i rec'),
-             s = (s rec'),
-             ns = 0,
-             v = (v rec'),
-             fv = (fv rec'),
-             sl = (sl rec'),
-             d = (d rec')
-            \<rparr>)"
+         let rec'' = (break_tie winners rec) in
+                       \<lparr>res = (res rec''),
+                         p = (p rec''),
+                         i = (i rec''),
+                         s = (s rec''),
+                         ns = 0,
+                         v = (v rec''),
+                         fv = (fv rec''),
+                         sl = (sl rec''),
+                         d = (d rec'')
+                        \<rparr>)"
 
 (* write proof that under assumption that length winners < ns rec
    the winner (the head of winners) gets its seats increased,
@@ -262,18 +262,52 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
    posso mettere divisor_module in un rec' e poi creare alla fine 
    \<lparr> \<rparr> passando tutti i parametri da rec' e per ns metto ns = ns rec' - 1 
 *)
+(* va aggiustato *)
+lemma assign_seats_update:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  rec'::"('a::linorder, 'b) Divisor_Module" and
+  winners::"'b list"
+  assumes "winners = get_winners (fv rec) (p rec)"
+  assumes "length winners \<le> ns rec"
+  assumes "rec' = divisor_module [hd winners] rec"
+  shows "assign_seats rec = \<lparr>res = (res rec'),
+                            p = (p rec'),
+                            i = (i rec'),
+                            s = (s rec'),
+                            ns = ((ns rec') - 1),
+                            v = (v rec'),
+                            fv = (fv rec'),
+                            sl = (sl rec'),
+                            d = (d rec')\<rparr>" using assms
+  by (smt (verit) assign_seats.simps)
+
 lemma assign_seats_seats_increased:
    fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
+  rec'::"('a::linorder, 'b) Divisor_Module" and
   party::"'b" and
   winners::"'b list" and
   votes::"rat list" and
   index::"nat"
 assumes "length winners \<le> ns rec"  
 assumes "party = hd winners"
+assumes win_def "winners = get_winners (fv rec) (p rec)" 
 assumes i_def "index = get_index_upd party (p rec)"
+assumes rec_def "rec' = (divisor_module [hd winners] rec)"
 shows "sl (assign_seats rec) ! index = sl rec ! index + 1"
-  sorry
+proof - 
+  have "assign_seats rec =  \<lparr>res = (res rec'),
+                         p = (p rec'),
+                         i = (i rec'),
+                         s = (s rec'),
+                         ns = ((ns rec') - 1),
+                         v = (v rec'),
+                         fv = (fv rec'),
+                         sl = (sl rec'),
+                         d = (d rec')
+                        \<rparr>" using assms
+  by (metis length_0_conv neq_Nil_conv update_at_index_nat.simps(1) update_at_index_nat_lemma)
 
 lemma assign_seats_major:
   fixes
