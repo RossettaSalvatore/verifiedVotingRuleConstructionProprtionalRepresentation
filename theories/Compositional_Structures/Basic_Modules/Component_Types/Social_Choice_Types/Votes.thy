@@ -423,7 +423,7 @@ qed*)
 fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = 
     (let m = max_val_wrap v in max_parties m v p p [])"
-                                                    
+
 (* lemma from max parties 0 votes \<Rightarrow> not in winners *)
 lemma get_winners_not_in:
 fixes 

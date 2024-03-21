@@ -136,7 +136,6 @@ proof -
   by blast
 qed
 
-(* should work *)
 lemma divisor_module_increase_seats:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
@@ -153,6 +152,53 @@ proof -
   then have "... = ((sl rec) ! index + 1)" using nth_list_update_eq assms by simp
   then show ?thesis
   using \<open>sl (divisor_module winner rec) ! index = list_update (sl rec) index (sl rec ! index + 1) ! index\<close> by auto
+qed
+
+lemma divisor_module_mon:
+  fixes
+  winner::"'b list" and
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  party::"'b" and
+  parties::"'b Parties" 
+assumes "party \<in> set parties"
+assumes i_def "index =  (get_index_upd party parties)"
+assumes "index < length (sl rec)"
+  shows "sl (divisor_module winner rec) ! index \<ge> 
+         (sl rec) ! index"
+proof (cases "party = hd winner")
+    define seat new_s new_as new_fv index curr_ns new_sl new_di 
+    where "seat = Min (disp_r (res rec))" and
+          "new_s = update_seat seat winner (s rec)" and
+          "new_as = ass_r (res rec) \<union> {seat}" and
+          "new_fv = update_votes2 winner (rec\<lparr>s:= new_s\<rparr>)" and
+          "index =  get_index_upd (hd winner) (p rec)" and
+          "curr_ns = (sl rec) ! index" and
+          "new_sl = list_update (sl rec) index (curr_ns + 1)" and
+          "new_di =  disp_r (res rec) - {seat}"
+  case True
+  have "(divisor_module winner rec) =  \<lparr>res = (new_as, {}, new_di),
+             p = (p rec),
+             i = (i rec),
+             s = new_s,
+             ns = (ns rec),
+             v = (v rec),
+             fv = new_fv,
+             sl = new_sl,
+             d = (d rec)
+            \<rparr>" 
+    unfolding divisor_module.simps new_sl_def Let_def
+  using nth_list_update_eq curr_ns_def index_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
+  then have "sl (divisor_module winner rec) = new_sl" by simp
+  then have "sl (divisor_module winner rec) ! index  
+              = new_sl ! index" by simp
+  then have "... = (list_update (sl rec) index (curr_ns + 1)) ! index" 
+    using new_sl_def by blast
+  then have "... = curr_ns + 1"
+    using nth_list_update_eq assms by simp
+  then show ?thesis by sledgehammer
+next
+  case False
+  then show ?thesis sorry
 qed
 
 fun break_tie :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
@@ -175,39 +221,17 @@ lemma break_tie_lemma:
   winner::"'b list"
 shows "sl (break_tie winner rec) = sl rec" by simp
 
-(* try if divisor module works *)
-(* Example instantiation of the Divisor_Module record 
-definition example_divisor_module :: "(nat, string) Divisor_Module" where
-  "example_divisor_module \<equiv> 
-    \<lparr> res = undefined, 
-      p = [''PartyA'', ''PartyB''],
-      i = {1, 2, 3},
-      s = empty_seats,
-      ns = 5,
-      v = [1/2, 3/4, 2/5],
-      fv = [4/5, 3/5, 1/4],
-      d = [5/6, 1/3, 2/7] \<rparr>"
-*)
-(*lemma divisor_module_length:
-  assumes non_empty_parties: "p rec \<noteq> []"
-  shows "length (p (divisor_module rec)) < length (p rec)"
-  using assms by (simp add:Let_def)
-*)
+lemma break_tie_lemma_party:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  winner::"'b list" and
+  index::"nat"
+shows "(sl (break_tie winner rec)) ! index = sl rec ! index" by simp
 
 fun defer_divisor :: "('a::linorder, 'b) Divisor_Module 
                       \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
 "defer_divisor r = r"
-(*
-text \<open> This function takes the list of winning parties and assigns a seat to each of team.
-       The output is the record updated.  \<close>
-function loop_divisor ::
-    "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
-  "ns rec = 0 \<Longrightarrow> loop_divisor rec = rec" |
-  "\<not>(ns rec = 0) \<Longrightarrow> loop_divisor rec = loop_divisor (divisor_module rec)" 
-  by auto
-termination by (relation "measure (\<lambda>rec. ns rec)")
-               (auto simp add: divisor_module_length Let_def)
-*)
+
 fun create_seats :: "'a::linorder set \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 'b list \<Rightarrow>
                       ('a::linorder, 'b) Seats" where
   "create_seats def seats pa =
@@ -246,17 +270,16 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
                          d = (d rec'')
                         \<rparr>)"
 
-(* devo scrivere un lemma che dice che se il partito non è nei winners i suoi seat
-   rimangono uguali *)
+
 lemma assign_seats_mon:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
   party::"'b" and ps::"'b list" and winners::"'b Parties" and
   m::"rat"
 assumes "m = max_val_wrap (fv rec)"
+assumes "length winners \<le> ns rec" 
 shows "m \<ge> ((fv rec) ! i1) \<Longrightarrow> sl (assign_seats rec) ! i1 \<ge> sl rec ! i1"
   sorry
-
 lemma assign_seats_not_winner_mantains_seats:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
