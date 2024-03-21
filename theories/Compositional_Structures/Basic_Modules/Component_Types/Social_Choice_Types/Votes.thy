@@ -139,7 +139,8 @@ fun update_at_index_nat :: "nat list \<Rightarrow> nat \<Rightarrow> nat \<Right
   "update_at_index_nat (x # xs) i n = (if i = 0 then n # xs
                                        else x # update_at_index_nat xs (i - 1) n)"
 
-
+(* usa list update mannaggia alla madonna *)
+value "list_update ([1::nat, 2, 3]) 1 1"
 
 lemma update_at_index_nat_simp:
   fixes
@@ -147,23 +148,20 @@ lemma update_at_index_nat_simp:
     x::"nat" and
     i::"nat" and
     n::"nat"
-  assumes "length (x # (x # xs)) > 0" 
-  shows "(update_at_index_nat (x # (x # xs)) i n) ! i = n"
+  assumes "length xs > 0" 
+  shows "(update_at_index_nat xs i n) ! i = n"
 proof(induction i)
   case 0
   show ?case
   by (metis "0" assms length_greater_0_conv nth_Cons_0 update_at_index_nat.elims)
 next
   case (Suc nat)
-  assume IH: "(update_at_index_nat (x # (x # xs)) nat n) ! nat = n"
-  have "update_at_index_nat (x # (x # xs)) (Suc nat) n = 
-          (if (Suc nat) = 0 then n # (x # xs) 
-           else x # update_at_index_nat (x # xs) ((Suc nat) - 1) n)" by simp
-  then have "update_at_index_nat (x # (x # xs)) (Suc nat) n ! Suc nat
-             = (x # update_at_index_nat (x # xs) nat n) ! Suc nat" by simp 
-  then have "... = update_at_index_nat (x # xs) nat n ! nat" by simp
+  assume IH: "(update_at_index_nat xs nat n) ! nat = n"
+  have "update_at_index_nat (x # xs) (Suc nat) n ! Suc nat
+             = (x # update_at_index_nat xs nat n) ! Suc nat" by simp 
+  then have "... = update_at_index_nat xs nat n ! nat" by simp
   then have "... = n" using IH by simp 
-  then show ?case by sledgehammer
+  then show ?case by simp
 qed
 
 lemma update_at_index_nat_simp:
