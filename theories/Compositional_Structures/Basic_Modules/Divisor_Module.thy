@@ -380,11 +380,14 @@ lemma loop_o_concordant:
   defines "v2 \<equiv> (v r) ! i2"
   defines "fv1 \<equiv> v1 / (sl r) ! i1"
   defines "fv2 \<equiv> v2 / (sl r) ! i2"
+  assumes "v2 = 0 \<Longrightarrow> (sl r') ! i2 = 0"
   shows "v1 > v2 \<Longrightarrow>
           (sl r') ! i1 \<ge> (sl r') ! i2"
 proof(induction v2)
   case 0
   then have "v1 > 0" by simp
+  have "v2 = 0" using assms by sledgehammer
+  then have "(sl r') ! i2 = 0" using assms by simp
   then show ?case sorry
 next
   case (Suc v2)

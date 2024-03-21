@@ -301,12 +301,32 @@ fun max_val_wrap:: "rat list \<Rightarrow> rat" where
 
 fun max_parties:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-"max_parties m v fp [] output = output" | 
-"max_parties m v fp (px # p) output = 
-        max_parties m v fp p (if v ! (get_index_upd px fp) = m then (output @ [px])
-                                   else output)"
+"max_parties m v fp [] winners = winners" | 
+"max_parties m v fp (px # p) winners = 
+        max_parties m v fp p (if v ! (get_index_upd px fp) = m then (winners @ [px])
+                                   else winners)"
 
-(*
+lemma max_parties_no_in:
+  fixes 
+  m::"rat" and
+  v::"rat list" and fp::"'b Parties" and fp2::"'b Parties" and winners::"'b Parties"
+  and start_winners::"'b Parties"
+assumes "m>0"
+assumes "px \<notin> set start_winners"
+assumes "v ! (get_index_upd px fp) = 0"
+defines "winners \<equiv> max_parties m v fp fp start_winners" 
+shows "px \<notin> set winners"
+proof -
+  have "m>0" using assms by simp 
+  then have "px \<notin> set start_winners" using assms by simp
+  then have "max_parties m v fp (px # p) start_winners = 
+        max_parties m v fp p (if v ! (get_index_upd px fp) = m then (start_winners @ [px])
+                                   else start_winners)" by simp
+  then have "... = max_parties m v fp p start_winners" using assms by fastforce
+  then show ?thesis
+  by (metis insert_Nil length_0_conv snoc_eq_iff_butlast update_at_index_nat.simps(1) update_at_index_nat_lemma)
+qed
+(* 
 lemma max_parties_perm:
   fixes
 parties::"'b Parties" and
