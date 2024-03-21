@@ -135,8 +135,31 @@ fun update_at_index :: "rat list \<Rightarrow> nat \<Rightarrow> rat \<Rightarro
   "update_at_index (x # xs) i n = (if i = 0 then n # xs else x # update_at_index xs (i - 1) n)"
 
 fun update_at_index_nat :: "nat list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat list" where
-  "update_at_index_nat [] _ _ = []" |
   "update_at_index_nat (x # xs) i n = (if i = 0 then n # xs else x # update_at_index_nat xs (i - 1) n)"
+
+value "(update_at_index_nat [1, 2, 3, 4] 3 5) ! 3"
+
+lemma update_at_index_nat_simp:
+  fixes
+    v::"nat list" and
+    i::"nat" and
+    n::"nat"
+  assumes "length v > 0" 
+  shows "(update_at_index_nat v i n) ! i = n"
+proof(cases i)
+  case 0
+  have "update_at_index_nat (x # xs) i n =  (if i = 0 then n # xs else x # update_at_index_nat xs (i - 1) n)" by simp
+  then have "... = n # xs" by (simp add: "0")
+  then have "(update_at_index_nat (x # xs) i n) ! i = (n # xs) ! i" by simp
+  then have "... = n" by (simp add: "0")
+  then show ?thesis
+  by (metis "0" assms length_greater_0_conv nth_Cons_0 update_at_index_nat.elims)
+next
+  case (Suc i)
+  then show ?case sorry
+qed
+
+
 
 lemma update_at_index_lemma:
   fixes

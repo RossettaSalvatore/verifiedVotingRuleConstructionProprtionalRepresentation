@@ -244,6 +244,19 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
                          d = (d rec'')
                         \<rparr>)"
 
+(* devo scrivere un lemma che dice che se il partito non è nei winners i suoi seat
+   rimangono uguali *)
+
+lemma assign_seats_not_winner_mantains_seats:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  party::"'b" and ps::"'b list" 
+  defines winners_def: "winners \<equiv> get_winners (fv rec) (p rec)"
+  defines rec'_def: "rec' \<equiv> divisor_module [hd winners] rec"
+  shows "party \<notin> set winners \<Longrightarrow> (sl rec) ! get_index_upd party ps =
+                                         (sl rec') ! get_index_upd party ps" using assms
+  sorry
+
 lemma assign_seats_update:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module"
