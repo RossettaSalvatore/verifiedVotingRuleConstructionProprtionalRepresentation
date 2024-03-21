@@ -310,11 +310,9 @@ lemma max_parties_no_in:
   fixes 
   m::"rat" and 
   px::"'b" and
-  v::"rat list" and 
-  fp::"'b Parties" and 
-  fp2::"'b Parties" and 
-  winners::"'b Parties"
-  and start_winners::"'b Parties"
+  v::"rat list" and
+  winners::"'b Parties" and 
+  start_winners::"'b Parties"
 assumes "m > 0"
 assumes "v ! (get_index_upd px fp) = 0"
 defines "px_in_parties \<equiv> (px \<in> set fp)"
@@ -381,6 +379,17 @@ fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" 
   "get_winners v p = 
     (let m = max_val_wrap v in max_parties m v p p [])"
                                                     
+(* lemma from max parties 0 votes \<Rightarrow> not in winners *)
+lemma get_winners_not_in:
+fixes 
+  v::"rat list" and
+  p::"'b Parties" and
+  px::"'b" and
+  m::"rat"
+assumes "m > 0"
+assumes "v ! (get_index_upd px p) = 0"
+shows "px \<notin> set (get_winners v p)"
+  by (metis n_not_Suc_n update_at_index_nat.simps(1) update_at_index_nat_lemma)
 
 lemma find_max_votes_not_empty:
   fixes
