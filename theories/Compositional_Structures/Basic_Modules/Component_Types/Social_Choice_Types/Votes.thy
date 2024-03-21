@@ -135,30 +135,59 @@ fun update_at_index :: "rat list \<Rightarrow> nat \<Rightarrow> rat \<Rightarro
   "update_at_index (x # xs) i n = (if i = 0 then n # xs else x # update_at_index xs (i - 1) n)"
 
 fun update_at_index_nat :: "nat list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat list" where
-  "update_at_index_nat (x # xs) i n = (if i = 0 then n # xs else x # update_at_index_nat xs (i - 1) n)"
+  "update_at_index_nat [] _ _ = []" |
+  "update_at_index_nat (x # xs) i n = (if i = 0 then n # xs
+                                       else x # update_at_index_nat xs (i - 1) n)"
 
-value "(update_at_index_nat [1, 2, 3, 4] 3 5) ! 3"
+
 
 lemma update_at_index_nat_simp:
   fixes
-    v::"nat list" and
+    xs::"nat list" and
+    x::"nat" and
     i::"nat" and
     n::"nat"
-  assumes "length v > 0" 
-  shows "(update_at_index_nat v i n) ! i = n"
-proof(cases i)
+  assumes "length (x # (x # xs)) > 0" 
+  shows "(update_at_index_nat (x # (x # xs)) i n) ! i = n"
+proof(induction i)
   case 0
-  have "update_at_index_nat (x # xs) i n =  (if i = 0 then n # xs else x # update_at_index_nat xs (i - 1) n)" by simp
-  then have "... = n # xs" by (simp add: "0")
-  then have "(update_at_index_nat (x # xs) i n) ! i = (n # xs) ! i" by simp
-  then have "... = n" by (simp add: "0")
-  then show ?thesis
+  show ?case
   by (metis "0" assms length_greater_0_conv nth_Cons_0 update_at_index_nat.elims)
 next
-  case (Suc i)
-  then show ?case sorry
+  case (Suc nat)
+  assume IH: "(update_at_index_nat (x # (x # xs)) nat n) ! nat = n"
+  have "update_at_index_nat (x # (x # xs)) (Suc nat) n = 
+          (if (Suc nat) = 0 then n # (x # xs) 
+           else x # update_at_index_nat (x # xs) ((Suc nat) - 1) n)" by simp
+  then have "update_at_index_nat (x # (x # xs)) (Suc nat) n ! Suc nat
+             = (x # update_at_index_nat (x # xs) nat n) ! Suc nat" by simp 
+  then have "... = update_at_index_nat (x # xs) nat n ! nat" by simp
+  then have "... = n" using IH by simp 
+  then show ?case by sledgehammer
 qed
 
+lemma update_at_index_nat_simp:
+  fixes
+    xs::"nat list" and
+    x::"nat" and
+    i::"nat" and
+    n::"nat"
+  assumes "length (x # xs) > 0" 
+  shows "(update_at_index_nat (x # xs) i n) ! i = n"
+proof(induction i)
+  case 0
+  show ?case
+  by (metis "0" assms length_greater_0_conv nth_Cons_0 update_at_index_nat.elims)
+next
+  case (Suc nat)
+  assume IH: "(update_at_index_nat (x # xs) nat n) ! nat = n"
+  have "update_at_index_nat (y # (x # xs)) (Suc nat) n =  (if (Suc nat) = 0 then n # (x # xs) else y # update_at_index_nat (x # xs) ((Suc nat) - 1) n)" by simp
+  then have "update_at_index_nat (y # (x # xs)) (Suc nat) n ! Suc nat
+             = (y # update_at_index_nat (x # xs) nat n) ! Suc nat" by simp 
+  then have "... = update_at_index_nat (x # xs) nat n ! nat" by simp
+  then have "... = n" using IH by simp 
+  then show ?case by sledgehammer
+qed
 
 
 lemma update_at_index_lemma:
