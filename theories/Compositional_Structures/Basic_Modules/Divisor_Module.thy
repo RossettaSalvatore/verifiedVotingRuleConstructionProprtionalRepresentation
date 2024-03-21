@@ -248,6 +248,14 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
 
 (* devo scrivere un lemma che dice che se il partito non è nei winners i suoi seat
    rimangono uguali *)
+lemma assign_seats_mon:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  party::"'b" and ps::"'b list" and winners::"'b Parties" and
+  m::"rat"
+assumes "m = max_val_wrap (fv rec)"
+shows "m \<ge> ((fv rec) ! i1) \<Longrightarrow> sl (assign_seats rec) ! i1 \<ge> sl rec ! i1"
+  sorry
 
 lemma assign_seats_not_winner_mantains_seats:
   fixes
@@ -381,17 +389,14 @@ lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r)
 
 lemma loop_o_concordant:
   fixes 
-  r:: "('a::linorder, 'b) Divisor_Module" and
-  pl::"'b Profile" and i1::"nat" and i2::"nat"
-  assumes "p1 \<in> set ps"
-  assumes "p2 \<in> set ps"
-  defines "r' \<equiv> loop_o r"
-  defines "v1 \<equiv> (v r) ! i1"
-  defines "v2 \<equiv> (v r) ! i2"
-  defines "fv1 \<equiv> v1 / (sl r) ! i1"
-  defines "fv2 \<equiv> v2 / (sl r) ! i2"
+  rr:: "('a::linorder, 'b) Divisor_Module" and
+  v1::"nat" and v2::"nat" and i1::"nat" and i2::"nat"
+  defines "r' \<equiv> loop_o rr"
+  defines "fv1 \<equiv> v1 / (sl rr) ! i1"
+  defines "fv2 \<equiv> v2 / (sl rr) ! i2"
   assumes "v1 > 0 \<Longrightarrow> v2 = 0 \<Longrightarrow> (sl r') ! i2 = 0"
   assumes "v1 > v2"
+  assumes "ns rr \<noteq> 0" 
   shows "(sl r') ! i1 \<ge> (sl r') ! i2"
 proof(cases v2)
   case 0
@@ -404,12 +409,20 @@ next
   then show ?thesis
   proof cases
     case 1
+    have "fv1 > fv2" by (simp add: "1")
+    then have "fv2 = (Suc nat) /  (sl rr) ! i2" using assms using Suc by fastforce 
+    then have "r' = loop_o rr" using assms by simp
+    then have "loop_o rr = loop_o (assign_seats rr)" using assms by simp
+    then have "sl r' = sl (loop_o (assign_seats rr))" using assms by simp
+    then have "... = " using assms by simp
     then show ?thesis sorry
   next
     case 2
+    have "fv1 = fv2" by (simp add: "2")
     then show ?thesis sorry
   next
     case 3
+    have "fv1 < fv2" by (simp add: "3")
     then show ?thesis sorry
   qed
 qed
