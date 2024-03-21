@@ -385,8 +385,7 @@ lemma loop_o_concordant:
           (sl r') ! i1 \<ge> (sl r') ! i2"
 proof(induction v2)
   case 0
-  then have "v1 > 0" by simp
-  have "v2 = 0" using assms by sledgehammer
+  have "(sl r') ! i2 = 0" by simp
   then have "(sl r') ! i2 = 0" using assms by simp
   then show ?case sorry
 next

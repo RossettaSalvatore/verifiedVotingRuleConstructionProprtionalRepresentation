@@ -230,13 +230,13 @@ lemma simp_votes:
     fparties::"'b Parties" and
     party::"'b" and
     profile:: "'b Profile" and
-    votes::"rat list"
+    votes::"nat list"
   assumes "party \<in> set parties"
   assumes "parties = fparties"
   assumes "votes ! get_index_upd party fparties = cnt_votes party profile 0"
   shows "calc_votes parties fparties profile votes ! get_index_upd party fparties =
          cnt_votes party profile 0"
-  by sledgehammer
+sorry
 
 lemma votes_perm:
   fixes
@@ -308,16 +308,28 @@ fun max_parties:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightar
 
 lemma max_parties_no_in:
   fixes 
-  m::"rat" and
-  v::"rat list" and fp::"'b Parties" and fp2::"'b Parties" and winners::"'b Parties"
+  m::"rat" and 
+  px::"'b" and
+  v::"rat list" and 
+  fp::"'b Parties" and 
+  fp2::"'b Parties" and 
+  winners::"'b Parties"
   and start_winners::"'b Parties"
-assumes "m>0"
-assumes "px \<notin> set start_winners"
+assumes "m > 0"
 assumes "v ! (get_index_upd px fp) = 0"
+defines "px_in_parties \<equiv> (px \<in> set fp)"
 defines "winners \<equiv> max_parties m v fp fp start_winners" 
 shows "px \<notin> set winners"
-proof -
-  have "m>0" using assms by simp 
+proof (induction start_winners)
+  case Nil
+  then show ?case
+  by (metis Zero_not_Suc update_at_index_nat.simps(1) update_at_index_nat_lemma) 
+  next
+  case (Cons a start_winners)
+  then show ?case
+  by simp
+qed
+(*  have "m>0" using assms by simp 
   then have "px \<notin> set start_winners" using assms by simp
   then have "max_parties m v fp (px # p) start_winners = 
         max_parties m v fp p (if v ! (get_index_upd px fp) = m then (start_winners @ [px])
@@ -326,6 +338,7 @@ proof -
   then show ?thesis
   by (metis insert_Nil length_0_conv snoc_eq_iff_butlast update_at_index_nat.simps(1) update_at_index_nat_lemma)
 qed
+*)
 (* 
 lemma max_parties_perm:
   fixes
@@ -389,7 +402,6 @@ fun count_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow>
   "count_seats p s i = 
     (card {ix. ix \<in> i \<and> s ix = p})"
 
-
 (* 
 fun max_parties:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
@@ -421,15 +433,6 @@ assumes "mset parties = mset parties'"
 assumes "mset votes = mset votes'"
 shows "get_winners votes parties = get_winners votes' parties'"
   sorry
-
-
-(* ----------- Prova anonimita con votes function dovrebbe funzionare -------------- *)
-
-
-(* posso provre ad usare questa funzione per provare che le entry nei voti sono uguali 
-anche se l'ordine dei partiti è diverso dal momento che per lo stesso party ottengo che
-il numero di voti è dato da questa funzione? *)
-(* fun svotes:: "'a Votes" where "svotes s = s" *)
 
 
 fun f :: "nat \<Rightarrow> nat" where
