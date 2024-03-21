@@ -142,6 +142,7 @@ fun update_at_index_nat :: "nat list \<Rightarrow> nat \<Rightarrow> nat \<Right
 (* usa list update mannaggia alla madonna *)
 value "list_update ([1::nat, 2, 3]) 1 1"
 
+(*
 lemma update_at_index_nat_simp:
   fixes
     xs::"nat list" and
@@ -162,8 +163,9 @@ next
   then have "... = update_at_index_nat xs nat n ! nat" by simp
   then have "... = n" using IH by simp 
   then show ?case by simp
-qed
+qed*)
 
+(*
 lemma update_at_index_nat_simp:
   fixes
     xs::"nat list" and
@@ -186,7 +188,7 @@ next
   then have "... = n" using IH by simp 
   then show ?case by sledgehammer
 qed
-
+*)
 
 lemma update_at_index_lemma:
   fixes
@@ -208,7 +210,7 @@ sorry
 
   value "list_update [''a'', ''b'', ''d''] 2 ''c''"
 
-value "update_at_index [2, 2, 2] 1 5"
+(* value "update_at_index [2, 2, 2] 1 5" *)
 
 definition remove_some :: "'a multiset \<Rightarrow> 'a" where
 "remove_some M = (SOME x. x \<in> set_mset M)"
@@ -272,7 +274,7 @@ fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Righ
   "calc_votes (party # parties) ps prof votes = 
       (let n = cnt_votes party prof 0;
        i = get_index_upd party ps in
-      calc_votes parties ps prof (update_at_index_nat votes i n))"
+      calc_votes parties ps prof (list_update votes i n))"
 
 lemma simp_votes:
   fixes
@@ -368,15 +370,8 @@ assumes "v ! (get_index_upd px fp) = 0"
 defines "px_in_parties \<equiv> (px \<in> set fp)"
 defines "winners \<equiv> max_parties m v fp fp start_winners" 
 shows "px \<notin> set winners"
-proof (induction start_winners)
-  case Nil
-  then show ?case
-  by (metis Zero_not_Suc update_at_index_nat.simps(1) update_at_index_nat_lemma) 
-  next
-  case (Cons a start_winners)
-  then show ?case
-  by simp
-qed
+  by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma zero_neq_numeral)
+
 (*  have "m>0" using assms by simp 
   then have "px \<notin> set start_winners" using assms by simp
   then have "max_parties m v fp (px # p) start_winners = 
