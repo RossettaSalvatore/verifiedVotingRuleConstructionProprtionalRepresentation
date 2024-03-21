@@ -385,28 +385,22 @@ lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r)
 lemma loop_o_concordant:
   fixes 
   r:: "('a::linorder, 'b) Divisor_Module" and
-  index1::"nat" and index2::"nat" and
-  pl::"'b Profile"
+  pl::"'b Profile" and i1::"nat" and i2::"nat"
   assumes "p1 \<in> set ps"
   assumes "p2 \<in> set ps"
   defines "r' \<equiv> loop_o r"
-  defines "i1 \<equiv> get_index_upd p1 ps"
-  defines "i2 \<equiv> get_index_upd p2 ps"
   defines "v1 \<equiv> (v r) ! i1"
   defines "v2 \<equiv> (v r) ! i2"
-  defines "fv1 \<equiv> v1 / (sl r) ! i1"
-  defines "fv2 \<equiv> v2 / (sl r) ! i2"
-  assumes "v2 = 0 \<Longrightarrow> (sl r') ! i2 = 0"
-  shows "v1 > v2 \<Longrightarrow>
-          (sl r') ! i1 \<ge> (sl r') ! i2"
-proof(induction v2)
+  assumes "v1 > 0 \<Longrightarrow> v2 = 0 \<Longrightarrow> (sl r') ! i2 = 0"
+  assumes "v1 > v2"
+  shows "(sl r') ! i1 \<ge> (sl r') ! i2"
+proof(cases v2)
   case 0
-  have "(sl r') ! i2 = 0" by simp
-  then have "(sl r') ! i2 = 0" using assms by simp
-  then show ?case sorry
+  then show ?thesis using assms
+  by (simp)
 next
-  case (Suc v2)
-  then show ?case sorry
+  case (Suc nat)
+  then show ?thesis sorry
 qed
 
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
