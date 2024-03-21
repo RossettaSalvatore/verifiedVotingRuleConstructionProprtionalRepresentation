@@ -379,9 +379,6 @@ termination by (relation "measure (\<lambda>r. ns r)")
 lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
   by (cases r) auto
 
-
-(* is it possible to induct on v1 considering case base 1? otherwise
-  consider v2 and case base 0 *)
 lemma loop_o_concordant:
   fixes 
   r:: "('a::linorder, 'b) Divisor_Module" and
@@ -391,6 +388,8 @@ lemma loop_o_concordant:
   defines "r' \<equiv> loop_o r"
   defines "v1 \<equiv> (v r) ! i1"
   defines "v2 \<equiv> (v r) ! i2"
+  defines "fv1 \<equiv> v1 / (sl r) ! i1"
+  defines "fv2 \<equiv> v2 / (sl r) ! i2"
   assumes "v1 > 0 \<Longrightarrow> v2 = 0 \<Longrightarrow> (sl r') ! i2 = 0"
   assumes "v1 > v2"
   shows "(sl r') ! i1 \<ge> (sl r') ! i2"
@@ -400,7 +399,19 @@ proof(cases v2)
   by (simp)
 next
   case (Suc nat)
-  then show ?thesis sorry
+  consider "fv1 > fv2" | "fv1 = fv2" | "fv1 < fv2"
+    by auto
+  then show ?thesis
+  proof cases
+    case 1
+    then show ?thesis sorry
+  next
+    case 2
+    then show ?thesis sorry
+  next
+    case 3
+    then show ?thesis sorry
+  qed
 qed
 
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
