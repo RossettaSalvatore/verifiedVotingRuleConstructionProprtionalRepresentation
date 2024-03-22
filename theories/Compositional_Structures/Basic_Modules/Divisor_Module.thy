@@ -433,6 +433,7 @@ proof (cases "(length winners) \<le> ns rec")
  define rec' 
     where 
      "rec'= (divisor_module [hd winners] rec)"  
+  then have "index \<noteq> index2" using assms by simp
   then have "assign_seats rec =  (
       let winners = get_winners (fv rec) (p rec) in
       if length winners \<le> ns rec then 
@@ -476,8 +477,9 @@ proof (cases "(length winners) \<le> ns rec")
     using assms \<open>sl (assign_seats rec) = sl rec'\<close> by presburger
   then have "... = (sl rec) ! index2" 
     using assms divisor_module_mantain_seats_lemma rec'_def
-  by sledgehammer
-  then show ?thesis sorry
+  by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma)
+  then show ?thesis
+  using \<open>sl (assign_seats rec) ! index2 = sl (divisor_module [hd winners] rec) ! index2\<close> by presburger
 next
   case False
   then show ?thesis sorry
