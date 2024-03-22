@@ -274,7 +274,7 @@ fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Righ
   "calc_votes (party # parties) ps prof votes = 
       (let n = cnt_votes party prof 0;
        i = get_index_upd party ps in
-      calc_votes parties ps prof (list_update votes i n))"
+      calc_votes parties ps prof (list_update votes i (n::nat)))"
 
 lemma simp_votes:
   fixes
@@ -343,10 +343,6 @@ text \<open> This function receives in input the function Votes and the list of 
 fun max_val:: "rat list \<Rightarrow> rat \<Rightarrow> rat" where 
 "max_val [] m = m" | 
 "max_val (px # p) m = max_val p (if px > m then px else m)"
-
-value "max_val [1, 4, 2] 0"
-
-value "max_val [4, 2, 1] 0" 
 
 fun max_val_wrap:: "rat list \<Rightarrow> rat" where 
 "max_val_wrap v = max_val v 0"
