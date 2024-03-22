@@ -129,14 +129,17 @@ proof -
              d = (d rec)
             \<rparr>" 
     unfolding divisor_module.simps new_sl_def Let_def
-  using nth_list_update_eq curr_ns_def index_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
-  then have "sl (divisor_module winner rec) = new_sl" by simp
-  then have "... =  list_update (sl rec) index (curr_ns + 1)" using new_sl_def by simp
+    using nth_list_update_eq curr_ns_def index_def new_as_def new_di_def new_fv_def new_s_def seat_def 
+    by fastforce
+  then have "sl (divisor_module winner rec) = new_sl" 
+    by simp
+  then have "... =  list_update (sl rec) index (curr_ns + 1)" 
+    using new_sl_def by simp
   then have "sl (divisor_module winner rec) ! index2 = 
              (list_update (sl rec) index (curr_ns + 1)) ! index2"
     using \<open>sl (divisor_module winner rec) = new_sl\<close> by presburger
-  then have "... = (sl rec) ! index2" using nth_list_update_neq assms
-    by (metis index_def)
+  then have "... = (sl rec) ! index2" 
+    using nth_list_update_neq assms by (metis index_def)
   then show ?thesis
   using \<open>sl (divisor_module winner rec) ! index2 = (sl rec)[index := curr_ns + 1] ! index2\<close> by presburger
 qed
@@ -177,8 +180,8 @@ proof -
   also have "... =  list_update (sl rec) index ((sl rec) ! index + 1)"
       unfolding new_sl_def using curr_ns_def by simp
   finally show ?thesis
-  using index_def nth_list_update_eq assms
-  by blast
+      using index_def nth_list_update_eq assms
+      by blast
 qed
 
 lemma divisor_module_increase_seats:
@@ -193,10 +196,12 @@ proof -
   have "sl (divisor_module winner rec) =  list_update (sl rec) index ((sl rec) ! index + 1)" 
     using divisor_module_sl_update assms by blast
   then have "sl (divisor_module winner rec) ! index = 
-        (list_update (sl rec) index ((sl rec) ! index + 1)) ! index" using assms by simp
-  then have "... = ((sl rec) ! index + 1)" using nth_list_update_eq assms by simp
+        (list_update (sl rec) index ((sl rec) ! index + 1)) ! index" 
+    using assms by simp
+  then have "... = ((sl rec) ! index + 1)" 
+    using nth_list_update_eq assms by simp
   then show ?thesis
-  using \<open>sl (divisor_module winner rec) ! index = list_update (sl rec) index (sl rec ! index + 1) ! index\<close> by auto
+    using \<open>sl (divisor_module winner rec) ! index = list_update (sl rec) index (sl rec ! index + 1) ! index\<close> by auto
 qed
 
 
@@ -231,7 +236,8 @@ proof -
             \<rparr>" 
     unfolding divisor_module.simps new_sl_def Let_def
   using nth_list_update_eq curr_ns_def index_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
-  then have "sl (divisor_module winner rec) = new_sl" by simp
+  then have "sl (divisor_module winner rec) = new_sl" 
+    by simp
   then have "sl (divisor_module winner rec) ! index  
               = new_sl ! index" by simp
   then have "... = (list_update (sl rec) index (curr_ns + 1)) ! index" 
@@ -359,12 +365,14 @@ proof(cases "length winners \<le> ns rec")
                          d = (d rec')
                         \<rparr>" using rec'_def assms
     by (smt (verit, best) True)
-  then have "sl (assign_seats rec) = sl rec'" by simp
-  then have "sl (assign_seats rec) ! index = sl rec' ! index" by simp
-  then have "... = (sl (divisor_module [hd winners] rec)) ! index" using rec'_def by simp
-  then have "... \<ge> (sl rec) ! index" using assms divisor_module_mon by blast
-  then show ?thesis using assms rec'_def
-  by (metis \<open>sl (assign_seats rec) = sl rec'\<close>)
+  then have "sl (assign_seats rec) ! index = sl rec' ! index" 
+    by simp
+  then have "... = (sl (divisor_module [hd winners] rec)) ! index" 
+    using rec'_def by simp
+  then have "... \<ge> (sl rec) ! index" 
+    using assms divisor_module_mon by blast
+  then show ?thesis 
+    using assms rec'_def by (metis \<open>sl (assign_seats rec) ! index = sl rec' ! index\<close>)
 next
   case False
   define rec'' 
@@ -407,13 +415,12 @@ next
                          d = (d rec'')
                         \<rparr>" using rec''_def assms
     by (smt (verit, best) False)
-  then have "sl (assign_seats rec) = sl rec''" by simp
-  then have "sl (assign_seats rec) ! index = sl rec'' ! index" by simp
-  then have "... = sl (break_tie winners rec) ! index" using rec''_def by simp
-  then have "... \<ge> sl rec ! index" by simp
+  then have "sl (assign_seats rec) ! index = sl (break_tie winners rec) ! index" 
+    using rec''_def by simp
+  then have "... \<ge> sl rec ! index" 
+    by simp
   then show ?thesis
-    using \<open>sl (assign_seats rec) ! index = sl rec'' ! index\<close> 
-          \<open>sl rec'' ! index = sl (break_tie winners rec) ! index\<close> by auto
+    using \<open>sl (assign_seats rec) ! index = sl (break_tie winners rec) ! index\<close> by fastforce
 qed
 
 lemma assign_seats_not_winner_mantains_seats:
@@ -433,7 +440,6 @@ proof (cases "(length winners) \<le> ns rec")
  define rec' 
     where 
      "rec'= (divisor_module [hd winners] rec)"  
-  then have "index \<noteq> index2" using assms by simp
   then have "assign_seats rec =  (
       let winners = get_winners (fv rec) (p rec) in
       if length winners \<le> ns rec then 
@@ -471,18 +477,72 @@ proof (cases "(length winners) \<le> ns rec")
                          d = (d rec')
                         \<rparr>" using rec'_def assms
     by (smt (verit, best) True)
-  then have "sl (assign_seats rec) = sl (rec')" by simp
-  then have "... = sl (divisor_module [hd winners] rec)" using rec'_def by simp
+  then have "sl (assign_seats rec) = sl (rec')" 
+    by simp
+  then have "... = sl (divisor_module [hd winners] rec)" using rec'_def 
+    by simp
   then have "sl (assign_seats rec) ! index2 = sl (divisor_module [hd winners] rec) ! index2" 
     using assms \<open>sl (assign_seats rec) = sl rec'\<close> by presburger
   then have "... = (sl rec) ! index2" 
     using assms divisor_module_mantain_seats_lemma rec'_def
   by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma)
   then show ?thesis
-  using \<open>sl (assign_seats rec) ! index2 = sl (divisor_module [hd winners] rec) ! index2\<close> by presburger
+    using \<open>sl (assign_seats rec) ! index2 = sl (divisor_module [hd winners] rec) ! index2\<close> 
+    by presburger
 next
   case False
-  then show ?thesis sorry
+ define rec''
+    where 
+     "rec''= break_tie winners rec"  
+  then have "index \<noteq> index2" using assms by simp
+  then have "assign_seats rec =  (
+      let winners = get_winners (fv rec) (p rec) in
+      if length winners \<le> ns rec then 
+        let rec' =  (divisor_module [hd winners] rec) in
+                    \<lparr>res = (res rec'),
+                         p = (p rec'),
+                         i = (i rec'),
+                         s = (s rec'),
+                         ns = ((ns rec') - 1),
+                         v = (v rec'),
+                         fv = (fv rec'),
+                         sl = (sl rec'),
+                         d = (d rec')
+                        \<rparr>
+      else
+         let rec'' = (break_tie winners rec) in
+                       \<lparr>res = (res rec''),
+                         p = (p rec''),
+                         i = (i rec''),
+                         s = (s rec''),
+                         ns = 0,
+                         v = (v rec''),
+                         fv = (fv rec''),
+                         sl = (sl rec''),
+                         d = (d rec'')
+                        \<rparr>)" using rec''_def by simp
+  then have "... = \<lparr>res = (res rec''),
+                         p = (p rec''),
+                         i = (i rec''),
+                         s = (s rec''),
+                         ns = 0,
+                         v = (v rec''),
+                         fv = (fv rec''),
+                         sl = (sl rec''),
+                         d = (d rec'')
+                        \<rparr>" using rec''_def assms
+    by (smt (verit, best) False)
+  then have "sl (assign_seats rec) = sl (rec'')" 
+    by simp
+  then have "sl (assign_seats rec) ! index2 = sl (rec'') ! index2" 
+    by simp
+  then have "... = sl (break_tie winners rec) ! index2" 
+    using break_tie_lemma rec''_def by simp
+  then have "... = (sl rec) ! index2" 
+    by simp
+  then show ?thesis
+    using \<open>sl (assign_seats rec) ! index2 = sl rec'' ! index2\<close> 
+          \<open>sl rec'' ! index2 = sl (break_tie winners rec) ! index2\<close> by force
 qed
 
 lemma assign_seats_update:
@@ -677,17 +737,6 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
              d = d rec
             \<rparr>)"
 
-(* ns è un numero naturale *)
-(* i divisor sono numeri interi *)
-fun dhondt :: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<Rightarrow>
-                   ('a::linorder, 'b) Divisor_Module" where
-"dhondt rec pr = full_module (rec\<lparr>d := upt 1 (ns rec)\<rparr>) pr"
-
-fun saintelague:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<Rightarrow>
-                   ('a::linorder, 'b) Divisor_Module" where
-"saintelague rec pr = full_module (rec\<lparr>d := filter (\<lambda>x. x mod 2 = 1)
-                                            (upt 1 (2*ns rec))\<rparr>) pr"
-
 (* Define a set *)
 definition my_set :: "nat set" where
   "my_set = {1, 2, 3, 4, 5}"
@@ -806,7 +855,7 @@ fun start_seats_list :: "'a list \<Rightarrow> nat list" where
   "start_seats_list [] = []" |
   "start_seats_list (x # xs) = 0 # start_seats_list xs"
 
-definition new_record :: "char list Parties \<Rightarrow> nat \<Rightarrow> (nat, char list) Divisor_Module"
+definition new_record :: "'b Parties \<Rightarrow> nat \<Rightarrow> (nat, 'b) Divisor_Module"
   where
   "new_record cp cns = \<lparr> res =  ({}, {}, {1..cns}), p = cp, i = {1..cns}, 
                                s = create_empty_seats {1..cns} cp, ns = cns, 
@@ -821,7 +870,22 @@ definition new_record :: "char list Parties \<Rightarrow> nat \<Rightarrow> (nat
   - sto cercando di assegnare il seat al winner (RISOLTO)
 *)
 
-value "dhondt (new_record parties 10) pref"
+(* ns è un numero naturale *)
+(* i divisor sono numeri interi *)
+fun dhondt_method :: "'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Rightarrow>
+                   (nat, 'b) Divisor_Module" where
+"dhondt_method partiti nseats pr = 
+    (let rec = new_record partiti nseats in full_module (rec\<lparr>d := upt 1 (ns rec)\<rparr>) pr)"
 
-value "saintelague (new_record parties 10) pref"
+fun saintelague_method:: "'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Rightarrow>
+                   (nat, 'b) Divisor_Module" where
+"saintelague_method partiti nseats pr = 
+  (let rec = new_record partiti nseats in full_module (rec\<lparr>d := filter (\<lambda>x. x mod 2 = 1)
+                                            (upt 1 (2*ns rec))\<rparr>) pr)"
+
+
+value "dhondt_method parties 10 pref"
+
+value "saintelague_method parties 10 pref"
+
 end

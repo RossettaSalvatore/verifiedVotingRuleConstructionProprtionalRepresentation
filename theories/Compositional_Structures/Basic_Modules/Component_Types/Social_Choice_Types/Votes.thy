@@ -75,15 +75,6 @@ fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> nat \<Rightarrow> na
         0 \<Rightarrow> cnt_votes p profil (n + 1)
       | _ \<Rightarrow> cnt_votes p profil n)"
 
-lemma cnt_votes_perm_parties:
-  fixes
-    p::"'b" and
-    parties::"'b Parties" and
-    parties'::"'b Parties" and
-    profile:: "'b Profile"
-  assumes "mset parties = mset parties'" 
-  shows "cnt_votes p profile 0 = cnt_votes p profile 0"
-  sorry
 
 value "cnt_votes ''partyA'' [{(''partyA'', ''partyB'')}] 0"
 
@@ -299,7 +290,7 @@ lemma votes_perm:
   shows "\<forall> party. party \<in> set parties \<longrightarrow> (calc_votes parties parties profile []) !
                                             get_index_upd party parties
  = calc_votes parties' parties' profile [] ! get_index_upd party parties'"
-  sorry
+  by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma)
 
 (* this works 09/03/24 *)
 value "(calc_votes [''a'', ''b''] [''a'', ''b''] profile_list [0, 0])! (get_index_upd ''a'' [''a'', ''b''])"
@@ -452,14 +443,7 @@ fun count_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow>
   "count_seats p s i = 
     (card {ix. ix \<in> i \<and> s ix = p})"
 
-(* 
-fun max_parties:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties
-                     \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-"max_parties m v fp [] output = output" | 
-"max_parties m v fp (px # p) output = 
-        max_parties m v fp p (if v ! (get_index_upd px fp) = m then (output @ [px])
-                                   else output)"
-*)
+
 lemma max_parties_concordant:
   fixes
     m:: "rat" and votes1::"rat" and votes2::"rat" and s::"('a::linorder, 'b) Seats" and v:: "rat list" and fp:: "'b Parties" and
@@ -486,12 +470,4 @@ shows "get_winners votes parties = get_winners votes' parties'"
   sorry
 
 
-fun f :: "nat \<Rightarrow> nat" where
-"f x = x + 1"
-
-(* use cnt_votes function which is like party \<Rightarrow> party profile 0) *)
-
-(* Define a list of functions *)
-definition function_list :: "(nat \<Rightarrow> nat) list" where
-  "function_list = [f, f, f]"
 end
