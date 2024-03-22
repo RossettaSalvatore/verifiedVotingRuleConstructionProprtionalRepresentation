@@ -611,9 +611,10 @@ proof -
   then have "... = (list_update (sl rec) index ((sl rec) ! index + 1))
                    ! index" using assms divisor_module_sl_update
     by (metis list.sel(1)) 
-  then have "... = (sl rec) ! index + 1" using nth_list_update_eq assms by simp
-  then show ?thesis
-  by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma)
+  then have "... = (sl rec) ! index + 1" 
+    using nth_list_update_eq assms by simp
+  then show ?thesis 
+    using update_at_index_nat.simps(1) update_at_index_nat_lemma by (metis (full_types))
 qed
 
 (* i dont think this is true, skip to loop 
@@ -685,7 +686,7 @@ next
   consider "fv1 > fv2" | "fv1 = fv2" | "fv1 < fv2"
     by auto
   then show ?thesis
-  proof cases
+  proof(case "fv1 = fv2")
     case 1
     have "fv1 > fv2" by (simp add: "1")
     then have "fv2 = (Suc nat) /  (sl rr) ! i2" using assms using Suc by fastforce 

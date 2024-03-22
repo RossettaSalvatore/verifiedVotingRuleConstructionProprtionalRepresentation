@@ -121,7 +121,7 @@ where
 *)
 
 (* funziona  *)
-fun update_at_index :: "rat list \<Rightarrow> nat \<Rightarrow> rat \<Rightarrow> rat list" where
+fun update_at_index :: "rat list \<Rightarrow>  nat \<Rightarrow> rat \<Rightarrow> rat list" where
   "update_at_index [] _ _ = []" |
   "update_at_index (x # xs) i n = (if i = 0 then n # xs else x # update_at_index xs (i - 1) n)"
 
@@ -130,6 +130,28 @@ fun update_at_index_nat :: "nat list \<Rightarrow> nat \<Rightarrow> nat \<Right
   "update_at_index_nat (x # xs) i n = (if i = 0 then n # xs
                                        else x # update_at_index_nat xs (i - 1) n)"
 
+value "list_update [1::nat, 2] 0 3"
+
+(*
+lemma working. implement this with assumptions on later lemmas
+
+lemma update_at_index_nat_lemma:
+  fixes
+  xs::"nat list" and
+  i::"nat" and
+  n::"nat"
+assumes "i < length xs"
+assumes "xs \<noteq> []"
+  shows "(update_at_index_nat xs i n) ! i = n"
+proof - 
+  have "update_at_index_nat xs i n = list_update xs i n" using assms
+    by (metis update_at_index_nat.elims)
+  then have "update_at_index_nat xs i n ! i = list_update xs i n ! i" by simp
+  then have "... = n" using nth_list_update_eq assms by simp
+  then show ?thesis
+  by (simp add: \<open>update_at_index_nat xs i n = xs[i := n]\<close>)
+qed
+*)
 (* usa list update mannaggia alla madonna *)
 value "list_update ([1::nat, 2, 3]) 1 1"
 
