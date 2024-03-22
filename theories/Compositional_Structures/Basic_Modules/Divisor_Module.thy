@@ -165,7 +165,7 @@ lemma divisor_module_mon:
 assumes "index < length (sl rec)"
   shows "sl (divisor_module winner rec) ! index \<ge> 
          (sl rec) ! index"
-proof (cases "party = hd winner")
+proof -
     define seat new_s new_as new_fv index curr_ns new_sl new_di 
     where "seat = Min (disp_r (res rec))" and
           "new_s = update_seat seat winner (s rec)" and
@@ -175,7 +175,6 @@ proof (cases "party = hd winner")
           "curr_ns = (sl rec) ! index" and
           "new_sl = list_update (sl rec) index (curr_ns + 1)" and
           "new_di =  disp_r (res rec) - {seat}"
-  case True
   have "(divisor_module winner rec) =  \<lparr>res = (new_as, {}, new_di),
              p = (p rec),
              i = (i rec),
@@ -195,32 +194,6 @@ proof (cases "party = hd winner")
     using new_sl_def nth_list_update_eq by blast
   then show ?thesis
   by (metis \<open>sl (divisor_module winner rec) = new_sl\<close> assms(1) curr_ns_def le_add1 new_sl_def nth_list_update_eq nth_list_update_neq order_refl)
-next
-    define seat new_s new_as new_fv index curr_ns new_sl new_di 
-    where "seat = Min (disp_r (res rec))" and
-          "new_s = update_seat seat winner (s rec)" and
-          "new_as = ass_r (res rec) \<union> {seat}" and
-          "new_fv = update_votes2 winner (rec\<lparr>s:= new_s\<rparr>)" and
-          "index =  get_index_upd (hd winner) (p rec)" and
-          "curr_ns = (sl rec) ! index" and
-          "new_sl = list_update (sl rec) index (curr_ns + 1)" and
-          "new_di =  disp_r (res rec) - {seat}"
-  case False
-  have "(divisor_module winner rec) =  \<lparr>res = (new_as, {}, new_di),
-             p = (p rec),
-             i = (i rec),
-             s = new_s,
-             ns = (ns rec),
-             v = (v rec),
-             fv = new_fv,
-             sl = new_sl,
-             d = (d rec)
-            \<rparr>" 
-    unfolding divisor_module.simps new_sl_def Let_def
-  using nth_list_update_eq curr_ns_def index_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
-  then have "sl (divisor_module winner rec) = new_sl" by simp
-  then show ?thesis
-  by (metis assms(1) curr_ns_def le_add1 new_sl_def nth_list_update_eq nth_list_update_neq order_refl)
 qed
 
 fun break_tie :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
@@ -623,8 +596,7 @@ theorem full_module_concordant:
   defines "index2 \<equiv> get_index_upd party2 parties"
   shows "cnt_votes party1 pl 0 > cnt_votes party2 pl 0 \<Longrightarrow> 
           sl' ! index1 \<ge> sl' ! index2"
-proof -
-qed
+sorry
  
 value "get_votes ''partyA'' [''partyA'', ''partyB''] [4, 5]"
 
