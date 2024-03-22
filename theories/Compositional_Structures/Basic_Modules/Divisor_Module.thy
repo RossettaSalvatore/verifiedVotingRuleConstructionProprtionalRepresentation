@@ -95,7 +95,52 @@ fun divisor_module :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \
              d = (d rec)
             \<rparr>)"
 
-(* should work *)
+(* this lemma shows that for every update of divisor_module, all the other 
+   parties still have the same seats *)
+lemma divisor_module_mantain_seats_lemma:
+  fixes winner :: "'b list" and 
+        party :: "'b list" and
+        rec :: "('a::linorder, 'b) Divisor_Module" and
+        index::"nat"
+  defines i_def: "index \<equiv> get_index_upd (hd winner) (p rec)"
+  defines i2_def: "index2 \<equiv> get_index_upd (hd party) (p rec)"
+  assumes "index \<noteq> index2" 
+  assumes "index2 < length (sl rec)"
+  shows "sl (divisor_module winner rec) ! index2 =
+         (sl rec) ! index2"
+proof - 
+   define seat new_s new_as new_fv index curr_ns new_sl new_di 
+    where "seat = Min (disp_r (res rec))" and
+          "new_s = update_seat seat winner (s rec)" and
+          "new_as = ass_r (res rec) \<union> {seat}" and
+          "new_fv = update_votes2 winner (rec\<lparr>s:= new_s\<rparr>)" and
+          "index =  get_index_upd (hd winner) (p rec)" and
+          "curr_ns = (sl rec) ! index" and
+          "new_sl = list_update (sl rec) index (curr_ns + 1)" and
+          "new_di =  disp_r (res rec) - {seat}"
+  have "(divisor_module winner rec) =  \<lparr>res = (new_as, {}, new_di),
+             p = (p rec),
+             i = (i rec),
+             s = new_s,
+             ns = (ns rec),
+             v = (v rec),
+             fv = new_fv,
+             sl = new_sl,
+             d = (d rec)
+            \<rparr>" 
+    unfolding divisor_module.simps new_sl_def Let_def
+  using nth_list_update_eq curr_ns_def index_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
+  then have "sl (divisor_module winner rec) = new_sl" by simp
+  then have "... =  list_update (sl rec) index (curr_ns + 1)" using new_sl_def by simp
+  then have "sl (divisor_module winner rec) ! index2 = 
+             (list_update (sl rec) index (curr_ns + 1)) ! index2"
+    using \<open>sl (divisor_module winner rec) = new_sl\<close> by presburger
+  then have "... = (sl rec) ! index2" using nth_list_update_neq assms
+    by (metis index_def)
+  then show ?thesis
+  using \<open>sl (divisor_module winner rec) ! index2 = (sl rec)[index := curr_ns + 1] ! index2\<close> by presburger
+qed
+
 lemma divisor_module_sl_update:
   fixes winner :: "'b list" and 
         rec :: "('a::linorder, 'b) Divisor_Module" and
@@ -154,8 +199,7 @@ proof -
   using \<open>sl (divisor_module winner rec) ! index = list_update (sl rec) index (sl rec ! index + 1) ! index\<close> by auto
 qed
 
-(* proves that for every party in parties, number of seats cannot decrease
-   after calling divisor module *)
+
 lemma divisor_module_mon:
   fixes
   winner::"'b list" and
@@ -375,12 +419,69 @@ qed
 lemma assign_seats_not_winner_mantains_seats:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
-  party::"'b" and ps::"'b list" 
-  defines winners_def: "winners \<equiv> get_winners (fv rec) (p rec)"
-  defines rec'_def: "rec' \<equiv> divisor_module [hd winners] rec"
-  shows "party \<notin> set winners \<Longrightarrow> (sl rec) ! get_index_upd party ps =
-                                         (sl rec') ! get_index_upd party ps" using assms
-  sorry
+  party::"'b list" and index2::"nat" and
+  winner::"'b list" and winners::"'b Parties" and index::"nat"
+  defines i_def: "index \<equiv>  get_index_upd (hd winner) (p rec)"
+  defines i2_def: "index2 \<equiv> get_index_upd (hd party) (p rec)"
+  assumes "winners = get_winners (fv rec) (p rec)"
+  assumes "index \<noteq> index2" 
+  assumes "index < length (sl rec)"
+  assumes "index2 < length (sl rec)"
+  shows "(sl rec) ! index2 = (sl (assign_seats rec)) ! index2"
+proof (cases "(length winners) \<le> ns rec")
+  case True
+ define rec' 
+    where 
+     "rec'= (divisor_module [hd winners] rec)"  
+  then have "assign_seats rec =  (
+      let winners = get_winners (fv rec) (p rec) in
+      if length winners \<le> ns rec then 
+        let rec' =  (divisor_module [hd winners] rec) in
+                    \<lparr>res = (res rec'),
+                         p = (p rec'),
+                         i = (i rec'),
+                         s = (s rec'),
+                         ns = ((ns rec') - 1),
+                         v = (v rec'),
+                         fv = (fv rec'),
+                         sl = (sl rec'),
+                         d = (d rec')
+                        \<rparr>
+      else
+         let rec'' = (break_tie winners rec) in
+                       \<lparr>res = (res rec''),
+                         p = (p rec''),
+                         i = (i rec''),
+                         s = (s rec''),
+                         ns = 0,
+                         v = (v rec''),
+                         fv = (fv rec''),
+                         sl = (sl rec''),
+                         d = (d rec'')
+                        \<rparr>)" using rec'_def by simp
+  then have "... = \<lparr>res = (res rec'),
+                         p = (p rec'),
+                         i = (i rec'),
+                         s = (s rec'),
+                         ns = ((ns rec') - 1),
+                         v = (v rec'),
+                         fv = (fv rec'),
+                         sl = (sl rec'),
+                         d = (d rec')
+                        \<rparr>" using rec'_def assms
+    by (smt (verit, best) True)
+  then have "sl (assign_seats rec) = sl (rec')" by simp
+  then have "... = sl (divisor_module [hd winners] rec)" using rec'_def by simp
+  then have "sl (assign_seats rec) ! index2 = sl (divisor_module [hd winners] rec) ! index2" 
+    using assms \<open>sl (assign_seats rec) = sl rec'\<close> by presburger
+  then have "... = (sl rec) ! index2" 
+    using assms divisor_module_mantain_seats_lemma rec'_def
+  by sledgehammer
+  then show ?thesis sorry
+next
+  case False
+  then show ?thesis sorry
+qed
 
 lemma assign_seats_update:
   fixes
