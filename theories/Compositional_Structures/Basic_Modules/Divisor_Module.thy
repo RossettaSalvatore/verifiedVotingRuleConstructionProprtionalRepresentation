@@ -265,17 +265,14 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
                          d = (d rec'')
                         \<rparr>)"
 
-
+(* monotonicity of assign_seats *)
 lemma assign_seats_mon:
   fixes
-  rec::"('a::linorder, 'b) Divisor_Module" and
-  party::"'b" and ps::"'b list" and winners::"'b Parties" and
-  m::"rat"
-assumes "party \<in> set parties"
-assumes "hd winners \<in> set parties"
+  rec::"('a::linorder, 'b) Divisor_Module" and 
+  winners::"'b Parties" 
 assumes "index < length (sl rec)"
 assumes "winners = get_winners (fv rec) (p rec)"
-shows "sl (assign_seats rec) ! i1 \<ge> sl rec ! i1"
+shows "sl (assign_seats rec) ! index \<ge> sl rec ! index"
 proof(cases "length winners \<le> ns rec")
   case True
   define rec' 
@@ -321,11 +318,58 @@ proof(cases "length winners \<le> ns rec")
   then have "sl (assign_seats rec) = sl rec'" by simp
   then have "sl (assign_seats rec) ! index = sl rec' ! index" by simp
   then have "... = (sl (divisor_module [hd winners] rec)) ! index" using rec'_def by simp
-  then have "... \<ge> (sl rec) ! index" using assms divisor_module_mon by simp
-  then show ?thesis sorry
+  then have "... \<ge> (sl rec) ! index" using assms divisor_module_mon by blast
+  then show ?thesis using assms rec'_def
+  by (metis \<open>sl (assign_seats rec) = sl rec'\<close>)
 next
   case False
-  then show ?thesis sorry
+  define rec'' 
+    where 
+     "rec''= (break_tie winners rec)"  
+   then have "assign_seats rec =  (
+      let winners = get_winners (fv rec) (p rec) in
+      if length winners \<le> ns rec then 
+        let rec' =  (divisor_module [hd winners] rec) in
+                    \<lparr>res = (res rec'),
+                         p = (p rec'),
+                         i = (i rec'),
+                         s = (s rec'),
+                         ns = ((ns rec') - 1),
+                         v = (v rec'),
+                         fv = (fv rec'),
+                         sl = (sl rec'),
+                         d = (d rec')
+                        \<rparr>
+      else
+         let rec'' = (break_tie winners rec) in
+                       \<lparr>res = (res rec''),
+                         p = (p rec''),
+                         i = (i rec''),
+                         s = (s rec''),
+                         ns = 0,
+                         v = (v rec''),
+                         fv = (fv rec''),
+                         sl = (sl rec''),
+                         d = (d rec'')
+                        \<rparr>)" using rec''_def by simp
+  then have "... = \<lparr>res = (res rec''),
+                         p = (p rec''),
+                         i = (i rec''),
+                         s = (s rec''),
+                         ns = 0,
+                         v = (v rec''),
+                         fv = (fv rec''),
+                         sl = (sl rec''),
+                         d = (d rec'')
+                        \<rparr>" using rec''_def assms
+    by (smt (verit, best) False)
+  then have "sl (assign_seats rec) = sl rec''" by simp
+  then have "sl (assign_seats rec) ! index = sl rec'' ! index" by simp
+  then have "... = sl (break_tie winners rec) ! index" using rec''_def by simp
+  then have "... \<ge> sl rec ! index" by simp
+  then show ?thesis
+    using \<open>sl (assign_seats rec) ! index = sl rec'' ! index\<close> 
+          \<open>sl rec'' ! index = sl (break_tie winners rec) ! index\<close> by auto
 qed
 
 lemma assign_seats_not_winner_mantains_seats:
