@@ -288,7 +288,7 @@ lemma simp_votes:
   assumes "votes ! get_index_upd party fparties = cnt_votes party profile 0"
   shows "calc_votes parties fparties profile votes ! get_index_upd party fparties =
          cnt_votes party profile 0"
-sorry
+  by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma)
 
 lemma votes_perm:
   fixes
