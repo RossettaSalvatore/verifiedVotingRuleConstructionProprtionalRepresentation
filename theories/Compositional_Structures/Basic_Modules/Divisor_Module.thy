@@ -533,8 +533,7 @@ lemma assign_seats_seats_increased:
    fixes
   rec::"('a::linorder, 'b) Divisor_Module"
 defines "winners \<equiv> get_winners (fv rec) (p rec)" 
-defines "party \<equiv> hd winners"
-defines "index \<equiv> get_index_upd party (p rec)"
+defines "index \<equiv> get_index_upd (hd winners) (p rec)"
 defines "rec' \<equiv> (divisor_module [hd winners] rec)"
 assumes "length winners \<le> ns rec" 
 assumes "index < length (sl rec)"
@@ -562,6 +561,89 @@ proof -
   finally have "sl (assign_seats rec) ! index = sl rec ! index + 1" by simp 
   then show ?thesis using \<open>sl (assign_seats rec) ! index = sl rec ! index + 1\<close>
   by simp
+qed
+
+lemma assign_seats_concordant:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  i1::"nat" and i2::"nat" and m::"rat"
+  assumes "v1 > v2"
+  defines "fv1 \<equiv> v1 / (d rec) ! ((sl rec) ! i1)"
+  defines "fv2 \<equiv> v2 / (d rec) ! ((sl rec) ! i2)"
+  defines "winners \<equiv> get_winners (fv rec) (p rec)" 
+  defines "index \<equiv> get_index_upd (hd winners) (p rec)"
+  defines "rec' \<equiv> (divisor_module [hd winners] rec)"
+  assumes "length winners \<le> ns rec" 
+  assumes "index < length (sl rec)"
+  assumes "sl rec ! i1 \<ge> sl rec ! i2" 
+  shows "sl (assign_seats rec) ! i1 \<ge> sl (assign_seats rec) ! i2"
+proof(cases "length winners \<le> ns rec")
+  case True
+  then show ?thesis 
+      proof(cases "fv1 = fv2")
+        case True
+        then show ?thesis
+        proof(cases "fv1 = m")
+          case True
+          then show ?thesis sorry
+        next
+          case False
+          then show ?thesis sorry
+        qed
+      next
+        case False
+        then show ?thesis sorry
+      qed
+next
+  case False
+  define rec''
+    where 
+     "rec''= break_tie winners rec" 
+   have "assign_seats rec =  (
+      let winners = get_winners (fv rec) (p rec) in
+      if length winners \<le> ns rec then 
+        let rec' =  (divisor_module [hd winners] rec) in
+                    \<lparr>res = (res rec'),
+                         p = (p rec'),
+                         i = (i rec'),
+                         s = (s rec'),
+                         ns = ((ns rec') - 1),
+                         v = (v rec'),
+                         fv = (fv rec'),
+                         sl = (sl rec'),
+                         d = (d rec')
+                        \<rparr>
+      else
+         let rec'' = (break_tie winners rec) in
+                       \<lparr>res = (res rec''),
+                         p = (p rec''),
+                         i = (i rec''),
+                         s = (s rec''),
+                         ns = 0,
+                         v = (v rec''),
+                         fv = (fv rec''),
+                         sl = (sl rec''),
+                         d = (d rec'')
+                        \<rparr>)" using rec''_def by simp
+   then have "... =  \<lparr>res = (res rec''),
+                         p = (p rec''),
+                         i = (i rec''),
+                         s = (s rec''),
+                         ns = 0,
+                         v = (v rec''),
+                         fv = (fv rec''),
+                         sl = (sl rec''),
+                         d = (d rec'')
+                        \<rparr>"
+     using False assms(7) by linarith
+   then have "sl (assign_seats rec) = sl rec''" by simp
+   then have "sl (assign_seats rec) ! i1 = sl rec'' ! i1" by simp
+   then have "... = sl rec ! i1"
+     using False assms(7) by blast
+   also have "sl (assign_seats rec) ! i2 = sl rec ! i2"
+     using False assms(7) by blast
+   
+  then show ?thesis sorry
 qed
 
 lemma nseats_decreasing:
