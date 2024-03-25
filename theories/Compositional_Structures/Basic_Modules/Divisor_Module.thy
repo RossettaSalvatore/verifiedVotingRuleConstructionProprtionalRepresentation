@@ -315,7 +315,8 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
                          d = (d rec'')
                         \<rparr>)"
 
-(* monotonicity of assign_seats *)
+(* proof that for every candidate, the number of seats after 
+   calling the function cannot decrease *)
 lemma assign_seats_mon:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and 
@@ -423,6 +424,8 @@ next
     using \<open>sl (assign_seats rec) ! index = sl (break_tie winners rec) ! index\<close> by fastforce
 qed
 
+(* proof that after calling assign_seats, the other parties not winning have 
+  the same number of seats *)
 lemma assign_seats_not_winner_mantains_seats:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
@@ -484,8 +487,8 @@ proof (cases "(length winners) \<le> ns rec")
   then have "sl (assign_seats rec) ! index2 = sl (divisor_module [hd winners] rec) ! index2" 
     using assms \<open>sl (assign_seats rec) = sl rec'\<close> by presburger
   then have "... = (sl rec) ! index2" 
-    using assms divisor_module_mantain_seats_lemma rec'_def
-  by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma)
+    using assms rec'_def update_at_index_nat.simps(1) update_at_index_nat_lemma
+  by (metis (full_types))
   then show ?thesis
     using \<open>sl (assign_seats rec) ! index2 = sl (divisor_module [hd winners] rec) ! index2\<close> 
     by presburger
@@ -562,6 +565,8 @@ lemma assign_seats_update:
                             d = (d rec')\<rparr>" using assms
   by (smt (verit) assign_seats.simps)
 
+(* proof that after assign seats the winner gets its seats
+   increased by one *)
 lemma assign_seats_seats_increased:
    fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
@@ -617,23 +622,6 @@ proof -
     using update_at_index_nat.simps(1) update_at_index_nat_lemma by (metis (full_types))
 qed
 
-(* i dont think this is true, skip to loop 
-lemma assign_seats_major:
-  fixes
-  rec::"('a::linorder, 'b) Divisor_Module" and
-  party1::"'b" and party2::"'b" and
-  parties::"'b list" and
-  votes::"rat list" and
-  i::"'a::linorder set"
-defines "votes1 \<equiv> get_votes party1 parties votes"
-defines "votes2 \<equiv> get_votes party2 parties votes"
-assumes "votes1 > votes2"
-assumes "\<not>(i = {})"
-assumes "count_seats [party1] (s rec) i = count_seats [party2] (s rec) i"
-shows "count_seats [party1] (s (assign_seats rec)) i \<ge> count_seats [party2] (s (assign_seats rec)) i"
-  sorry
-*)
-
 lemma nseats_decreasing:
   assumes non_empty_parties: "p rec \<noteq> []"
   assumes n_positive: "(ns rec) > 0"
@@ -686,7 +674,7 @@ next
   consider "fv1 > fv2" | "fv1 = fv2" | "fv1 < fv2"
     by auto
   then show ?thesis
-  proof(case "fv1 = fv2")
+  proof cases
     case 1
     have "fv1 > fv2" by (simp add: "1")
     then have "fv2 = (Suc nat) /  (sl rr) ! i2" using assms using Suc by fastforce 

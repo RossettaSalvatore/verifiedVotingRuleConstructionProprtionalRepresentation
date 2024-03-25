@@ -300,8 +300,8 @@ lemma simp_votes:
   assumes "parties = fparties"
   assumes "votes ! get_index_upd party fparties = cnt_votes party profile 0"
   shows "calc_votes parties fparties profile votes ! get_index_upd party fparties =
-         cnt_votes party profile 0"
-  by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma)
+         cnt_votes party profile 0" 
+  using update_at_index_nat.simps(1) update_at_index_nat_lemma by (metis (full_types))
 
 lemma votes_perm:
   fixes
@@ -312,7 +312,7 @@ lemma votes_perm:
   shows "\<forall> party. party \<in> set parties \<longrightarrow> (calc_votes parties parties profile []) !
                                             get_index_upd party parties
  = calc_votes parties' parties' profile [] ! get_index_upd party parties'"
-  by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma)
+  using update_at_index_nat.simps(1) update_at_index_nat_lemma by (metis (full_types))
 
 (* this works 09/03/24 *)
 value "(calc_votes [''a'', ''b''] [''a'', ''b''] profile_list [0, 0])! (get_index_upd ''a'' [''a'', ''b''])"
@@ -374,9 +374,7 @@ lemma max_parties_no_in:
   v::"rat list" and
   winners::"'b Parties" and 
   start_winners::"'b Parties"
-assumes "m > 0"
 assumes "v ! (get_index_upd px fp) = 0"
-defines "px_in_parties \<equiv> (px \<in> set fp)"
 defines "winners \<equiv> max_parties m v fp fp start_winners" 
 shows "px \<notin> set winners"
   by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma zero_neq_numeral)
