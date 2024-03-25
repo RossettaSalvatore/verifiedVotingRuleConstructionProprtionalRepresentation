@@ -531,9 +531,7 @@ lemma assign_seats_update:
    increased by one *)
 lemma assign_seats_seats_increased:
    fixes
-  rec::"('a::linorder, 'b) Divisor_Module" and
-  rec'::"('a::linorder, 'b) Divisor_Module" and
-  index::"nat"
+  rec::"('a::linorder, 'b) Divisor_Module"
 defines "winners \<equiv> get_winners (fv rec) (p rec)" 
 defines "party \<equiv> hd winners"
 defines "index \<equiv> get_index_upd party (p rec)"
@@ -542,7 +540,7 @@ assumes "length winners \<le> ns rec"
 assumes "index < length (sl rec)"
 shows "sl (assign_seats rec) ! index = sl rec ! index + 1"
 proof - 
-  have "assign_seats rec =  \<lparr>res = (res rec'),
+  have "sl (assign_seats rec) =  sl (\<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
                          s = (s rec'),
@@ -551,37 +549,19 @@ proof -
                          fv = (fv rec'),
                          sl = (sl rec'),
                          d = (d rec')
-                        \<rparr>"
-    using assms assign_seats_update by blast
-  then have "sl (assign_seats rec) =  sl (\<lparr>res = (res rec'),
-                         p = (p rec'),
-                         i = (i rec'),
-                         s = (s rec'),
-                         ns = ((ns rec') - 1),
-                         v = (v rec'),
-                         fv = (fv rec'),
-                         sl = (sl rec'),
-                         d = (d rec')
-                        \<rparr>)" by simp
-  then have "sl (assign_seats rec) ! index =  sl (\<lparr>res = (res rec'),
-                         p = (p rec'),
-                         i = (i rec'),
-                         s = (s rec'),
-                         ns = ((ns rec') - 1),
-                         v = (v rec'),
-                         fv = (fv rec'),
-                         sl = (sl rec'),
-                         d = (d rec')
-                        \<rparr>) ! index" by simp
-  then have "... = (sl rec') ! index" by simp 
-  then have "... = (sl ( (divisor_module [hd winners] rec))) ! index" using assms by simp
-  then have "... = (list_update (sl rec) index ((sl rec) ! index + 1))
+                        \<rparr>)"    
+    using assms assign_seats_update by metis
+  then have "sl (assign_seats rec) ! index = (sl rec') ! index"
+    by simp 
+  also have "... = sl (divisor_module [hd winners] rec) ! index" using assms by simp
+  also have "... = (list_update (sl rec) index ((sl rec) ! index + 1))
                    ! index" using assms divisor_module_sl_update
     by (metis list.sel(1)) 
-  then have "... = (sl rec) ! index + 1" 
+  also have "... = sl rec ! index + 1" 
     using nth_list_update_eq assms by simp
-  then show ?thesis 
-    using update_at_index_nat.simps(1) update_at_index_nat_lemma by (metis (full_types))
+  finally have "sl (assign_seats rec) ! index = sl rec ! index + 1" by simp 
+  then show ?thesis using \<open>sl (assign_seats rec) ! index = sl rec ! index + 1\<close>
+  by simp
 qed
 
 lemma nseats_decreasing:
