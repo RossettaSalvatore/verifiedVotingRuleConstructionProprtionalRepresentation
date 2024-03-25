@@ -449,7 +449,7 @@ lemma max_parties_concordant:
   assumes "(v ! (get_index_upd party1 fp)) = votes1"
   assumes "(v ! (get_index_upd party2 fp)) = votes2"
   shows "party1 \<in> set output \<longrightarrow> party2 \<in> set output"
-  by (metis assms(5) diff_gt_0_iff_gt get_index_upd.simps(1) max_p.simps(1) max_parties_no_in nth_Cons_0)
+  by (metis (full_types) assms(5) diff_gt_0_iff_gt get_index_upd.simps(1) max_p.simps(1) max_parties_no_in nth_Cons_0)
 
 lemma anonymous_total:
   fixes
