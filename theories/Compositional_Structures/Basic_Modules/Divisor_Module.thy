@@ -424,9 +424,9 @@ qed
 lemma assign_seats_not_winner_mantains_seats:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module"
-  defines win_def: "winners \<equiv> get_winners (fv rec) (p rec)"
-  defines i1_def: "i1 \<equiv> get_index_upd (hd winners) (p rec)"
-  assumes "i1 < length (sl rec)"
+  defines "winners \<equiv> get_winners (fv rec) (p rec)"
+  defines "i1 \<equiv> get_index_upd (hd winners) (p rec)"
+  assumes "i1 \<noteq> i2"
   assumes "i2 < length (sl rec)"
   shows "(sl rec) ! i2 = (sl (assign_seats rec)) ! i2"
 proof (cases "(length winners) \<le> ns rec")
@@ -450,7 +450,7 @@ proof (cases "(length winners) \<le> ns rec")
   then have "sl (assign_seats rec) ! i2 = sl (divisor_module [hd winners] rec) ! i2" 
     using assms \<open>sl (assign_seats rec) = sl rec'\<close> using rec'_def by presburger
   then have "... = (sl rec) ! i2" 
-    using divisor_module_mantain_seats_lemma assms list.sel(1) by (metis) 
+    using divisor_module_mantain_seats_lemma assms list.sel(1) by metis
   then show ?thesis
   using \<open>sl (assign_seats rec) ! i2 = sl (divisor_module [hd winners] rec) ! i2\<close> by linarith
 next
@@ -573,8 +573,9 @@ assumes "party1 \<noteq> party2"
   defines "fv1 \<equiv> v1 / (d rec) ! ((sl rec) ! i1)"
   defines "fv2 \<equiv> v2 / (d rec) ! ((sl rec) ! i2)"
   defines "winners \<equiv> get_winners (fv rec) (p rec)"
-  assumes "length winners \<le> ns rec" 
+  assumes "length winners \<le> ns rec"
   assumes "sl rec ! i1 \<ge> sl rec ! i2" 
+  assumes "i1 \<noteq> i2" 
   assumes "i1 < length (sl rec)"
   assumes "i2 < length (sl rec)"
 shows "sl (assign_seats rec) ! i1 \<ge> sl (assign_seats rec) ! i2"
@@ -583,23 +584,22 @@ proof(cases "length winners \<le> ns rec")
   then show ?thesis 
       proof(cases "party1 = hd winners")
         case True
-       define rec' 
-         where 
-           "rec'= (divisor_module [hd winners] rec)" 
        have "sl (assign_seats rec) ! i1 = (sl rec) ! i1 + 1"
-       using True assign_seats_seats_increased assms(8) assms(10) i1_def winners_def by blast
+       using True assign_seats_seats_increased assms(8) assms(11) i1_def winners_def by blast
      also have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
      using True assign_seats_not_winner_mantains_seats assms(10) assms(11) i1_def winners_def by (metis) 
         then show ?thesis
         using assms(9) calculation by linarith
       next
         case False
-        then show ?thesis 
+        then show ?thesis
         proof(cases "party2 = hd winners")
           case True
           then show ?thesis sorry
         next
           case False
+          have "party1 \<noteq> hd winners" by sledgehammer
+           have "sl (assign_seats rec) ! i1 = sl rec ! i1" by sledgehammer
           then show ?thesis sorry
         qed
       qed
@@ -644,15 +644,15 @@ next
                          sl = (sl rec''),
                          d = (d rec'')
                         \<rparr>"
-     using False assms(9) by blast
+     using False assms(8) by blast
    then have "sl (assign_seats rec) = sl rec''" by simp
    then have "sl (assign_seats rec) ! i1 = sl rec'' ! i1" by simp
    then have "... = sl rec ! i1"
-     using False assms(9) by blast
+     using False assms(8) by blast
    also have "sl (assign_seats rec) ! i2 = sl rec ! i2"
-     using False assms(9) by blast
+     using False assms(8) by blast
   then show ?thesis
-  using False assms(9) by blast
+  using False assms(8) by blast
 qed
 
 lemma nseats_decreasing:
