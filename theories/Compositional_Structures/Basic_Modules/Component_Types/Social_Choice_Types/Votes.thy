@@ -120,15 +120,6 @@ where
 
 *)
 
-(* funziona  *)
-fun update_at_index :: "rat list \<Rightarrow>  nat \<Rightarrow> rat \<Rightarrow> rat list" where
-  "update_at_index [] _ _ = []" |
-  "update_at_index (x # xs) i n = (if i = 0 then n # xs else x # update_at_index xs (i - 1) n)"
-
-fun update_at_index_nat :: "nat list \<Rightarrow> nat \<Rightarrow> nat \<Rightarrow> nat list" where
-  "update_at_index_nat [] _ _ = []" |
-  "update_at_index_nat (x # xs) i n = (if i = 0 then n # xs
-                                       else x # update_at_index_nat xs (i - 1) n)"
 
 value "list_update [1::nat, 2] 0 3"
 
@@ -203,27 +194,9 @@ next
 qed
 *)
 
-lemma update_at_index_lemma:
-  fixes
-  xs::"rat list" and
-  i::"nat" and
-  n::"rat"
-assumes "(update_at_index xs i n) ! i = n" 
-  shows "(update_at_index xs i n) ! i = n"
-  using assms by simp
+value "list_update [''a'', ''b'', ''d''] 2 ''c''"
 
-
-lemma update_at_index_nat_lemma:
-  fixes
-  xs::"nat list" and
-  i::"nat" and
-  n::"nat"
-  shows "(update_at_index_nat xs i n) ! i = n"
-sorry
-
-  value "list_update [''a'', ''b'', ''d''] 2 ''c''"
-
-(* value "update_at_index [2, 2, 2] 1 5" *)
+value "list_update [2::nat, 2, 2] 1 5"
 
 definition remove_some :: "'a multiset \<Rightarrow> 'a" where
 "remove_some M = (SOME x. x \<in> set_mset M)"
@@ -301,7 +274,7 @@ lemma simp_votes:
   assumes "votes ! get_index_upd party fparties = cnt_votes party profile 0"
   shows "calc_votes parties fparties profile votes ! get_index_upd party fparties =
          cnt_votes party profile 0" 
-  using update_at_index_nat.simps(1) update_at_index_nat_lemma by (metis (full_types))
+  by sledgehammer
 
 lemma votes_perm:
   fixes
@@ -360,24 +333,28 @@ fun max_val:: "rat list \<Rightarrow> rat \<Rightarrow> rat" where
 fun max_val_wrap:: "rat list \<Rightarrow> rat" where 
 "max_val_wrap v = max_val v 0"
 
-fun max_parties:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties
+fun func1:: "char list list \<Rightarrow> char list list \<Rightarrow> char list list" where
+"func1 [] w = w" | 
+"func1 (px # p) w = 
+        func1 p (if px = ''y'' then (w @ [px])
+                                   else w)"
+
+lemma lemma1:
+  assumes "px \<notin> set sw" and "px \<noteq> ''y''"
+  shows "px \<notin> set (func1 ps sw)"
+  using assms by (induction ps sw rule: func1.induct) auto
+
+fun max_p:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-"max_parties m v fp [] winners = winners" | 
-"max_parties m v fp (px # p) winners = 
-        max_parties m v fp p (if v ! (get_index_upd px fp) = m then (winners @ [px])
-                                   else winners)"
+"max_p m v ps w = w @ filter (\<lambda>x. v ! (get_index_upd x ps) = m) ps" 
 
 lemma max_parties_no_in:
-  fixes 
-  m::"rat" and 
-  px::"'b" and
-  v::"rat list" and
-  winners::"'b Parties" and 
-  start_winners::"'b Parties"
-assumes "v ! (get_index_upd px fp) = 0"
-defines "winners \<equiv> max_parties m v fp fp start_winners" 
-shows "px \<notin> set winners"
-  by (metis update_at_index_nat.simps(1) update_at_index_nat_lemma zero_neq_numeral)
+  assumes "px \<notin> set sw"
+  assumes "m > 0"
+  assumes "v ! (get_index_upd px ps) = 0"
+  shows "px \<notin> set (max_p m v ps sw)"
+  using assms by (induction ps sw rule: max_p.induct) auto
+
 
 (*  have "m>0" using assms by simp 
   then have "px \<notin> set start_winners" using assms by simp
@@ -404,9 +381,8 @@ shows "max_parties m v parties parties output = max_parties m v' parties' partie
 *)
 
 (* works 09/03 *)
-value "max_parties   7 [7, 4, 5] 
+value "max_p   7 [7, 4, 5] 
                      [''a'', ''b'', ''c''] 
-                     [''a'', ''b'', ''c'']
                      []"
 
 value "cnt_votes ''a'' profile_list 0"
@@ -429,7 +405,7 @@ qed*)
 
 fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = 
-    (let m = max_val_wrap v in max_parties m v p p [])"
+    (let m = max_val_wrap v in max_p m v p [])"
 
 (* lemma from max parties 0 votes \<Rightarrow> not in winners *)
 lemma get_winners_not_in:
@@ -441,7 +417,7 @@ fixes
 assumes "m > 0"
 assumes "v ! (get_index_upd px p) = 0"
 shows "px \<notin> set (get_winners v p)"
-  by (metis n_not_Suc_n update_at_index_nat.simps(1) update_at_index_nat_lemma)
+  sorry
 
 lemma find_max_votes_not_empty:
   fixes
@@ -465,9 +441,6 @@ fun count_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow>
 
 
 lemma max_parties_concordant:
-  fixes
-    m:: "rat" and votes1::"rat" and votes2::"rat" and s::"('a::linorder, 'b) Seats" and v:: "rat list" and fp:: "'b Parties" and
-    p::"'b Parties" and party1::"'b" and party2::"'b" and px:: "'b" and prof::"'b list Profile" and i::"'a::linorder set"
   assumes "fp = p"
   assumes "ns1 = ns2"
   assumes "votes1 = cnt_votes fp prof 0 / ns1"
@@ -476,7 +449,7 @@ lemma max_parties_concordant:
   assumes "(v ! (get_index_upd party1 fp)) = votes1"
   assumes "(v ! (get_index_upd party2 fp)) = votes2"
   shows "party1 \<in> set output \<longrightarrow> party2 \<in> set output"
-  by (metis assms(5) diff_gt_0_iff_gt get_index_upd.simps(1) max_parties.simps(1) max_parties_no_in nth_Cons_0)
+  by (metis assms(5) diff_gt_0_iff_gt get_index_upd.simps(1) max_p.simps(1) max_parties_no_in nth_Cons_0)
 
 lemma anonymous_total:
   fixes

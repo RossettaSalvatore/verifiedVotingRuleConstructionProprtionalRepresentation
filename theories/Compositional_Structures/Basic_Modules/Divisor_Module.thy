@@ -98,13 +98,8 @@ fun divisor_module :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \
 (* this lemma shows that for every update of divisor_module, all the other 
    parties still have the same seats *)
 lemma divisor_module_mantain_seats_lemma:
-  fixes winner :: "'b list" and 
-        party :: "'b list" and
-        rec :: "('a::linorder, 'b) Divisor_Module" and
-        index::"nat"
-  defines i_def: "index \<equiv> get_index_upd (hd winner) (p rec)"
-  defines i2_def: "index2 \<equiv> get_index_upd (hd party) (p rec)"
-  assumes "index \<noteq> index2" 
+  assumes "index = get_index_upd (hd winner) (p rec)"
+  assumes "index2 \<noteq> index"
   assumes "index2 < length (sl rec)"
   shows "sl (divisor_module winner rec) ! index2 =
          (sl rec) ! index2"
@@ -487,8 +482,7 @@ proof (cases "(length winners) \<le> ns rec")
   then have "sl (assign_seats rec) ! index2 = sl (divisor_module [hd winners] rec) ! index2" 
     using assms \<open>sl (assign_seats rec) = sl rec'\<close> by presburger
   then have "... = (sl rec) ! index2" 
-    using assms rec'_def update_at_index_nat.simps(1) update_at_index_nat_lemma
-  by (metis (full_types))
+    by sledgehammer
   then show ?thesis
     using \<open>sl (assign_seats rec) ! index2 = sl (divisor_module [hd winners] rec) ! index2\<close> 
     by presburger
@@ -681,7 +675,6 @@ next
     then have "r' = loop_o rr" using assms by simp
     then have "loop_o rr = loop_o (assign_seats rr)" using assms by simp
     then have "sl r' = sl (loop_o (assign_seats rr))" using assms by simp
-    then have "... = " using assms by simp
     then show ?thesis sorry
   next
     case 2
