@@ -584,12 +584,12 @@ proof(cases "length winners \<le> ns rec")
   then show ?thesis 
       proof(cases "party1 = hd winners")
         case True
-       have "sl (assign_seats rec) ! i1 = (sl rec) ! i1 + 1"
-       using True assign_seats_seats_increased assms(8) assms(11) i1_def winners_def by blast
-     also have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
-     using True assign_seats_not_winner_mantains_seats assms(10) assms(11) i1_def winners_def by (metis) 
-        then show ?thesis
-        using assms(9) calculation by linarith
+             have "sl (assign_seats rec) ! i1 = (sl rec) ! i1 + 1"
+             using True assign_seats_seats_increased assms(8) assms(11) i1_def winners_def by blast
+           also have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
+           using True assign_seats_not_winner_mantains_seats assms(10) assms(11) i1_def winners_def by (metis) 
+              then show ?thesis
+              using assms(9) calculation by linarith
       next
         case False
         then show ?thesis
@@ -598,8 +598,10 @@ proof(cases "length winners \<le> ns rec")
           then show ?thesis sorry
         next
           case False
-          have "party1 \<noteq> hd winners" by sledgehammer
-           have "sl (assign_seats rec) ! i1 = sl rec ! i1" by sledgehammer
+          have "party1 \<noteq> hd winners" 
+            using  \<open>party1 \<noteq> hd winners\<close> by simp
+          have "sl (assign_seats rec) ! i1 = sl rec ! i1" 
+            using assms \<open>party1 \<noteq> hd winners\<close> by sledgehammer
           then show ?thesis sorry
         qed
       qed
