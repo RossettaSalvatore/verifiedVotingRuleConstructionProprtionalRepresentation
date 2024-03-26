@@ -587,7 +587,7 @@ proof(cases "length winners \<le> ns rec")
              have "sl (assign_seats rec) ! i1 = (sl rec) ! i1 + 1"
              using True assign_seats_seats_increased assms(8) assms(11) i1_def winners_def by blast
            also have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
-           using True assign_seats_not_winner_mantains_seats assms(10) assms(11) i1_def winners_def by (metis) 
+           using True assign_seats_not_winner_mantains_seats assms i1_def winners_def by metis 
               then show ?thesis
               using assms(9) calculation by linarith
       next
@@ -598,10 +598,24 @@ proof(cases "length winners \<le> ns rec")
           then show ?thesis sorry
         next
           case False
-          have "party1 \<noteq> hd winners" 
-            using  \<open>party1 \<noteq> hd winners\<close> by simp
-          have "sl (assign_seats rec) ! i1 = sl rec ! i1" 
-            using assms \<open>party1 \<noteq> hd winners\<close> by sledgehammer
+          obtain partyW iW where "partyW = hd winners" 
+          "iW = get_index_upd partyW (p rec)" by simp
+          have "party1 \<noteq> partyW" 
+            using  \<open>partyW = hd winners\<close>  \<open>party1 \<noteq> hd winners\<close> False by simp
+          have "party2 \<noteq> partyW" 
+            using  \<open>partyW = hd winners\<close> False by simp
+          then have "i2 = get_index_upd party2 (p rec)" 
+            using assms by simp
+          also have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
+            using False assign_seats_not_winner_mantains_seats assms i2_def i1_def 
+                    winners_def by sledgehammer 
+          
+          then have "i2 \<noteq> get_index_upd (hd winners) (p rec)" 
+            using False assms \<open>party2 \<noteq> hd winners\<close>
+                              \<open>i2 = get_index_upd party2 (p rec)\<close>
+            by sledgehammer
+          also have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
+            by simp
           then show ?thesis sorry
         qed
       qed
