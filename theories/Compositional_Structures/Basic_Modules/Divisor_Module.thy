@@ -573,7 +573,6 @@ assumes "party1 \<noteq> party2"
   defines "fv1 \<equiv> v1 / (d rec) ! ((sl rec) ! i1)"
   defines "fv2 \<equiv> v2 / (d rec) ! ((sl rec) ! i2)"
   defines "winners \<equiv> get_winners (fv rec) (p rec)"
-  assumes "length winners \<le> ns rec"
   assumes "sl rec ! i1 \<ge> sl rec ! i2" 
   assumes "i1 \<noteq> i2" 
   assumes "i1 < length (sl rec)"
@@ -585,11 +584,11 @@ proof(cases "length winners \<le> ns rec")
       proof(cases "party1 = hd winners")
         case True
              have "sl (assign_seats rec) ! i1 = (sl rec) ! i1 + 1"
-             using True assign_seats_seats_increased assms(8) assms(11) i1_def winners_def by blast
+             using  \<open>length winners \<le> ns rec\<close> True assign_seats_seats_increased assms(8) assms(11) i1_def winners_def by blast
            also have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
            using True assign_seats_not_winner_mantains_seats assms i1_def winners_def by metis 
               then show ?thesis
-              using assms(9) calculation by linarith
+              using assms(8) calculation by simp
       next
         case False
         then show ?thesis
@@ -600,22 +599,13 @@ proof(cases "length winners \<le> ns rec")
           case False
           obtain partyW iW where "partyW = hd winners" 
           "iW = get_index_upd partyW (p rec)" by simp
-          have "party1 \<noteq> partyW" 
-            using  \<open>partyW = hd winners\<close>  \<open>party1 \<noteq> hd winners\<close> False by simp
           have "party2 \<noteq> partyW" 
             using  \<open>partyW = hd winners\<close> False by simp
           then have "i2 = get_index_upd party2 (p rec)" 
             using assms by simp
           also have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
             using False assign_seats_not_winner_mantains_seats assms i2_def i1_def 
-                    winners_def by sledgehammer 
-          
-          then have "i2 \<noteq> get_index_upd (hd winners) (p rec)" 
-            using False assms \<open>party2 \<noteq> hd winners\<close>
-                              \<open>i2 = get_index_upd party2 (p rec)\<close>
-            by sledgehammer
-          also have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
-            by simp
+                    winners_def by simp 
           then show ?thesis sorry
         qed
       qed
@@ -660,13 +650,13 @@ next
                          sl = (sl rec''),
                          d = (d rec'')
                         \<rparr>"
-     using False assms(8) by blast
+     using False rec''_def winners_def by simp
    then have "sl (assign_seats rec) = sl rec''" by simp
    then have "sl (assign_seats rec) ! i1 = sl rec'' ! i1" by simp
    then have "... = sl rec ! i1"
-     using False assms(8) by blast
+     using break_tie_lemma rec''_def by metis
    also have "sl (assign_seats rec) ! i2 = sl rec ! i2"
-     using False assms(8) by blast
+     using \<open>sl (assign_seats rec) = sl rec''\<close> break_tie_lemma rec''_def by metis
   then show ?thesis
   using False assms(8) by blast
 qed
