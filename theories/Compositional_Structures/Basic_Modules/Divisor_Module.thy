@@ -600,7 +600,8 @@ proof(cases "length winners \<le> ns rec")
         next
           case False
           have "party2 \<noteq> hd winners" using False by simp
-          then have "get_index_upd (hd (get_winners (fv rec) (p rec))) (p rec) \<noteq> i2" 
+          then have "winners = (get_winners (fv rec) (p rec))" using assms by simp
+          then have "get_index_upd (hd winners) (p rec) \<noteq> i2" 
             using assms by simp
           then have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
             using False assms i2_def i1_def 
