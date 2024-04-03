@@ -584,7 +584,7 @@ proof(cases "length winners \<le> ns rec")
       proof(cases "party1 = hd winners")
         case True
              have "sl (assign_seats rec) ! i1 = (sl rec) ! i1 + 1"
-             using  \<open>length winners \<le> ns rec\<close> True assign_seats_seats_increased assms(8) assms(11) i1_def winners_def by blast
+             using  \<open>length winners \<le> ns rec\<close> True assign_seats_seats_increased assms i1_def winners_def by blast
            also have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
            using True assign_seats_not_winner_mantains_seats assms i1_def winners_def by metis 
               then show ?thesis
@@ -597,15 +597,11 @@ proof(cases "length winners \<le> ns rec")
           then show ?thesis sorry
         next
           case False
-          obtain partyW iW where "partyW = hd winners" 
-          "iW = get_index_upd partyW (p rec)" by simp
-          have "party2 \<noteq> partyW" 
-            using  \<open>partyW = hd winners\<close> False by simp
-          then have "i2 = get_index_upd party2 (p rec)" 
-            using assms by simp
-          also have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
-            using False assign_seats_not_winner_mantains_seats assms i2_def i1_def 
-                    winners_def by simp 
+          have "party2 \<noteq> hd winners" using False by simp
+          then have "i2 \<noteq> get_index_upd (hd winners) (p rec)" using assms by simp
+          then have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
+            using False assms i2_def i1_def 
+                    winners_def assign_seats_not_winner_mantains_seats[of rec i2] by simp
           then show ?thesis sorry
         qed
       qed
@@ -658,7 +654,8 @@ next
    also have "sl (assign_seats rec) ! i2 = sl rec ! i2"
      using \<open>sl (assign_seats rec) = sl rec''\<close> break_tie_lemma rec''_def by metis
   then show ?thesis
-  using False assms(8) by blast
+  using False assms
+  using \<open>sl (assign_seats rec) ! i1 = sl rec'' ! i1\<close> calculation by linarith
 qed
 
 lemma nseats_decreasing:
@@ -693,43 +690,32 @@ termination by (relation "measure (\<lambda>r. ns r)")
 lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
   by (cases r) auto
 
+
 lemma loop_o_concordant:
-  fixes 
-  rr:: "('a::linorder, 'b) Divisor_Module" and
-  v1::"nat" and v2::"nat" and i1::"nat" and i2::"nat"
-  defines "r' \<equiv> loop_o rr"
-  defines "fv1 \<equiv> v1 / (sl rr) ! i1"
-  defines "fv2 \<equiv> v2 / (sl rr) ! i2"
-  assumes "v1 > 0 \<Longrightarrow> v2 = 0 \<Longrightarrow> (sl r') ! i2 = 0"
-  assumes "v1 > v2"
-  assumes "ns rr \<noteq> 0" 
-  shows "(sl r') ! i1 \<ge> (sl r') ! i2"
-proof(cases v2)
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  m::"rat" and
+  party1::"'b" and party2::"'b" and parties::"'b Parties"
+assumes "v1 > v2"
+assumes "party1 \<noteq> party2"
+  defines "i1 \<equiv> get_index_upd party1 (p rec)"
+  defines "i2 \<equiv> get_index_upd party2 (p rec)"
+  defines "fv1 \<equiv> v1 / (d rec) ! ((sl rec) ! i1)"
+  defines "fv2 \<equiv> v2 / (d rec) ! ((sl rec) ! i2)"
+  defines "winners \<equiv> get_winners (fv rec) (p rec)"
+  assumes "sl rec ! i1 \<ge> sl rec ! i2" 
+  assumes "i1 \<noteq> i2" 
+  assumes "i1 < length (sl rec)"
+  assumes "i2 < length (sl rec)"
+shows "sl (loop_o rec) ! i1 \<ge> sl (loop_o rec) ! i2"
+proof(induction "ns rec")
   case 0
-  then show ?thesis using assms
-  by (simp)
+  then have "loop_o rec = rec" using assms by simp
+  then show ?case using assms by simp
 next
-  case (Suc nat)
-  consider "fv1 > fv2" | "fv1 = fv2" | "fv1 < fv2"
-    by auto
-  then show ?thesis
-  proof cases
-    case 1
-    have "fv1 > fv2" by (simp add: "1")
-    then have "fv2 = (Suc nat) /  (sl rr) ! i2" using assms using Suc by fastforce 
-    then have "r' = loop_o rr" using assms by simp
-    then have "loop_o rr = loop_o (assign_seats rr)" using assms by simp
-    then have "sl r' = sl (loop_o (assign_seats rr))" using assms by simp
-    then show ?thesis sorry
-  next
-    case 2
-    have "fv1 = fv2" by (simp add: "2")
-    then show ?thesis sorry
-  next
-    case 3
-    have "fv1 < fv2" by (simp add: "3")
-    then show ?thesis sorry
-  qed
+  case (Suc x)
+  then show ?case sorry
+qed
 qed
 
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
