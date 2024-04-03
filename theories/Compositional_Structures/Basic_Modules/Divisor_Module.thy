@@ -423,7 +423,7 @@ qed
   the same number of seats *)
 lemma assign_seats_not_winner_mantains_seats:
   fixes
-  rec::"('a::linorder, 'b) Divisor_Module"
+  rec::"('a::linorder, 'b) Divisor_Module" and winners::"'b list" and i2::"nat"
   defines "winners \<equiv> get_winners (fv rec) (p rec)"
   defines "i1 \<equiv> get_index_upd (hd winners) (p rec)"
   assumes "i1 \<noteq> i2"
@@ -564,7 +564,8 @@ qed
 lemma assign_seats_concordant:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
-  m::"rat" and
+  i2::"nat" and i1::"nat" and
+  m::"rat" and winners::"'b list" and
   party1::"'b" and party2::"'b" and parties::"'b Parties"
 assumes "v1 > v2"
 assumes "party1 \<noteq> party2"
@@ -577,6 +578,7 @@ assumes "party1 \<noteq> party2"
   assumes "i1 \<noteq> i2" 
   assumes "i1 < length (sl rec)"
   assumes "i2 < length (sl rec)"
+  assumes "get_index_upd (hd (get_winners (fv rec) (p rec))) (p rec) \<noteq> i2"
 shows "sl (assign_seats rec) ! i1 \<ge> sl (assign_seats rec) ! i2"
 proof(cases "length winners \<le> ns rec")
   case True
@@ -598,10 +600,11 @@ proof(cases "length winners \<le> ns rec")
         next
           case False
           have "party2 \<noteq> hd winners" using False by simp
-          then have "i2 \<noteq> get_index_upd (hd winners) (p rec)" using assms by simp
+          then have "get_index_upd (hd (get_winners (fv rec) (p rec))) (p rec) \<noteq> i2" 
+            using assms by simp
           then have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
             using False assms i2_def i1_def 
-                    winners_def assign_seats_not_winner_mantains_seats[of rec i2] by simp
+                  assign_seats_not_winner_mantains_seats[of rec i2] by auto
           then show ?thesis sorry
         qed
       qed
@@ -683,7 +686,7 @@ function loop_o ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
   where  
   "ns r = 0  \<Longrightarrow> loop_o r = r" |
-  "\<not>(ns r = 0) \<Longrightarrow> loop_o r = loop_o (assign_seats r)"
+  "ns r > 0 \<Longrightarrow> loop_o r = loop_o (assign_seats r)"
   by auto
 termination by (relation "measure (\<lambda>r. ns r)")
                (auto simp add: Let_def nseats_decreasing)
@@ -691,7 +694,7 @@ lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r)
   by (cases r) auto
 
 
-lemma loop_o_concordant:
+lemma lemma1:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
   m::"rat" and
@@ -707,16 +710,28 @@ assumes "party1 \<noteq> party2"
   assumes "i1 \<noteq> i2" 
   assumes "i1 < length (sl rec)"
   assumes "i2 < length (sl rec)"
-shows "sl (loop_o rec) ! i1 \<ge> sl (loop_o rec) ! i2"
-proof(induction "ns rec")
-  case 0
-  then have "loop_o rec = rec" using assms by simp
-  then show ?case using assms by simp
-next
-  case (Suc x)
-  then show ?case sorry
-qed
-qed
+shows "sl (assign_seats rec) ! i1 \<ge> sl (assign_seats rec) ! i2"
+  sorry
+
+lemma loop_o_concordant:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  m::"rat" and
+  party1::"'b" and party2::"'b" and parties::"'b Parties"
+assumes "v1 > v2"
+assumes "party1 \<noteq> party2"
+  defines "i1 \<equiv> get_index_upd party1 (p rec)"
+  defines "i2 \<equiv> get_index_upd party2 (p rec)"
+  defines "fv1 \<equiv> v1 / (d rec) ! ((sl rec) ! i1)"
+  defines "fv2 \<equiv> v2 / (d rec) ! ((sl rec) ! i2)"
+  defines "winners \<equiv> get_winners (fv rec) (p rec)"
+  assumes "i1 \<noteq> i2" 
+  assumes "i1 < length (sl rec)"
+  assumes "i2 < length (sl rec)"
+  shows "sl (loop_o rec) ! i1 \<ge> sl (loop_o rec) ! i2"
+  using assms lemma1
+  by (induction rec rule:loop_o.induct)
+    auto
 
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
   "create_empty_seats indexes parties =
