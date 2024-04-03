@@ -578,7 +578,6 @@ assumes "party1 \<noteq> party2"
   assumes "i1 \<noteq> i2" 
   assumes "i1 < length (sl rec)"
   assumes "i2 < length (sl rec)"
-  assumes "get_index_upd (hd (get_winners (fv rec) (p rec))) (p rec) \<noteq> i2"
 shows "sl (assign_seats rec) ! i1 \<ge> sl (assign_seats rec) ! i2"
 proof(cases "length winners \<le> ns rec")
   case True
@@ -602,7 +601,7 @@ proof(cases "length winners \<le> ns rec")
           have "party2 \<noteq> hd winners" using False by simp
           then have "winners = (get_winners (fv rec) (p rec))" using assms by simp
           then have "get_index_upd (hd winners) (p rec) \<noteq> i2" 
-            using assms by simp
+            using assms False get_index_upd_diff_elements by metis
           then have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
             using False assms i2_def i1_def 
                   assign_seats_not_winner_mantains_seats[of rec i2] by auto

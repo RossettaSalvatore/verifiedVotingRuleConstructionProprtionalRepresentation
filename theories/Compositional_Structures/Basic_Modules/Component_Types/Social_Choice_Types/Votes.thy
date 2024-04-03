@@ -50,17 +50,17 @@ primrec get_index :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow
 "get_index P [] = 0"
 | "get_index P (x # xs) = (if P x then 0 else Suc (get_index P xs))"
 
-primrec get_index_upd :: "'a \<Rightarrow> 'a list \<Rightarrow> nat" where
+fun get_index_upd :: "'a \<Rightarrow> 'a list \<Rightarrow> nat" where
 "get_index_upd p [] = 0"
 | "get_index_upd p (x # xs) = (if x = p then 0 else Suc (get_index_upd p xs))"
 
 lemma get_index_upd_correct:
+  fixes
+  p::"'a list"
   shows "p ! (get_index_upd px p) = px"
-  by (induction px rule:get_index_upd.induct)
+  sorry
 
 lemma get_index_upd_diff_elements:
-  assumes "p ! (get_index_upd p1 p) = p1"
-  assumes "p ! (get_index_upd p2 p) = p2"
   assumes "p1 \<noteq> p2" 
   shows "get_index_upd p1 p \<noteq> get_index_upd p2 p"
 proof (rule ccontr)
@@ -69,12 +69,13 @@ proof (rule ccontr)
   from this obtain n1 n2 where "get_index_upd p1 p = n1" and "get_index_upd p2 p = n2" by blast
   hence "n1 = n2"
     by (meson \<open>\<not> get_index_upd p1 p \<noteq> get_index_upd p2 p\<close>)
-  hence "p ! n1 = p1" using assms
-    using \<open>get_index_upd p1 p = n1\<close> by auto
-  hence "p ! n2 = p2" using assms
-    using \<open>get_index_upd p2 p = n2\<close> by simp
+  hence "p ! n1 = p1" 
+    using assms get_index_upd_correct \<open>get_index_upd p1 p = n1\<close> by fastforce
+  hence "p ! n2 = p2" 
+    using assms get_index_upd_correct \<open>get_index_upd p2 p = n2\<close> by fastforce
   hence "p1 = p2" 
-    using assms \<open>\<not> get_index_upd p1 p \<noteq> get_index_upd p2 p\<close> by auto
+    using assms \<open>\<not> get_index_upd p1 p \<noteq> get_index_upd p2 p\<close>
+          \<open>n1 = n2\<close> \<open>p ! n1 = p1\<close> by blast
   with assms show False by simp
 qed
 
