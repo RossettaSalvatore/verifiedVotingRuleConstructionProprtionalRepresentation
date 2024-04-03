@@ -54,6 +54,30 @@ primrec get_index_upd :: "'a \<Rightarrow> 'a list \<Rightarrow> nat" where
 "get_index_upd p [] = 0"
 | "get_index_upd p (x # xs) = (if x = p then 0 else Suc (get_index_upd p xs))"
 
+lemma get_index_upd_correct:
+  shows "p ! (get_index_upd px p) = px"
+  by (induction px rule:get_index_upd.induct)
+
+lemma get_index_upd_diff_elements:
+  assumes "p ! (get_index_upd p1 p) = p1"
+  assumes "p ! (get_index_upd p2 p) = p2"
+  assumes "p1 \<noteq> p2" 
+  shows "get_index_upd p1 p \<noteq> get_index_upd p2 p"
+proof (rule ccontr)
+  assume "\<not> (get_index_upd p1 p \<noteq> get_index_upd p2 p)"
+  then have "get_index_upd p1 p = get_index_upd p2 p" by simp
+  from this obtain n1 n2 where "get_index_upd p1 p = n1" and "get_index_upd p2 p = n2" by blast
+  hence "n1 = n2"
+    by (meson \<open>\<not> get_index_upd p1 p \<noteq> get_index_upd p2 p\<close>)
+  hence "p ! n1 = p1" using assms
+    using \<open>get_index_upd p1 p = n1\<close> by auto
+  hence "p ! n2 = p2" using assms
+    using \<open>get_index_upd p2 p = n2\<close> by simp
+  hence "p1 = p2" 
+    using assms \<open>\<not> get_index_upd p1 p \<noteq> get_index_upd p2 p\<close> by auto
+  with assms show False by simp
+qed
+
 value "get_index_upd ''3'' [''0'', ''2'', ''1'', ''4'', ''3'', ''5'']"
 
 fun get_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> nat list \<Rightarrow> nat" where
