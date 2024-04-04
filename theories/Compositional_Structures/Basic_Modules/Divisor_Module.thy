@@ -63,7 +63,7 @@ text \<open> This function updates the "fractional votes" of the winning party, 
 fun update_votes2 ::  "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        rat list" where 
 "update_votes2 winner r = 
-    (let index = get_index(\<lambda>x. x = (hd winner)) (p r);
+    (let index = get_index_upd(hd winner)(p r);
      n_seats = count_seats winner (s r) (i r);
      new_v = of_nat(get_votes (hd winner) (p r) (v r)) / of_int(d r ! n_seats) in
      list_update (fv r) index new_v)"
