@@ -563,6 +563,39 @@ proof -
   by simp
 qed
 
+lemma assign_seats_helper_lemma:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  i2::"nat" and i1::"nat" and
+  m::"rat" and winners::"'b list" and
+  party1::"'b" and party2::"'b" and parties::"'b Parties"
+assumes "v1 > v2"
+assumes "party1 \<noteq> party2"
+  defines "i1 \<equiv> get_index_upd party1 (p rec)"
+  defines "i2 \<equiv> get_index_upd party2 (p rec)"
+  defines "fv1 \<equiv> v1 / (d rec) ! ((sl rec) ! i1)"
+  defines "fv2 \<equiv> v2 / (d rec) ! ((sl rec) ! i2)"
+  defines "winners \<equiv> get_winners (fv rec) (p rec)"
+  assumes "sl rec ! i1 \<ge> sl rec ! i2" 
+  assumes "i1 \<noteq> i2" 
+  assumes "i1 < length (sl rec)"
+  assumes "i2 < length (sl rec)"
+  assumes "party2 = hd winners"
+  assumes "length winners \<le> ns rec"
+  shows "sl (assign_seats rec) ! i1 \<ge> sl (assign_seats rec) ! i2"
+proof(cases "sl rec ! i1 = sl rec ! i2")
+  case True
+  have "sl rec ! i1 = sl rec ! i2" using True by simp
+  then show ?thesis sorry
+next
+  case False
+  have "sl rec ! i1 > sl rec ! i2" using assms False by simp
+  then have "i2 = get_index_upd (hd winners) (p rec)" using assms by simp
+  then have "sl (assign_seats rec) ! i2 = sl rec ! i2 + 1" 
+    using assms assign_seats_seats_increased by blast
+  then show ?thesis sorry
+qed
+
 lemma assign_seats_concordant:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
