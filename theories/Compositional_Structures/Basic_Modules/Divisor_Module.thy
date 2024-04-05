@@ -423,7 +423,9 @@ qed
   the same number of seats *)
 lemma assign_seats_not_winner_mantains_seats:
   fixes
-  rec::"('a::linorder, 'b) Divisor_Module" and winners::"'b list" and i2::"nat"
+  rec::"('a::linorder, 'b) Divisor_Module" and 
+  winners::"'b list" and 
+  i2::"nat"
   defines "winners \<equiv> get_winners (fv rec) (p rec)"
   defines "i1 \<equiv> get_index_upd (hd winners) (p rec)"
   assumes "i1 \<noteq> i2"
@@ -580,7 +582,8 @@ assumes "party1 \<noteq> party2"
   assumes "i2 < length (sl rec)"
 shows "sl (assign_seats rec) ! i1 \<ge> sl (assign_seats rec) ! i2"
 proof(cases "length winners \<le> ns rec")
-  case True
+  case True  \<comment> \<open>commment\<close> 
+  (* let ?x = *)
   then show ?thesis 
       proof(cases "party1 = hd winners")
         case True
@@ -605,7 +608,14 @@ proof(cases "length winners \<le> ns rec")
           then have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
             using False assms i2_def i1_def 
                   assign_seats_not_winner_mantains_seats[of rec i2] by auto
-          then show ?thesis sorry
+          have "party1 \<noteq> hd winners" using \<open>party1 \<noteq> hd winners\<close> by simp
+          then have "get_index_upd (hd winners) (p rec) \<noteq> i1" 
+            using assms False get_index_upd_diff_elements by metis
+             then have "sl (assign_seats rec) ! i1 = (sl rec) ! i1"
+            using \<open>party1 \<noteq> hd winners\<close> assms i2_def i1_def 
+                  assign_seats_not_winner_mantains_seats[of rec i1] by auto
+          then show ?thesis
+          using \<open>sl (assign_seats rec) ! i2 = sl rec ! i2\<close> assms(8) by linarith
         qed
       qed
 next
