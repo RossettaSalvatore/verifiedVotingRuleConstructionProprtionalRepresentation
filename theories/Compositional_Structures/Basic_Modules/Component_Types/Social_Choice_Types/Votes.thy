@@ -61,7 +61,12 @@ lemma get_index_upd_correct:
   sorry
 
 lemma get_index_upd_diff_elements:
+  fixes 
+  p1::"'a" and p2::"'a" and p::"'a list"
+assumes "p1 \<in> set p"
+assumes "p2 \<in> set p"
   assumes "p1 \<noteq> p2" 
+  assumes "p \<noteq> []"
   shows "get_index_upd p1 p \<noteq> get_index_upd p2 p"
 proof (rule ccontr)
   assume "\<not> (get_index_upd p1 p \<noteq> get_index_upd p2 p)"
