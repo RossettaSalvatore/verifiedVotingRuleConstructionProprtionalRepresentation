@@ -563,6 +563,45 @@ proof -
   by simp
 qed
 
+
+(* lemma che dice che se ho gli stessi seat (sl rec ! i1) = (sl rec ! i2) 
+ma v1 > v2 allora party2 non può essere il vincitore *)
+lemma assign_seats_helper_lemma_helper:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  i2::"nat" and i1::"nat" and
+  m::"rat" and winners::"'b list" and
+  party1::"'b" and party2::"'b" and parties::"'b Parties" and vt::"rat list"
+defines "v1 = vt ! (get_index_upd party1 parties)"
+defines "v2 = vt ! (get_index_upd party2 parties)"
+assumes "v1 > v2"
+assumes "party1 \<noteq> party2"
+  defines "i1 \<equiv> get_index_upd party1 (p rec)"
+  defines "i2 \<equiv> get_index_upd party2 (p rec)"
+  defines "fv1 \<equiv> v1 / (d rec) ! ((sl rec) ! i1)"
+  defines "fv2 \<equiv> v2 / (d rec) ! ((sl rec) ! i2)"
+  defines "winners \<equiv> get_winners (fv rec) (p rec)"
+  assumes "sl rec ! i1 = sl rec ! i2" 
+  assumes "i1 \<noteq> i2" 
+  assumes "i1 < length (sl rec)"
+  assumes "i2 < length (sl rec)"
+  assumes "(d rec) ! ((sl rec) ! i2) \<noteq> 0"
+  shows "party2 \<noteq> hd (get_winners (fv rec) (p rec))"
+proof (cases "fv1 = max_val_wrap vt")
+  case True
+  then have "fv1 > fv2" 
+    using assms by (smt (verit) divide_le_cancel of_nat_0_le_iff of_nat_eq_0_iff)
+  then have "fv2 \<noteq> max_val_wrap vt" 
+    using assms True by (metis of_real_eq_iff verit_comp_simplify1(1))
+  then have "party2 \<noteq> hd (get_winners (fv rec) (p rec))" using assms by sledgehammer
+  then show ?thesis sorry
+next
+  case False
+  then show ?thesis sorry
+qed
+  show ?thesis by sorry
+qed
+
 lemma assign_seats_helper_lemma:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and

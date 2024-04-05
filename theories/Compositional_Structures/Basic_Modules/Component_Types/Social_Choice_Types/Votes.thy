@@ -373,6 +373,16 @@ fun max_p:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
 "max_p m v ps w = w @ filter (\<lambda>x. v ! (get_index_upd x ps) = m) ps" 
 
+
+(* forse questo lemma prova che se il partito non ha il massimo dei voti allora non finisce
+   nella lista dei vincitori *)
+lemma max_parties_not_winner_not_in_winners:
+  assumes "px \<notin> set sw"
+  assumes "m > 0"
+  assumes "v ! (get_index_upd px ps) \<noteq> m"
+  shows "px \<notin> set (max_p m v ps sw)"
+  using assms by (induction ps sw rule: max_p.induct) auto
+
 lemma max_parties_no_in:
   assumes "px \<notin> set sw"
   assumes "m > 0"
@@ -405,32 +415,42 @@ shows "max_parties m v parties parties output = max_parties m v' parties' partie
   sorry
 *)
 
-(* works 09/03 *)
-value "max_p   7 [7, 4, 5] 
-                     [''a'', ''b'', ''c''] 
-                     []"
-
-value "cnt_votes ''a'' profile_list 0"
-
-(*lemma max_parties_not_empty:
-  fixes
-  m::"rat" and
-  mvp::"'b Parties" and
-  v::"'b Votes" and
-  p::"'b Parties"
-  assumes "p \<noteq> []"
-  shows "max_parties m v p mvp \<noteq> []"
-proof (cases)
-  case True
-  then show ?thesis sorry
-next
-  case False
-  then show ?thesis sorry
-qed*)
 
 fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = 
     (let m = max_val_wrap v in max_p m v p [])"
+
+lemma get_winners_not_winner_not_in_winners:
+  fixes v::"rat list"
+  defines "m \<equiv> max_val_wrap v"
+  assumes "v ! (get_index_upd px ps) \<noteq> m"
+  shows "px \<notin> set (get_winners v ps)"
+proof - 
+  have "get_winners v ps = (let m = max_val_wrap v in max_p m v ps [])" 
+    using get_winners.simps by blast
+  then have "px \<notin> set (max_p m v ps [])" 
+    using assms by simp
+  then show ?thesis 
+    using m_def by simp
+qed
+
+(* prova che se partiti non è lista vuota e px non ha il massimo dei fv allora non rientra 
+   nella lista dei vincitori *)
+lemma get_winners_not_winner_not_in_winners_list:
+  fixes v::"rat list" and m::"rat" and ps::"'a list" and px::"'a"
+  defines "m \<equiv> max_val_wrap v"
+  assumes "v ! (get_index_upd px ps) \<noteq> m"
+  assumes "ps \<noteq> []"
+  shows "px \<noteq> hd (get_winners v ps)" 
+  using assms get_index_upd.simps(1) get_index_upd_diff_elements
+  by metis
+
+lemma not_in_set_not_eq_hd:
+  fixes p::'a and list::"'a list"
+  assumes "p \<notin> set list"
+  assumes "list \<noteq> []"
+  shows "p \<noteq> hd list"
+using assms by auto
 
 (* lemma from max parties 0 votes \<Rightarrow> not in winners *)
 lemma get_winners_not_in:
