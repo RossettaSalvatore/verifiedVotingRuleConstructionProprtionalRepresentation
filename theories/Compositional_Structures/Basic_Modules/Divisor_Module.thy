@@ -568,24 +568,27 @@ ma v1 > v2 allora party2 non può essere il vincitore *)
 lemma assign_seats_helper_lemma_helper:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
-  i2::"nat" and i1::"nat" and
-  m::"rat" and winners::"'b list" and
-  party1::"'b" and party2::"'b" and parties::"'b Parties"
-defines "fv1 \<equiv> (fv rec) ! (get_index_upd party1 parties)"
-defines "fv2 \<equiv> (fv rec) ! (get_index_upd party2 parties)"
-assumes "v1 > v2"
-assumes "party1 \<noteq> party2"
-  defines "i1 \<equiv> get_index_upd party1 (p rec)"
-  defines "i2 \<equiv> get_index_upd party2 (p rec)"
-  defines "fv1 \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! i1)))"
-  defines "fv2 \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! i2)))"
-  defines "winners \<equiv> get_winners (fv rec) (p rec)"
-  assumes "sl rec ! i1 = sl rec ! i2" 
-  assumes "i1 \<noteq> i2" 
-  assumes "i1 < length (sl rec)"
-  assumes "i2 < length (sl rec)"
-  assumes "(d rec) ! ((sl rec) ! i2) \<noteq> 0"
-  shows "party2 \<noteq> hd (get_winners (fv rec) (p rec))"
+  i2::"nat" and 
+  i1::"nat" and
+  party1::"'b" and 
+  party2::"'b" and 
+  v1::"rat" and v2::"rat" and
+  parties::"'b Parties" and
+  fv1::"rat" and
+  fv2::"rat" and winners::"'b list"
+  defines "fv1 \<equiv> (fv rec) ! (get_index_upd party1 parties)" and
+   "fv2 \<equiv> (fv rec) ! (get_index_upd party2 parties)" and
+  "winners \<equiv> get_winners (fv rec) (p rec)"
+assumes "v1 > v2" and
+ "fv1 \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! i1)))" and
+  "fv2 \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! i2)))" and
+   "party1 \<noteq> party2" and
+  "(d rec) ! ((sl rec) ! i2) \<noteq> 0" and
+  "sl rec ! i1 = sl rec ! i2" and
+  "i1 \<noteq> i2" and
+  "i1 < length (sl rec)" and
+  "i2 < length (sl rec)"
+  shows "party2 \<noteq> hd (winners)"
 proof (cases "fv1 = max_val_wrap (fv rec)")
   case True
   then have "fv1 > fv2" 
@@ -594,13 +597,17 @@ proof (cases "fv1 = max_val_wrap (fv rec)")
     using assms True by force
   then have "party2 \<noteq> hd (get_winners (fv rec) (p rec))" using assms
   by (metis get_index_upd.simps(1) get_index_upd_correct)
-  then show ?thesis by simp
+  then show ?thesis using assms by simp
 next
   case False
-  then show ?thesis sorry
+  then have "max_val_wrap (fv rec) > fv1" using assms
+    by (metis get_index_upd.simps(1) get_index_upd_correct)
+  then have "max_val_wrap (fv rec) \<noteq> fv2" using assms divide_right_mono less_le_not_le negative_zle of_int_nonneg
+    by (smt (z3))
+  then show ?thesis
+  by (metis get_index_upd.simps(1) get_index_upd_correct)
 qed
-  show ?thesis by sorry
-qed
+
 
 lemma assign_seats_helper_lemma:
   fixes
