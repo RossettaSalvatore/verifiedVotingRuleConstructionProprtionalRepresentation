@@ -609,6 +609,8 @@ next
 qed
 
 
+(* voglio provare un singolo caso di quello che verrà dopo, il caso che voglio 
+  provare è che se il partito2 vince allora comunque non supera i seat di partito1 *)
 lemma assign_seats_helper_lemma:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
@@ -631,16 +633,18 @@ assumes "party1 \<noteq> party2"
   assumes "(d rec) ! ((sl rec) ! i2) \<noteq> 0"
   shows "sl (assign_seats rec) ! i1 \<ge> sl (assign_seats rec) ! i2"
 proof(cases "sl rec ! i1 = sl rec ! i2")
-  case True
+  case True \<comment> \<open> prova per assurdo  \<close>
   have "sl rec ! i1 = sl rec ! i2" using True by simp
+ then have "fv1 = v1 / (d rec) ! ((sl rec) ! i2)" 
+    using assms True by simp
   then have "fv2 = v2 / (d rec) ! ((sl rec) ! i2)" 
     using assms by simp
   then have "fv1 > fv2" 
     using \<open>fv1 = v1 / (d rec) ! ((sl rec) ! i2)\<close> 
           \<open>fv2 = v2 / (d rec) ! ((sl rec) ! i2)\<close> \<open>v1 > v2\<close> assms
     by (smt (verit) divide_strict_right_mono of_nat_le_0_iff)
-  
-  then show ?thesis sorry
+  then have "party2 \<noteq> hd winners" by sledgehammer
+  then show ?thesis by simp
 next
   case False
   have "sl rec ! i1 > sl rec ! i2" using assms False by simp
