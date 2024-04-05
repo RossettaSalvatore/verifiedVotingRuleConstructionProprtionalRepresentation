@@ -582,10 +582,18 @@ assumes "party1 \<noteq> party2"
   assumes "i2 < length (sl rec)"
   assumes "party2 = hd winners"
   assumes "length winners \<le> ns rec"
+  assumes "(d rec) ! ((sl rec) ! i2) \<noteq> 0"
   shows "sl (assign_seats rec) ! i1 \<ge> sl (assign_seats rec) ! i2"
 proof(cases "sl rec ! i1 = sl rec ! i2")
   case True
   have "sl rec ! i1 = sl rec ! i2" using True by simp
+  then have "fv2 = v2 / (d rec) ! ((sl rec) ! i2)" 
+    using assms by simp
+  then have "fv1 > fv2" 
+    using \<open>fv1 = v1 / (d rec) ! ((sl rec) ! i2)\<close> 
+          \<open>fv2 = v2 / (d rec) ! ((sl rec) ! i2)\<close> \<open>v1 > v2\<close> assms
+    by (smt (verit) divide_strict_right_mono of_nat_le_0_iff)
+  
   then show ?thesis sorry
 next
   case False
@@ -593,7 +601,10 @@ next
   then have "i2 = get_index_upd (hd winners) (p rec)" using assms by simp
   then have "sl (assign_seats rec) ! i2 = sl rec ! i2 + 1" 
     using assms assign_seats_seats_increased by blast
-  then show ?thesis sorry
+  then have "sl (assign_seats rec) ! i1 = sl rec ! i1" 
+    using assms assign_seats_not_winner_mantains_seats by metis
+  then show ?thesis 
+  using \<open>sl (assign_seats rec) ! i2 = sl rec ! i2 + 1\<close> \<open>sl rec ! i2 < sl rec ! i1\<close> by linarith
 qed
 
 lemma assign_seats_concordant:
