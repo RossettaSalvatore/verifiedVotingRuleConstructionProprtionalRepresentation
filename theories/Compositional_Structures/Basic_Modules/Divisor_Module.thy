@@ -584,6 +584,7 @@ defines
   "winners \<equiv> get_winners (fv rec) (p rec)"
 assumes 
   "v1 > v2" and
+  "party1 \<noteq> party2" and
   "fv1 \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! i1)))" and
   "fv2 \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! i2)))" and
   "party1 \<noteq> party2" and
@@ -654,6 +655,7 @@ defines
   "i2 \<equiv> get_index_upd party2 (p rec)"
 assumes 
   "v1 > v2" and
+  "party1 \<noteq> party2" and
   "party2 = hd winners" and
   "fv1 \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! i1)))" and
   "fv2 \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! i2)))" and
@@ -737,7 +739,7 @@ proof(cases "length winners \<le> ns rec")
         then show ?thesis
         proof(cases "party2 = hd winners")
           case True
-          then show ?thesis sorry
+          then show ?thesis using assms True assign_seats_helper_lemma by metis
         next
           case False
           have "party2 \<noteq> hd winners" using False by simp
