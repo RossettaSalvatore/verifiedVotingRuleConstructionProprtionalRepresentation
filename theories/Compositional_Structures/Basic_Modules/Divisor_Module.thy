@@ -649,7 +649,9 @@ lemma assign_seats_helper_lemma:
 defines 
   "fv1 \<equiv> (fv rec) ! (get_index_upd party1 parties)" and
   "fv2 \<equiv> (fv rec) ! (get_index_upd party2 parties)" and
-  "winners \<equiv> get_winners (fv rec) (p rec)"
+  "winners \<equiv> get_winners (fv rec) (p rec)" and
+  "i1 \<equiv> get_index_upd party1 (p rec)" and
+  "i2 \<equiv> get_index_upd party2 (p rec)"
 assumes 
   "v1 > v2" and
   "party2 = hd winners" and
@@ -657,7 +659,8 @@ assumes
   "fv2 \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! i2)))" and
   "party1 \<noteq> party2" and
   "(d rec) ! ((sl rec) ! i2) \<noteq> 0" and
-  "sl rec ! i1 = sl rec ! i2" and
+  "sl rec ! i1 \<ge> sl rec ! i2" and
+  "length winners \<le> ns rec" and
   "i1 \<noteq> i2" and
   "i1 < length (sl rec)" and
   "i2 < length (sl rec)"
@@ -672,20 +675,22 @@ proof(cases "sl rec ! i1 = sl rec ! i2")
     using assms  by (metis of_int_of_nat_eq of_rat_divide of_rat_of_nat_eq)
   then have "fv1 > fv2" 
     using \<open>fv1 = v1 / (d rec) ! ((sl rec) ! i2)\<close> 
-          \<open>fv2 = v2 / (d rec) ! ((sl rec) ! i2)\<close> \<open>v1 > v2\<close> assms divide_strict_right_mono
-    by fastforce
+          \<open>fv2 = v2 / (d rec) ! ((sl rec) ! i2)\<close> \<open>v1 > v2\<close> assms
+  by (metis True assign_seats_helper_lemma_helper)
   then have "party2 \<noteq> hd winners"
     using True assign_seats_helper_lemma_helper assms fv1_def fv2_def winners_def by metis
   then show ?thesis
-  using assms(5) by blast
+  using assms by blast
 next
   case False
-  have "sl rec ! i1 > sl rec ! i2" using assms False by simp
-  then have "i2 = get_index_upd (hd winners) (p rec)" using assms by simp
+  have "sl rec ! i1 > sl rec ! i2" using assms False
+  using le_neq_implies_less by presburger
+  then have "i2 = get_index_upd (hd winners) (p rec)" using assms by blast
   then have "sl (assign_seats rec) ! i2 = sl rec ! i2 + 1" 
-    using assms assign_seats_seats_increased False by linarith
+    using \<open>i2 = get_index_upd (hd winners) (p rec)\<close> assms 
+          assign_seats_seats_increased False by blast
   then have "sl (assign_seats rec) ! i1 = sl rec ! i1" 
-    using assms assign_seats_not_winner_mantains_seats False by blast
+    using assms assign_seats_not_winner_mantains_seats False by metis
   then show ?thesis 
     using \<open>sl (assign_seats rec) ! i2 = sl rec ! i2 + 1\<close> 
           \<open>sl rec ! i2 < sl rec ! i1\<close> by linarith
@@ -709,9 +714,11 @@ assumes
   "fv1 \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! i1)))" and
   "fv2 \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! i2)))" and
   "sl rec ! i1 \<ge> sl rec ! i2" and
+  "(d rec) ! ((sl rec) ! i2) \<noteq> 0" and
   "i1 \<noteq> i2" and
   "i1 < length (sl rec)" and
-  "i2 < length (sl rec)"
+  "i2 < length (sl rec)" and
+  "length winners \<le> ns rec"
 shows "sl (assign_seats rec) ! i1 \<ge> sl (assign_seats rec) ! i2"
 proof(cases "length winners \<le> ns rec")
   case True  \<comment> \<open>commment\<close> 
@@ -724,7 +731,7 @@ proof(cases "length winners \<le> ns rec")
            also have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
            using True assign_seats_not_winner_mantains_seats assms i1_def winners_def by metis 
               then show ?thesis
-              using assms calculation by simp
+              using assms calculation by linarith
       next
         case False
         then show ?thesis
@@ -739,13 +746,13 @@ proof(cases "length winners \<le> ns rec")
             using assms False get_index_upd_correct by metis
           then have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
             using False assms i2_def i1_def 
-                  assign_seats_not_winner_mantains_seats[of rec i2] by auto
+                  assign_seats_not_winner_mantains_seats[of rec i2] by metis
           have "party1 \<noteq> hd winners" using \<open>party1 \<noteq> hd winners\<close> by simp
           then have "get_index_upd (hd winners) (p rec) \<noteq> i1" 
             using assms False get_index_upd_correct by metis            
           then have "sl (assign_seats rec) ! i1 = (sl rec) ! i1"
             using \<open>party1 \<noteq> hd winners\<close> assms i2_def i1_def 
-                  assign_seats_not_winner_mantains_seats[of rec i1] by auto
+                  assign_seats_not_winner_mantains_seats[of rec i1] by metis
           then show ?thesis
           using \<open>sl (assign_seats rec) ! i2 = sl rec ! i2\<close> assms by linarith
         qed
