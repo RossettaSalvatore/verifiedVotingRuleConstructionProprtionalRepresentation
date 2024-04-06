@@ -12,10 +12,12 @@ HOL.List
 Preference_Relation
 Profile
 Result
-
+"List-Index.List_Index"
 begin
 
 (* \<equiv> *)
+
+value "remove_nth 1 [''0'', ''1'']"
 
 definition above_set :: "_ \<Rightarrow> 'a \<Rightarrow> 'a set"
   where "above_set r a \<equiv> above (set r) a"
