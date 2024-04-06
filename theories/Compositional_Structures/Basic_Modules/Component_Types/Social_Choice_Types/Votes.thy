@@ -304,7 +304,7 @@ lemma simp_votes:
   assumes "votes ! get_index_upd party fparties = cnt_votes party profile 0"
   shows "calc_votes parties fparties profile votes ! get_index_upd party fparties =
          cnt_votes party profile 0" 
-  by sledgehammer
+  by sorry
 
 lemma votes_perm:
   fixes
@@ -315,7 +315,7 @@ lemma votes_perm:
   shows "\<forall> party. party \<in> set parties \<longrightarrow> (calc_votes parties parties profile []) !
                                             get_index_upd party parties
  = calc_votes parties' parties' profile [] ! get_index_upd party parties'"
-  using update_at_index_nat.simps(1) update_at_index_nat_lemma by (metis (full_types))
+  by (metis get_index_upd.simps(1) get_index_upd_correct)
 
 (* this works 09/03/24 *)
 value "(calc_votes [''a'', ''b''] [''a'', ''b''] profile_list [0, 0])! (get_index_upd ''a'' [''a'', ''b''])"
@@ -447,8 +447,8 @@ lemma get_winners_not_winner_not_in_winners_list:
   assumes "v ! (get_index_upd px ps) \<noteq> m"
   assumes "ps \<noteq> []"
   shows "px \<noteq> hd (get_winners v ps)" 
-  using assms get_index_upd.simps(1) get_index_upd_diff_elements
-  by metis
+  using assms get_index_upd.simps(1)
+  by (metis get_index_upd_correct)
 
 lemma not_in_set_not_eq_hd:
   fixes p::'a and list::"'a list"

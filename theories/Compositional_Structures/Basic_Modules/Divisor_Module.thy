@@ -844,45 +844,40 @@ termination by (relation "measure (\<lambda>r. ns r)")
 lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
   by (cases r) auto
 
-
-lemma lemma1:
-  fixes
-  rec::"('a::linorder, 'b) Divisor_Module" and
-  m::"rat" and
-  party1::"'b" and party2::"'b" and parties::"'b Parties"
-assumes "v1 > v2"
-assumes "party1 \<noteq> party2"
-  defines "i1 \<equiv> get_index_upd party1 (p rec)"
-  defines "i2 \<equiv> get_index_upd party2 (p rec)"
-  defines "fv1 \<equiv> v1 / (d rec) ! ((sl rec) ! i1)"
-  defines "fv2 \<equiv> v2 / (d rec) ! ((sl rec) ! i2)"
-  defines "winners \<equiv> get_winners (fv rec) (p rec)"
-  assumes "sl rec ! i1 \<ge> sl rec ! i2" 
-  assumes "i1 \<noteq> i2" 
-  assumes "i1 < length (sl rec)"
-  assumes "i2 < length (sl rec)"
-shows "sl (assign_seats rec) ! i1 \<ge> sl (assign_seats rec) ! i2"
-  sorry
-
 lemma loop_o_concordant:
-  fixes
+   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
-  m::"rat" and
+  i2::"nat" and i1::"nat" and
+  m::"rat" and winners::"'b list" and v1::"rat" and v2::"rat" and
   party1::"'b" and party2::"'b" and parties::"'b Parties"
-assumes "v1 > v2"
-assumes "party1 \<noteq> party2"
-  defines "i1 \<equiv> get_index_upd party1 (p rec)"
-  defines "i2 \<equiv> get_index_upd party2 (p rec)"
-  defines "fv1 \<equiv> v1 / (d rec) ! ((sl rec) ! i1)"
-  defines "fv2 \<equiv> v2 / (d rec) ! ((sl rec) ! i2)"
-  defines "winners \<equiv> get_winners (fv rec) (p rec)"
-  assumes "i1 \<noteq> i2" 
-  assumes "i1 < length (sl rec)"
-  assumes "i2 < length (sl rec)"
+defines 
+  "fv1 \<equiv> (fv rec) ! (get_index_upd party1 parties)" and
+  "fv2 \<equiv> (fv rec) ! (get_index_upd party2 parties)" and
+  "winners \<equiv> get_winners (fv rec) (p rec)" and
+  "i1 \<equiv> get_index_upd party1 (p rec)" and
+  "i2 \<equiv> get_index_upd party2 (p rec)"
+assumes 
+  "v1 > v2" and
+  "party1 \<noteq> party2" and
+  "fv1 \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! i1)))" and
+  "fv2 \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! i2)))" and
+  "sl rec ! i1 \<ge> sl rec ! i2" and
+  "(d rec) ! ((sl rec) ! i2) \<noteq> 0" and
+  "i1 \<noteq> i2" and
+  "i1 < length (sl rec)" and
+  "i2 < length (sl rec)" and
+  "length winners \<le> ns rec"
   shows "sl (loop_o rec) ! i1 \<ge> sl (loop_o rec) ! i2"
-  using assms lemma1
+  using assms assign_seats_concordant
   by (induction rec rule:loop_o.induct)
     auto
+
+(*  
+  apply (induction rec rule:loop_o.induct)
+  subgoal for r
+    using assign_seats_concordant[of v2 v1 party1 party2 r]
+    apply  (auto simp: Let_def split: if_splits simp del: assign_seats.simps)
+*)
 
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
   "create_empty_seats indexes parties =
