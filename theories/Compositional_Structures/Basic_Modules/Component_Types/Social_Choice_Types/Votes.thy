@@ -19,6 +19,8 @@ begin
 
 value "remove_nth 1 [''0'', ''1'']"
 
+value "index [0::nat, 4, 5, 1] 1"
+
 definition above_set :: "_ \<Rightarrow> 'a \<Rightarrow> 'a set"
   where "above_set r a \<equiv> above (set r) a"
 
@@ -53,14 +55,20 @@ primrec get_index :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow
 | "get_index P (x # xs) = (if P x then 0 else Suc (get_index P xs))"
 
 fun get_index_upd :: "'a \<Rightarrow> 'a list \<Rightarrow> nat" where
-"get_index_upd p [] = 0"
-| "get_index_upd p (x # xs) = (if x = p then 0 else Suc (get_index_upd p xs))"
+"get_index_upd px p = index p px"
 
-lemma get_index_upd_correct:
+lemma index_correct:
   fixes
   p::"'a list"
+assumes "index p px < size p"
+  shows "p ! (index p px) = px"
+  by (meson assms index_eq_iff)
+
+lemma get_index_upd_correct:
+  assumes "get_index_upd px p < size p"
   shows "p ! (get_index_upd px p) = px"
-  sorry
+by (metis assms get_index_upd.elims index_correct)
+
 
 lemma get_index_upd_diff_elements:
   fixes 
@@ -86,12 +94,8 @@ proof (rule ccontr)
   with assms show False by simp
 qed
 
-value "get_index_upd ''3'' [''0'', ''2'', ''1'', ''4'', ''3'', ''5'']"
-
 fun get_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> nat list \<Rightarrow> nat" where
 "get_votes party parties votes = votes ! (get_index_upd party parties)"
-
-value "get_votes ''partyB'' [''partyA'', ''partyB''] [4, 5]"
 
 (* function to generate the list of parameters *)
 fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
@@ -150,12 +154,6 @@ definition fold_mset :: "('a \<Rightarrow> 'b \<Rightarrow> 'b) \<Rightarrow> 'b
 where
   "fold_mset f s M = Finite_Set.fold (\<lambda>x. f x ^^ count M x) s (set_mset M)"
 
-*)
-
-
-value "list_update [1::nat, 2] 0 3"
-
-(*
 lemma working. implement this with assumptions on later lemmas
 
 lemma update_at_index_nat_lemma:
@@ -176,59 +174,6 @@ proof -
 qed
 *)
 (* usa list update mannaggia alla madonna *)
-value "list_update ([1::nat, 2, 3]) 1 1"
-
-(*
-lemma update_at_index_nat_simp:
-  fixes
-    xs::"nat list" and
-    x::"nat" and
-    i::"nat" and
-    n::"nat"
-  assumes "length xs > 0" 
-  shows "(update_at_index_nat xs i n) ! i = n"
-proof(induction i)
-  case 0
-  show ?case
-  by (metis "0" assms length_greater_0_conv nth_Cons_0 update_at_index_nat.elims)
-next
-  case (Suc nat)
-  assume IH: "(update_at_index_nat xs nat n) ! nat = n"
-  have "update_at_index_nat (x # xs) (Suc nat) n ! Suc nat
-             = (x # update_at_index_nat xs nat n) ! Suc nat" by simp 
-  then have "... = update_at_index_nat xs nat n ! nat" by simp
-  then have "... = n" using IH by simp 
-  then show ?case by simp
-qed*)
-
-(*
-lemma update_at_index_nat_simp:
-  fixes
-    xs::"nat list" and
-    x::"nat" and
-    i::"nat" and
-    n::"nat"
-  assumes "length (x # xs) > 0" 
-  shows "(update_at_index_nat (x # xs) i n) ! i = n"
-proof(induction i)
-  case 0
-  show ?case
-  by (metis "0" assms length_greater_0_conv nth_Cons_0 update_at_index_nat.elims)
-next
-  case (Suc nat)
-  assume IH: "(update_at_index_nat (x # xs) nat n) ! nat = n"
-  have "update_at_index_nat (y # (x # xs)) (Suc nat) n =  (if (Suc nat) = 0 then n # (x # xs) else y # update_at_index_nat (x # xs) ((Suc nat) - 1) n)" by simp
-  then have "update_at_index_nat (y # (x # xs)) (Suc nat) n ! Suc nat
-             = (y # update_at_index_nat (x # xs) nat n) ! Suc nat" by simp 
-  then have "... = update_at_index_nat (x # xs) nat n ! nat" by simp
-  then have "... = n" using IH by simp 
-  then show ?case by sledgehammer
-qed
-*)
-
-value "list_update [''a'', ''b'', ''d''] 2 ''c''"
-
-value "list_update [2::nat, 2, 2] 1 5"
 
 definition remove_some :: "'a multiset \<Rightarrow> 'a" where
 "remove_some M = (SOME x. x \<in> set_mset M)"
@@ -314,10 +259,12 @@ lemma votes_perm:
     parties':: "'b Parties" and
     profile:: "'b Profile"
   assumes "mset parties = mset parties'"
-  shows "\<forall> party. party \<in> set parties \<longrightarrow> (calc_votes parties parties profile []) !
+  assumes "party \<in> set parties"
+  assumes "get_index_upd party parties < size parties"
+  shows "(calc_votes parties parties profile []) !
                                             get_index_upd party parties
  = calc_votes parties' parties' profile [] ! get_index_upd party parties'"
-  by (metis get_index_upd.simps(1) get_index_upd_correct)
+  by sorry 
 
 (* this works 09/03/24 *)
 value "(calc_votes [''a'', ''b''] [''a'', ''b''] profile_list [0, 0])! (get_index_upd ''a'' [''a'', ''b''])"
@@ -357,13 +304,34 @@ qed
 text \<open> This function receives in input the function Votes and the list of parties. The 
        output is the list of parties with the maximum number of votes.  \<close>
 
-(* adapted to list. works 09/03 *)
+(* adapted to list. works 09/03 
 fun max_val:: "rat list \<Rightarrow> rat \<Rightarrow> rat" where 
 "max_val [] m = m" | 
 "max_val (px # p) m = max_val p (if px > m then px else m)"
 
+fun max_val_2::"rat set \<Rightarrow> rat" where
+"max_val_2 lisc = Max lisc"
+
+value "max_val_2 {4, 3, 6, 2}"
+
+lemma max_val_2_lemma:
+  fixes fvv::"rat list" and fv1::"rat"
+  assumes "fv1 \<in> set fvv"
+  shows "Max (set fvv) \<ge> fv1"
+  by (simp add: assms)
+*)
 fun max_val_wrap:: "rat list \<Rightarrow> rat" where 
-"max_val_wrap v = max_val v 0"
+"max_val_wrap v = Max (set v)"
+
+lemma max_val_2_lemma:
+  fixes fvv::"rat list" and fv1::"rat"
+  assumes "fv1 \<in> set fvv"
+  shows "max_val_wrap fvv \<ge> fv1"
+  by (simp add: assms)
+
+lemma lemma_list_a_set_appartenenza:
+  assumes "fvx = fvlista ! i1" and "i1 < size fvlista"
+  shows "fvx \<in> set fvlista" using assms by simp
 
 fun func1:: "char list list \<Rightarrow> char list list \<Rightarrow> char list list" where
 "func1 [] w = w" | 
@@ -398,66 +366,25 @@ lemma max_parties_no_in:
   using assms by (induction ps sw rule: max_p.induct) auto
 
 
-(*  have "m>0" using assms by simp 
-  then have "px \<notin> set start_winners" using assms by simp
-  then have "max_parties m v fp (px # p) start_winners = 
-        max_parties m v fp p (if v ! (get_index_upd px fp) = m then (start_winners @ [px])
-                                   else start_winners)" by simp
-  then have "... = max_parties m v fp p start_winners" using assms by fastforce
-  then show ?thesis
-  by (metis insert_Nil length_0_conv snoc_eq_iff_butlast update_at_index_nat.simps(1) update_at_index_nat_lemma)
-qed
-*)
-(* 
-lemma max_parties_perm:
-  fixes
-parties::"'b Parties" and
-parties'::"'b Parties" and
-v::"rat list" and
-v'::"rat list"
-assumes "mset parties = mset parties'"
-assumes "length parties = length v"
-assumes "mset v = mset v'"
-shows "max_parties m v parties parties output = max_parties m v' parties' parties' output"
-  sorry
-*)
-
-
 fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = 
     (let m = max_val_wrap v in max_p m v p [])"
 
 lemma get_winners_not_winner_not_in_winners:
-  fixes v::"rat list"
-  defines "m \<equiv> max_val_wrap v"
-  assumes "v ! (get_index_upd px ps) \<noteq> m"
-  shows "px \<notin> set (get_winners v ps)"
+  fixes fv::"rat list" and m::"rat"
+  defines "m \<equiv> max_val_wrap fv"
+  assumes "fv ! (get_index_upd px ps) \<noteq> m"
+  assumes "get_winners fv ps \<noteq> []"
+  shows "px \<noteq> hd (get_winners fv ps)"
 proof - 
-  have "get_winners v ps = (let m = max_val_wrap v in max_p m v ps [])" 
+  have "get_winners fv ps = (let m = max_val_wrap fv in max_p m fv ps [])" 
     using get_winners.simps by blast
-  then have "px \<notin> set (max_p m v ps [])" 
+  then have "px \<notin> set (max_p m fv ps [])" 
     using assms by simp
   then show ?thesis 
-    using m_def by simp
+    using m_def hd_in_set assms 
+          \<open>get_winners fv ps = (let m = max_val_wrap fv in max_p m fv ps [])\<close> by metis
 qed
-
-(* prova che se partiti non è lista vuota e px non ha il massimo dei fv allora non rientra 
-   nella lista dei vincitori *)
-lemma get_winners_not_winner_not_in_winners_list:
-  fixes v::"rat list" and m::"rat" and ps::"'a list" and px::"'a"
-  defines "m \<equiv> max_val_wrap v"
-  assumes "v ! (get_index_upd px ps) \<noteq> m"
-  assumes "ps \<noteq> []"
-  shows "px \<noteq> hd (get_winners v ps)" 
-  using assms get_index_upd.simps(1)
-  by (metis get_index_upd_correct)
-
-lemma not_in_set_not_eq_hd:
-  fixes p::'a and list::"'a list"
-  assumes "p \<notin> set list"
-  assumes "list \<noteq> []"
-  shows "p \<noteq> hd list"
-using assms by auto
 
 (* lemma from max parties 0 votes \<Rightarrow> not in winners *)
 lemma get_winners_not_in:
