@@ -98,13 +98,9 @@ fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> nat \<Rightarrow> na
         0 \<Rightarrow> cnt_votes p profil (n + 1)
       | _ \<Rightarrow> cnt_votes p profil n)"
 
-
-value "cnt_votes ''partyA'' [{(''partyA'', ''partyB'')}] 0"
-
 fun empty_v :: "('b \<Rightarrow> rat)" where
   "empty_v b = 0"
 
-(* lemma from zulip *)
 lemma perm_induct:
   assumes "P [] []"
   assumes "\<And>x xs ys. P (x # xs) (x # ys)"
@@ -160,7 +156,6 @@ proof -
   by (simp add: \<open>update_at_index_nat xs i n = xs[i := n]\<close>)
 qed
 *)
-(* usa list update mannaggia alla madonna *)
 
 definition remove_some :: "'a multiset \<Rightarrow> 'a" where
 "remove_some M = (SOME x. x \<in> set_mset M)"
@@ -176,47 +171,6 @@ definition party_multiset :: "char list multiset" where
 (* Define the initial votes *)
 fun empty_votes :: "char list \<Rightarrow> rat" where
   "empty_votes p = 0"
-
-(* Calculate the votes *)
-definition pref_rel_a :: "char list Preference_Relation" where
-"pref_rel_a = {(''b'', ''a''), (''d'', ''c''), 
-                (''d'',''a''), (''c'', ''b''), 
-                (''c'',''a''), (''d'', ''b'')}"
-
-definition pref_rel_b :: "char list Preference_Relation" where
-"pref_rel_b = {(''a'', ''b''), (''c'', ''b''), 
-                (''d'', ''b''), (''a'', ''c''), 
-                (''c'', ''d''), (''a'', ''d'')}"
-
-definition pref_rel_c :: "char list Preference_Relation" where
-"pref_rel_c = {(''a'', ''c''), (''b'', ''c''), 
-                (''d'', ''c''), (''a'', ''b''), 
-                (''b'', ''d''), (''a'', ''d'')}"
-
-definition pref_rel_b2 :: "char list Preference_Relation" where
-"pref_rel_b2 = {(''a'', ''b''), (''c'', ''b''), 
-                 (''d'', ''b''), (''c'', ''a''), 
-                 (''a'', ''d''), (''c'', ''d'')}"
-
-definition pref_rel_b3 :: "char list Preference_Relation" where
-"pref_rel_b3 = {(''a'', ''b''), (''c'', ''b''), 
-                 (''d'', ''b''), (''c'', ''a''), 
-                 (''a'', ''d''), (''c'', ''d'')}"
-
-definition pref_rel_d :: "char list Preference_Relation" where
-"pref_rel_d = {(''a'', ''d''), (''b'', ''d''), 
-                (''c'', ''d''), (''a'', ''c''), 
-                (''c'', ''b''), (''a'', ''b'')}"
-
-definition pref_rel_a2 :: "char list Preference_Relation" where
-"pref_rel_a2 = {(''b'', ''a''), (''c'', ''a''), 
-                 (''d'', ''a''), (''b'', ''d''), 
-                 (''b'', ''c''), (''d'', ''c'')}"
-
-(* Define the profile *)
-definition profile_list :: "char list Profile" where
-"profile_list = [pref_rel_a, pref_rel_b, pref_rel_c, pref_rel_b, 
-                 pref_rel_b, pref_rel_d, pref_rel_a]"
 
 (* update_at_index added here bring error in full_module *)
 fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Rightarrow> nat list \<Rightarrow> nat list" where
@@ -254,9 +208,6 @@ lemma votes_perm:
  = calc_votes parties' parties' profile [] ! get_index_upd party parties'"
   by sorry 
 *)
-(* this works 09/03/24 *)
-value "(calc_votes [''a'', ''b''] [''a'', ''b''] profile_list [0, 0])! (get_index_upd ''a'' [''a'', ''b''])"
-value "(calc_votes [''b'', ''a''] [''a'', ''b''] profile_list [0, 0])! (get_index_upd ''a'' [''b'', ''a''])"
 
 (*prove "p1 <~~> p2 \<Longrightarrow> (calc_votes p1 profl votes = calc_votes p2 profl votes)"
 *)
@@ -332,8 +283,6 @@ fun max_p:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
 "max_p m v ps w = w @ filter (\<lambda>x. v ! (get_index_upd x ps) = m) ps" 
 
-(* forse questo lemma prova che se il partito non ha il massimo dei voti allora non finisce
-   nella lista dei vincitori *)
 lemma max_parties_not_winner_not_in_winners:
   assumes "px \<notin> set sw"
   assumes "m > 0"
@@ -347,7 +296,6 @@ lemma max_parties_no_in:
   assumes "v ! (get_index_upd px ps) = 0"
   shows "px \<notin> set (max_p m v ps sw)"
   using assms by (induction ps sw rule: max_p.induct) auto
-
 
 fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = 
@@ -368,18 +316,6 @@ proof -
     using m_def hd_in_set assms 
           \<open>get_winners fv ps = (let m = max_val_wrap fv in max_p m fv ps [])\<close> by metis
 qed
-
-(* lemma from max parties 0 votes \<Rightarrow> not in winners *)
-lemma get_winners_not_in:
-fixes 
-  v::"rat list" and
-  p::"'b Parties" and
-  px::"'b" and
-  m::"rat"
-assumes "m > 0"
-assumes "v ! (get_index_upd px p) = 0"
-shows "px \<notin> set (get_winners v p)"
-  sorry
 
 lemma find_max_votes_not_empty:
   fixes
@@ -402,16 +338,6 @@ fun count_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow>
     (card {ix. ix \<in> i \<and> s ix = p})"
 
 (*
-lemma max_parties_concordant:
-  assumes "fp = p"
-  assumes "ns1 = ns2"
-  assumes "votes1 = cnt_votes fp prof 0 / ns1"
-  assumes "votes2 = cnt_votes fp prof 0 / ns2"
-  assumes "votes1 > votes2"
-  assumes "(v ! (get_index_upd party1 fp)) = votes1"
-  assumes "(v ! (get_index_upd party2 fp)) = votes2"
-  shows "party1 \<in> set output \<longrightarrow> party2 \<in> set output"
-  by (metis (full_types) assms(5) diff_gt_0_iff_gt get_index_upd.simps(1) max_p.simps(1) max_parties_no_in nth_Cons_0)
 
 lemma anonymous_total:
   fixes
