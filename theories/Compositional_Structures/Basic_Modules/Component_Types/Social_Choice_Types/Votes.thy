@@ -323,15 +323,11 @@ lemma max_val_2_lemma:
 fun max_val_wrap:: "rat list \<Rightarrow> rat" where 
 "max_val_wrap v = Max (set v)"
 
-lemma max_val_2_lemma:
+lemma max_val_wrap_lemma:
   fixes fvv::"rat list" and fv1::"rat"
-  assumes "fv1 \<in> set fvv"
+  assumes "fv1 = fvv ! i1" and "i1 < length fvv"
   shows "max_val_wrap fvv \<ge> fv1"
   by (simp add: assms)
-
-lemma lemma_list_a_set_appartenenza:
-  assumes "fvx = fvlista ! i1" and "i1 < size fvlista"
-  shows "fvx \<in> set fvlista" using assms by simp
 
 fun func1:: "char list list \<Rightarrow> char list list \<Rightarrow> char list list" where
 "func1 [] w = w" | 
