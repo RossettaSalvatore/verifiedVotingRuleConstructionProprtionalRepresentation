@@ -183,20 +183,20 @@ lemma divisor_module_increase_seats:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
   winner::"'b list"
-defines i_def: "index \<equiv> get_index_upd (hd winner) (p rec)"
-assumes "index < length (sl rec)"
-shows "(sl (divisor_module winner rec)) ! index =
-       (sl rec) ! index + 1"
+defines i_def: "inde \<equiv> get_index_upd (hd winner) (p rec)"
+assumes "inde < length (sl rec)"
+shows "(sl (divisor_module winner rec)) ! inde =
+       (sl rec) ! inde + 1"
 proof -
-  have "sl (divisor_module winner rec) =  list_update (sl rec) index ((sl rec) ! index + 1)" 
+  have "sl (divisor_module winner rec) =  list_update (sl rec) inde ((sl rec) ! inde + 1)" 
     using divisor_module_sl_update assms by blast
-  then have "sl (divisor_module winner rec) ! index = 
-        (list_update (sl rec) index ((sl rec) ! index + 1)) ! index" 
+  then have "sl (divisor_module winner rec) ! inde = 
+        (list_update (sl rec) inde ((sl rec) ! inde + 1)) ! inde" 
     using assms by simp
-  then have "... = ((sl rec) ! index + 1)" 
+  then have "... = ((sl rec) ! inde + 1)" 
     using nth_list_update_eq assms by simp
   then show ?thesis
-    using \<open>sl (divisor_module winner rec) ! index = list_update (sl rec) index (sl rec ! index + 1) ! index\<close> by auto
+    using \<open>sl (divisor_module winner rec) ! inde = list_update (sl rec) inde (sl rec ! inde + 1) ! inde\<close> by auto
 qed
 
 
