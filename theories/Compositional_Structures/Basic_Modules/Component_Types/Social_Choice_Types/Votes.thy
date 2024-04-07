@@ -36,12 +36,10 @@ type_synonym 'b Parties = "'b list"
 
 text  \<open>Every seat is unique and identified and has a set of parties to which it is assigned.\<close>
 type_synonym ('a, 'b) Seats = "'a \<Rightarrow> 'b list"
+
 type_synonym 'b Votes = "'b \<Rightarrow> rat"
 
 type_synonym Params = "nat list"
-
-fun get_index_upd :: "'a \<Rightarrow> 'a list \<Rightarrow> nat" where
-"get_index_upd px p = index p px"
 
 lemma index_correct:
   fixes
@@ -50,39 +48,32 @@ assumes "index p px < size p"
   shows "p ! (index p px) = px"
   by (meson assms index_eq_iff)
 
-lemma get_index_upd_correct:
-  assumes "get_index_upd px p < size p"
-  shows "p ! (get_index_upd px p) = px"
-by (metis assms get_index_upd.elims index_correct)
-
-
-lemma get_index_upd_diff_elements:
-  fixes 
-  p1::"'a" and p2::"'a" and p::"'a list"
-assumes "p1 \<in> set p"
-  assumes "p1 \<noteq> p2" 
-  assumes "p \<noteq> []"
-  shows "get_index_upd p1 p \<noteq> get_index_upd p2 p"
+lemma index_diff_elements:
+  assumes 
+    "p1 \<in> set p" and 
+    "p1 \<noteq> p2" and 
+    "p \<noteq> []"
+  shows "index p p1 \<noteq> index p p2"
 proof (rule ccontr)
-  assume "\<not> (get_index_upd p1 p \<noteq> get_index_upd p2 p)"
-  then have "get_index_upd p1 p = get_index_upd p2 p" 
+  assume "\<not> (index p p1 \<noteq> index p p2)"
+  then have "index p p1 = index p p2" 
     by simp
-  then obtain n1 n2 where "get_index_upd p1 p = n1" and "get_index_upd p2 p = n2" 
+  then obtain n1 n2 where "index p p1 = n1" and "index p p2 = n2" 
     by blast
   hence "n1 = n2"
-    by (meson \<open>\<not> get_index_upd p1 p \<noteq> get_index_upd p2 p\<close>)
+    by (meson \<open>\<not> index p p1 \<noteq> index p p2\<close>)
   hence "p ! n1 = p1" 
-    using assms get_index_upd_correct \<open>get_index_upd p1 p = n1\<close> by fastforce
+    using assms index_correct \<open>index p p1 = n1\<close> by fastforce
   hence "p ! n2 = p2" 
-    using assms get_index_upd_correct \<open>get_index_upd p2 p = n2\<close> 
-          \<open>get_index_upd p1 p = get_index_upd p2 p\<close> by force
+    using assms index_correct \<open>index p p2 = n2\<close> 
+          \<open>index p p1 = index p p2\<close> by force
   hence "p1 = p2" 
-    using assms \<open>\<not> get_index_upd p1 p \<noteq> get_index_upd p2 p\<close> \<open>n1 = n2\<close> \<open>p ! n1 = p1\<close> by blast
+    using assms \<open>\<not> index p p1 \<noteq> index p p2\<close> \<open>n1 = n2\<close> \<open>p ! n1 = p1\<close> by blast
   with assms show False by simp
 qed
 
 fun get_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> nat list \<Rightarrow> nat" where
-"get_votes party parties votes = votes ! (get_index_upd party parties)"
+"get_votes party parties votes = votes ! (index parties party)"
 
 (* function to generate the list of parameters *)
 fun generate_list :: "bool \<Rightarrow> nat \<Rightarrow> nat list" where
@@ -97,9 +88,6 @@ fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> nat \<Rightarrow> na
      (case (count_above px p) of
         0 \<Rightarrow> cnt_votes p profil (n + 1)
       | _ \<Rightarrow> cnt_votes p profil n)"
-
-fun empty_v :: "('b \<Rightarrow> rat)" where
-  "empty_v b = 0"
 
 lemma perm_induct:
   assumes "P [] []"
@@ -174,11 +162,11 @@ fun empty_votes :: "char list \<Rightarrow> rat" where
 
 (* update_at_index added here bring error in full_module *)
 fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Rightarrow> nat list \<Rightarrow> nat list" where
-  "calc_votes [] ps prof votes = votes" |
-  "calc_votes (party # parties) ps prof votes = 
-      (let n = cnt_votes party prof 0;
-       i = get_index_upd party ps in
-      calc_votes parties ps prof (list_update votes i (n::nat)))"
+  "calc_votes [] fp prof votes = votes" |
+  "calc_votes (px # ps) fp prof votes = 
+      (let n = cnt_votes px prof 0;
+       i = index fp px in
+      calc_votes ps fp prof (list_update votes i n))"
 
 (*
 lemma simp_votes:
@@ -243,22 +231,6 @@ qed
 text \<open> This function receives in input the function Votes and the list of parties. The 
        output is the list of parties with the maximum number of votes.  \<close>
 
-(* adapted to list. works 09/03 
-fun max_val:: "rat list \<Rightarrow> rat \<Rightarrow> rat" where 
-"max_val [] m = m" | 
-"max_val (px # p) m = max_val p (if px > m then px else m)"
-
-fun max_val_2::"rat set \<Rightarrow> rat" where
-"max_val_2 lisc = Max lisc"
-
-value "max_val_2 {4, 3, 6, 2}"
-
-lemma max_val_2_lemma:
-  fixes fvv::"rat list" and fv1::"rat"
-  assumes "fv1 \<in> set fvv"
-  shows "Max (set fvv) \<ge> fv1"
-  by (simp add: assms)
-*)
 fun max_val_wrap:: "rat list \<Rightarrow> rat" where 
 "max_val_wrap v = Max (set v)"
 
@@ -268,43 +240,30 @@ lemma max_val_wrap_lemma:
   shows "max_val_wrap fvv \<ge> fv1"
   by (simp add: assms)
 
-fun func1:: "char list list \<Rightarrow> char list list \<Rightarrow> char list list" where
-"func1 [] w = w" | 
-"func1 (px # p) w = 
-        func1 p (if px = ''y'' then (w @ [px])
-                                   else w)"
-
-lemma lemma1:
-  assumes "px \<notin> set sw" and "px \<noteq> ''y''"
-  shows "px \<notin> set (func1 ps sw)"
-  using assms by (induction ps sw rule: func1.induct) auto
-
 fun max_p:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-"max_p m v ps w = w @ filter (\<lambda>x. v ! (get_index_upd x ps) = m) ps" 
-
-lemma max_parties_not_winner_not_in_winners:
-  assumes "px \<notin> set sw"
-  assumes "m > 0"
-  assumes "v ! (get_index_upd px ps) \<noteq> m"
-  shows "px \<notin> set (max_p m v ps sw)"
-  using assms by (induction ps sw rule: max_p.induct) auto
+"max_p m v ps w = w @ filter (\<lambda>x. v ! (index ps x) = m) ps" 
 
 lemma max_parties_no_in:
   assumes "px \<notin> set sw"
   assumes "m > 0"
-  assumes "v ! (get_index_upd px ps) = 0"
+  assumes "v ! (index ps px) = 0"
   shows "px \<notin> set (max_p m v ps sw)"
   using assms by (induction ps sw rule: max_p.induct) auto
 
-fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-  "get_winners v p = 
-    (let m = max_val_wrap v in max_p m v p [])"
+lemma max_parties_no_in_empty:
+  assumes "m > 0"
+  assumes "v ! (index ps px) = 0"
+  shows "px \<notin> set (max_p m v ps [])"
+  using assms max_parties_no_in by simp
 
-lemma get_winners_not_winner_not_in_winners:
+fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
+  "get_winners v p = (let m = max_val_wrap v in max_p m v p [])"
+
+lemma get_winners_not_in_win:
   fixes fv::"rat list" and m::"rat"
   defines "m \<equiv> max_val_wrap fv"
-  assumes "fv ! (get_index_upd px ps) \<noteq> m"
+  assumes "fv ! (index ps px) \<noteq> m"
   assumes "get_winners fv ps \<noteq> []"
   shows "px \<noteq> hd (get_winners fv ps)"
 proof - 
@@ -328,17 +287,15 @@ lemma find_max_votes_not_empty:
 
 fun update_seat :: "'a::linorder \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats 
                     \<Rightarrow> ('a::linorder, 'b) Seats" where
-  "update_seat seat_n winner seats = seats(seat_n := winner)"
+  "update_seat seat w seats = seats(seat := w)"
 
 text \<open> This function counts seats of a given party. \<close>
 
-fun count_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
+fun cnt_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
                     'a::linorder set => nat" where
-  "count_seats p s i = 
-    (card {ix. ix \<in> i \<and> s ix = p})"
+  "cnt_seats p s i = card {ix. ix \<in> i \<and> s ix = p}"
 
 (*
-
 lemma anonymous_total:
   fixes
 parties::"'b Parties" and
