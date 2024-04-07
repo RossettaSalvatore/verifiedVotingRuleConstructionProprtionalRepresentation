@@ -43,7 +43,7 @@ text \<open> This function updates the "fractional votes" of the winning party, 
 fun update_votes2 ::  "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        rat list" where 
 "update_votes2 winner r = 
-    (let index = get_index_upd(hd winner)(p r);
+    (let index = index (p r) (hd winner);
      n_seats = count_seats winner (s r) (i r);
      new_v = of_nat(get_votes (hd winner) (p r) (v r)) / of_int(d r ! n_seats) in
      list_update (fv r) index new_v)"
@@ -60,7 +60,7 @@ fun divisor_module :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \
     new_s = update_seat seat winner (s rec);
     new_as = ass_r (res rec) \<union> {seat};
     new_fv = update_votes2 winner (rec\<lparr>s:= new_s\<rparr>);
-    index =  get_index_upd (hd winner) (p rec);
+    index = index (p rec) (hd winner);
     curr_ns = (sl rec) ! index;
     new_sl = list_update (sl rec) index ( (sl rec) ! index + 1);
     new_di =  disp_r (res rec) - {seat}
@@ -78,20 +78,20 @@ fun divisor_module :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \
 (* this lemma shows that for every update of divisor_module, all the other 
    parties still have the same seats *)
 lemma divisor_module_mantain_seats_lemma:
-  assumes "i1 = get_index_upd (hd winner) (p rec)"
+  assumes "i1 = index (p rec) (hd winner)"
   assumes "i2 \<noteq> i1"
   assumes "i2 < length (sl rec)"
   shows "sl (divisor_module winner rec) ! i2 =
          (sl rec) ! i2"
 proof - 
-   define seat new_s new_as new_fv index curr_ns new_sl new_di 
+   define seat new_s new_as new_fv ind curr_ns new_sl new_di 
     where "seat = Min (disp_r (res rec))" and
           "new_s = update_seat seat winner (s rec)" and
           "new_as = ass_r (res rec) \<union> {seat}" and
           "new_fv = update_votes2 winner (rec\<lparr>s:= new_s\<rparr>)" and
-          "index =  get_index_upd (hd winner) (p rec)" and
-          "curr_ns = (sl rec) ! index" and
-          "new_sl = list_update (sl rec) index (curr_ns + 1)" and
+          "ind =  index (p rec) (hd winner)" and
+          "curr_ns = (sl rec) ! ind" and
+          "new_sl = list_update (sl rec) ind (curr_ns + 1)" and
           "new_di =  disp_r (res rec) - {seat}"
   have "(divisor_module winner rec) =  \<lparr>res = (new_as, {}, new_di),
              p = (p rec),
@@ -104,37 +104,37 @@ proof -
              d = (d rec)
             \<rparr>" 
     unfolding divisor_module.simps new_sl_def Let_def
-    using nth_list_update_eq curr_ns_def index_def new_as_def new_di_def new_fv_def new_s_def seat_def 
+    using nth_list_update_eq curr_ns_def ind_def new_as_def new_di_def new_fv_def new_s_def seat_def 
     by fastforce
   then have "sl (divisor_module winner rec) = new_sl" 
     by simp
-  then have "... =  list_update (sl rec) index (curr_ns + 1)" 
+  then have "... =  list_update (sl rec) ind (curr_ns + 1)" 
     using new_sl_def by simp
   then have "sl (divisor_module winner rec) ! i2 = 
-             (list_update (sl rec) index (curr_ns + 1)) ! i2"
+             (list_update (sl rec) ind (curr_ns + 1)) ! i2"
     using \<open>sl (divisor_module winner rec) = new_sl\<close> by presburger
   then have "... = (sl rec) ! i2" 
-    using nth_list_update_neq assms by (metis index_def)
+    using nth_list_update_neq assms by (metis ind_def)
   then show ?thesis
-  using \<open>sl (divisor_module winner rec) ! i2 = (sl rec)[index := curr_ns + 1] ! i2\<close> by presburger
+  using \<open>sl (divisor_module winner rec) ! i2 = (sl rec)[ind := curr_ns + 1] ! i2\<close> by presburger
 qed
 
 lemma divisor_module_sl_update:
   fixes winner :: "'b list" and 
         rec :: "('a::linorder, 'b) Divisor_Module" and
-        index::"nat"
-  defines i_def: "index \<equiv> get_index_upd (hd winner) (p rec)"
+        ind::"nat"
+  defines i_def: "ind \<equiv> index (p rec) (hd winner)"
   shows "sl (divisor_module winner rec) = 
-         list_update (sl rec) index ((sl rec) ! index + 1)"
+         list_update (sl rec) ind ((sl rec) ! ind + 1)"
 proof -
-  define seat new_s new_as new_fv index curr_ns new_sl new_di 
+  define seat new_s new_as new_fv ind curr_ns new_sl new_di 
     where "seat = Min (disp_r (res rec))" and
           "new_s = update_seat seat winner (s rec)" and
           "new_as = ass_r (res rec) \<union> {seat}" and
           "new_fv = update_votes2 winner (rec\<lparr>s:= new_s\<rparr>)" and
-          "index =  get_index_upd (hd winner) (p rec)" and
-          "curr_ns = (sl rec) ! index" and
-          "new_sl = list_update (sl rec) index (curr_ns + 1)" and
+          "ind =  index (p rec) (hd winner)" and
+          "curr_ns = (sl rec) ! ind" and
+          "new_sl = list_update (sl rec) ind (curr_ns + 1)" and
           "new_di =  disp_r (res rec) - {seat}"
   have "(divisor_module winner rec) =  \<lparr>res = (new_as, {}, new_di),
              p = (p rec),
@@ -147,15 +147,15 @@ proof -
              d = (d rec)
             \<rparr>" 
     unfolding divisor_module.simps new_sl_def Let_def
-  using nth_list_update_eq curr_ns_def index_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
+  using nth_list_update_eq curr_ns_def ind_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
   then have "sl(divisor_module winner rec) = new_sl" 
     by simp
-  also have "... = list_update (sl rec) index (curr_ns + 1)" 
+  also have "... = list_update (sl rec) ind (curr_ns + 1)" 
     unfolding new_sl_def by simp
-  also have "... =  list_update (sl rec) index ((sl rec) ! index + 1)"
+  also have "... =  list_update (sl rec) ind ((sl rec) ! ind + 1)"
       unfolding new_sl_def using curr_ns_def by simp
   finally show ?thesis
-      using index_def nth_list_update_eq assms
+      using ind_def nth_list_update_eq assms
       by blast
 qed
 
@@ -163,7 +163,7 @@ lemma divisor_module_increase_seats:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
   winner::"'b list"
-defines i_def: "inde \<equiv> get_index_upd (hd winner) (p rec)"
+defines i_def: "inde \<equiv> index (p rec) (hd winner)"
 assumes "inde < length (sl rec)"
 shows "(sl (divisor_module winner rec)) ! inde =
        (sl rec) ! inde + 1"
@@ -183,20 +183,20 @@ lemma divisor_module_mon:
   fixes
   winner::"'b list" and
   rec::"('a::linorder, 'b) Divisor_Module" and
-  index::"nat" and
+  ind::"nat" and
   parties::"'b Parties" 
-assumes "index < length (sl rec)"
-  shows "sl (divisor_module winner rec) ! index \<ge> 
-         (sl rec) ! index"
+assumes "ind < length (sl rec)"
+  shows "sl (divisor_module winner rec) ! ind \<ge> 
+         (sl rec) ! ind"
 proof -
-    define seat new_s new_as new_fv index curr_ns new_sl new_di 
+    define seat new_s new_as new_fv ind curr_ns new_sl new_di 
     where "seat = Min (disp_r (res rec))" and
           "new_s = update_seat seat winner (s rec)" and
           "new_as = ass_r (res rec) \<union> {seat}" and
           "new_fv = update_votes2 winner (rec\<lparr>s:= new_s\<rparr>)" and
-          "index =  get_index_upd (hd winner) (p rec)" and
-          "curr_ns = (sl rec) ! index" and
-          "new_sl = list_update (sl rec) index (curr_ns + 1)" and
+          "ind =  index (p rec) (hd winner)" and
+          "curr_ns = (sl rec) ! ind" and
+          "new_sl = list_update (sl rec) ind (curr_ns + 1)" and
           "new_di =  disp_r (res rec) - {seat}"
   have "(divisor_module winner rec) =  \<lparr>res = (new_as, {}, new_di),
              p = (p rec),
@@ -209,12 +209,12 @@ proof -
              d = (d rec)
             \<rparr>" 
     unfolding divisor_module.simps new_sl_def Let_def
-  using nth_list_update_eq curr_ns_def index_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
+  using nth_list_update_eq curr_ns_def ind_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
   then have "sl (divisor_module winner rec) = new_sl" 
     by simp
-  then have "sl (divisor_module winner rec) ! index  
-              = new_sl ! index" by simp
-  then have "... = (list_update (sl rec) index (curr_ns + 1)) ! index" 
+  then have "sl (divisor_module winner rec) ! ind  
+              = new_sl ! ind" by simp
+  then have "... = (list_update (sl rec) ind (curr_ns + 1)) ! ind" 
     using new_sl_def nth_list_update_eq by blast
   then show ?thesis
   by (metis \<open>sl (divisor_module winner rec) = new_sl\<close> assms(1) curr_ns_def le_add1 new_sl_def nth_list_update_eq nth_list_update_neq order_refl)
@@ -244,8 +244,8 @@ lemma break_tie_lemma_party:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
   winner::"'b list" and
-  index::"nat"
-shows "(sl (break_tie winner rec)) ! index \<ge> sl rec ! index" by simp
+  ind::"nat"
+shows "(sl (break_tie winner rec)) ! ind \<ge> sl rec ! ind" by simp
 
 fun defer_divisor :: "('a::linorder, 'b) Divisor_Module 
                       \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
@@ -406,7 +406,7 @@ lemma assign_seats_not_winner_mantains_seats:
   winners::"'b list" and 
   i2::"nat"
   defines "winners \<equiv> get_winners (fv rec) (p rec)"
-  defines "i1 \<equiv> get_index_upd (hd winners) (p rec)"
+  defines "i1 \<equiv> index (p rec) (hd winners)"
   assumes "i1 \<noteq> i2"
   assumes "i2 < length (sl rec)"
   shows "(sl rec) ! i2 = (sl (assign_seats rec)) ! i2"
@@ -512,7 +512,7 @@ lemma assign_seats_seats_increased:
    fixes
   rec::"('a::linorder, 'b) Divisor_Module"
 defines "winners \<equiv> get_winners (fv rec) (p rec)" 
-defines "inde \<equiv> get_index_upd (hd winners) (p rec)"
+defines "inde \<equiv> index (p rec) (hd winners)"
 assumes "length winners \<le> ns rec" 
 assumes "inde < length (sl rec)"
 shows "sl (assign_seats rec) ! inde = sl rec ! inde + 1"
@@ -560,8 +560,8 @@ lemma assign_seats_helper_lemma_helper:
   winners::"'b list"
 defines 
   "m \<equiv> max_val_wrap (fv rec)" and
-  "i1 \<equiv> get_index_upd party1 (p rec)" and
-  "i2 \<equiv> get_index_upd party2 (p rec)" and
+  "i1 \<equiv> index (p rec) party1" and
+  "i2 \<equiv> index (p rec) party2" and
   "fv1 \<equiv> (fv rec) ! i1" and
   "fv2 \<equiv> (fv rec) ! i2" and
   "winners \<equiv> get_winners (fv rec) (p rec)"
@@ -588,7 +588,7 @@ proof (cases "fv1 = max_val_wrap (fv rec)")
     using assms divide_strict_right_mono by fastforce
   then have "fv2 \<noteq> max_val_wrap (fv rec)" 
     using assms True by force
-  then have "(fv rec) ! (get_index_upd party2 (p rec)) \<noteq> m" using assms by simp 
+  then have "(fv rec) ! (index (p rec) party2) \<noteq> m" using assms by simp 
   then have "fv2 \<noteq> m" using assms by fastforce
   then have "party2 \<noteq> hd winners" using assms get_winners_not_winner_not_in_winners
   by metis
@@ -614,8 +614,8 @@ lemma assign_seats_helper_lemma:
   m::"rat" and winners::"'b list" and v1::"rat" and v2::"rat" and
   party1::"'b" and party2::"'b" and parties::"'b Parties"
 defines 
-  "i1 \<equiv> get_index_upd party1 (p rec)" and
-  "i2 \<equiv> get_index_upd party2 (p rec)" and
+  "i1 \<equiv> index (p rec) party1" and
+  "i2 \<equiv> index (p rec) party2" and
   "fv1 \<equiv> (fv rec) ! i1" and
   "fv2 \<equiv> (fv rec) ! i2" and
   "winners \<equiv> get_winners (fv rec) (p rec)"
@@ -657,9 +657,9 @@ next
   case False
   have "sl rec ! i1 > sl rec ! i2" using assms False
   using le_neq_implies_less by presburger
-  then have "i2 = get_index_upd (hd winners) (p rec)" using assms by blast
+  then have "i2 = index (p rec) (hd winners)" using assms by blast
   then have "sl (assign_seats rec) ! i2 = sl rec ! i2 + 1" 
-    using \<open>i2 = get_index_upd (hd winners) (p rec)\<close> assms 
+    using \<open>i2 = index (p rec) (hd winners)\<close> assms 
           assign_seats_seats_increased False by blast
   then have "sl (assign_seats rec) ! i1 = sl rec ! i1" 
     using assms assign_seats_not_winner_mantains_seats False by metis
@@ -675,8 +675,8 @@ lemma assign_seats_concordant:
   m::"rat" and winners::"'b list" and v1::"rat" and v2::"rat" and
   party1::"'b" and party2::"'b" and parties::"'b Parties"
 defines 
-  "i1 \<equiv> get_index_upd party1 (p rec)" and
-  "i2 \<equiv> get_index_upd party2 (p rec)" and
+  "i1 \<equiv> index (p rec) party1" and
+  "i2 \<equiv> index (p rec) party2" and
   "fv1 \<equiv> (fv rec) ! i1" and
   "fv2 \<equiv> (fv rec) ! i2" and
   "winners \<equiv> get_winners (fv rec) (p rec)"
@@ -719,14 +719,14 @@ proof(cases "length winners \<le> ns rec")
           case False
           have "party2 \<noteq> hd winners" using False by simp
           then have "party2 \<in> set (p rec)" using assms by simp
-          then have "get_index_upd (hd winners) (p rec) \<noteq> i2" 
+          then have "index (p rec) (hd winners) \<noteq> i2" 
             using assms False get_index_upd_diff_elements
           by (metis length_greater_0_conv length_pos_if_in_set)
           then have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
             using False assms i2_def i1_def 
                   assign_seats_not_winner_mantains_seats[of rec i2] by metis
           have "party1 \<noteq> hd winners" using \<open>party1 \<noteq> hd winners\<close> by simp
-          then have "get_index_upd (hd winners) (p rec) \<noteq> i1" 
+          then have "index (p rec) (hd winners) \<noteq> i1" 
             using assms False
           by (metis get_index_upd_diff_elements length_greater_0_conv length_pos_if_in_set)            
           then have "sl (assign_seats rec) ! i1 = (sl rec) ! i1"
@@ -828,11 +828,11 @@ lemma loop_o_concordant:
   m::"rat" and winners::"'b list" and v1::"rat" and v2::"rat" and
   party1::"'b" and party2::"'b" and parties::"'b Parties"
 defines 
-  "fv1 \<equiv> (fv rec) ! (get_index_upd party1 parties)" and
-  "fv2 \<equiv> (fv rec) ! (get_index_upd party2 parties)" and
+  "fv1 \<equiv> (fv rec) ! (index parties party1)" and
+  "fv2 \<equiv> (fv rec) ! (index parties party2)" and
   "winners \<equiv> get_winners (fv rec) (p rec)" and
-  "i1 \<equiv> get_index_upd party1 (p rec)" and
-  "i2 \<equiv> get_index_upd party2 (p rec)"
+  "i1 \<equiv> index (p rec) party1" and
+  "i2 \<equiv> index (p rec) party2"
 assumes 
   "v1 > v2" and
   "party1 \<noteq> party2" and
