@@ -262,17 +262,16 @@ fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" 
 
 lemma get_winners_not_in_win:
   fixes fv::"rat list" and m::"rat"
-  defines "m \<equiv> max_val_wrap fv"
-  assumes "fv ! (index ps px) \<noteq> m"
+  assumes "fv ! (index ps px) \<noteq> max_val_wrap fv"
   assumes "get_winners fv ps \<noteq> []"
   shows "px \<noteq> hd (get_winners fv ps)"
 proof - 
   have "get_winners fv ps = (let m = max_val_wrap fv in max_p m fv ps [])" 
     using get_winners.simps by blast
-  then have "px \<notin> set (max_p m fv ps [])" 
+  then have "px \<notin> set (max_p (max_val_wrap fv) fv ps [])" 
     using assms by simp
   then show ?thesis 
-    using m_def hd_in_set assms 
+    using hd_in_set assms 
           \<open>get_winners fv ps = (let m = max_val_wrap fv in max_p m fv ps [])\<close> by metis
 qed
 

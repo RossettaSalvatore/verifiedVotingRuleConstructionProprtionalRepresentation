@@ -52,9 +52,9 @@ text \<open> This function moves one seat from the disputed set to the assigned 
        returns the record with updated Seats function and "fractional" Votes entry 
        for the winning party. \<close>
 
-fun divisor_module :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
+fun assign_seat :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        ('a::linorder, 'b) Divisor_Module" where 
-"divisor_module winner rec =
+"assign_seat winner rec =
   (let 
     seat = Min (disp_r (res rec));
     new_s = update_seat seat winner (s rec);
@@ -75,13 +75,13 @@ fun divisor_module :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \
              d = (d rec)
             \<rparr>)"
 
-(* this lemma shows that for every update of divisor_module, all the other 
+(* this lemma shows that for every update of assign_seat, all the other 
    parties still have the same seats *)
-lemma divisor_module_mantain_seats_lemma:
+lemma assign_seat_mantain_seats_lemma:
   assumes "i1 = index (p rec) (hd winner)"
   assumes "i2 \<noteq> i1"
   assumes "i2 < length (sl rec)"
-  shows "sl (divisor_module winner rec) ! i2 =
+  shows "sl (assign_seat winner rec) ! i2 =
          (sl rec) ! i2"
 proof - 
    define seat new_s new_as new_fv ind curr_ns new_sl new_di 
@@ -93,7 +93,7 @@ proof -
           "curr_ns = (sl rec) ! ind" and
           "new_sl = list_update (sl rec) ind (curr_ns + 1)" and
           "new_di =  disp_r (res rec) - {seat}"
-  have "(divisor_module winner rec) =  \<lparr>res = (new_as, {}, new_di),
+  have "(assign_seat winner rec) =  \<lparr>res = (new_as, {}, new_di),
              p = (p rec),
              i = (i rec),
              s = new_s,
@@ -103,28 +103,28 @@ proof -
              sl = new_sl,
              d = (d rec)
             \<rparr>" 
-    unfolding divisor_module.simps new_sl_def Let_def
+    unfolding assign_seat.simps new_sl_def Let_def
     using nth_list_update_eq curr_ns_def ind_def new_as_def new_di_def new_fv_def new_s_def seat_def 
     by fastforce
-  then have "sl (divisor_module winner rec) = new_sl" 
+  then have "sl (assign_seat winner rec) = new_sl" 
     by simp
   then have "... =  list_update (sl rec) ind (curr_ns + 1)" 
     using new_sl_def by simp
-  then have "sl (divisor_module winner rec) ! i2 = 
+  then have "sl (assign_seat winner rec) ! i2 = 
              (list_update (sl rec) ind (curr_ns + 1)) ! i2"
-    using \<open>sl (divisor_module winner rec) = new_sl\<close> by presburger
+    using \<open>sl (assign_seat winner rec) = new_sl\<close> by presburger
   then have "... = (sl rec) ! i2" 
     using nth_list_update_neq assms by (metis ind_def)
   then show ?thesis
-  using \<open>sl (divisor_module winner rec) ! i2 = (sl rec)[ind := curr_ns + 1] ! i2\<close> by presburger
+  using \<open>sl (assign_seat winner rec) ! i2 = (sl rec)[ind := curr_ns + 1] ! i2\<close> by presburger
 qed
 
-lemma divisor_module_sl_update:
+lemma assign_seat_sl_update:
   fixes winner :: "'b list" and 
         rec :: "('a::linorder, 'b) Divisor_Module" and
         ind::"nat"
   defines i_def: "ind \<equiv> index (p rec) (hd winner)"
-  shows "sl (divisor_module winner rec) = 
+  shows "sl (assign_seat winner rec) = 
          list_update (sl rec) ind ((sl rec) ! ind + 1)"
 proof -
   define seat new_s new_as new_fv ind curr_ns new_sl new_di 
@@ -136,7 +136,7 @@ proof -
           "curr_ns = (sl rec) ! ind" and
           "new_sl = list_update (sl rec) ind (curr_ns + 1)" and
           "new_di =  disp_r (res rec) - {seat}"
-  have "(divisor_module winner rec) =  \<lparr>res = (new_as, {}, new_di),
+  have "(assign_seat winner rec) =  \<lparr>res = (new_as, {}, new_di),
              p = (p rec),
              i = (i rec),
              s = new_s,
@@ -146,9 +146,9 @@ proof -
              sl = new_sl,
              d = (d rec)
             \<rparr>" 
-    unfolding divisor_module.simps new_sl_def Let_def
+    unfolding assign_seat.simps new_sl_def Let_def
   using nth_list_update_eq curr_ns_def ind_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
-  then have "sl(divisor_module winner rec) = new_sl" 
+  then have "sl(assign_seat winner rec) = new_sl" 
     by simp
   also have "... = list_update (sl rec) ind (curr_ns + 1)" 
     unfolding new_sl_def by simp
@@ -159,34 +159,34 @@ proof -
       by blast
 qed
 
-lemma divisor_module_increase_seats:
+lemma assign_seat_increase_seats:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
   winner::"'b list"
 defines i_def: "inde \<equiv> index (p rec) (hd winner)"
 assumes "inde < length (sl rec)"
-shows "(sl (divisor_module winner rec)) ! inde =
+shows "(sl (assign_seat winner rec)) ! inde =
        (sl rec) ! inde + 1"
 proof -
-  have "sl (divisor_module winner rec) =  list_update (sl rec) inde ((sl rec) ! inde + 1)" 
-    using divisor_module_sl_update assms by blast
-  then have "sl (divisor_module winner rec) ! inde = 
+  have "sl (assign_seat winner rec) =  list_update (sl rec) inde ((sl rec) ! inde + 1)" 
+    using assign_seat_sl_update assms by blast
+  then have "sl (assign_seat winner rec) ! inde = 
         (list_update (sl rec) inde ((sl rec) ! inde + 1)) ! inde" 
     using assms by simp
   then have "... = ((sl rec) ! inde + 1)" 
     using nth_list_update_eq assms by simp
   then show ?thesis
-    using \<open>sl (divisor_module winner rec) ! inde = list_update (sl rec) inde (sl rec ! inde + 1) ! inde\<close> by auto
+    using \<open>sl (assign_seat winner rec) ! inde = list_update (sl rec) inde (sl rec ! inde + 1) ! inde\<close> by auto
 qed
 
-lemma divisor_module_mon:
+lemma assign_seat_mon:
   fixes
   winner::"'b list" and
   rec::"('a::linorder, 'b) Divisor_Module" and
   ind::"nat" and
   parties::"'b Parties" 
 assumes "ind < length (sl rec)"
-  shows "sl (divisor_module winner rec) ! ind \<ge> 
+  shows "sl (assign_seat winner rec) ! ind \<ge> 
          (sl rec) ! ind"
 proof -
     define seat new_s new_as new_fv ind curr_ns new_sl new_di 
@@ -198,7 +198,7 @@ proof -
           "curr_ns = (sl rec) ! ind" and
           "new_sl = list_update (sl rec) ind (curr_ns + 1)" and
           "new_di =  disp_r (res rec) - {seat}"
-  have "(divisor_module winner rec) =  \<lparr>res = (new_as, {}, new_di),
+  have "(assign_seat winner rec) =  \<lparr>res = (new_as, {}, new_di),
              p = (p rec),
              i = (i rec),
              s = new_s,
@@ -208,16 +208,16 @@ proof -
              sl = new_sl,
              d = (d rec)
             \<rparr>" 
-    unfolding divisor_module.simps new_sl_def Let_def
+    unfolding assign_seat.simps new_sl_def Let_def
   using nth_list_update_eq curr_ns_def ind_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
-  then have "sl (divisor_module winner rec) = new_sl" 
+  then have "sl (assign_seat winner rec) = new_sl" 
     by simp
-  then have "sl (divisor_module winner rec) ! ind  
+  then have "sl (assign_seat winner rec) ! ind  
               = new_sl ! ind" by simp
   then have "... = (list_update (sl rec) ind (curr_ns + 1)) ! ind" 
     using new_sl_def nth_list_update_eq by blast
   then show ?thesis
-  by (metis \<open>sl (divisor_module winner rec) = new_sl\<close> assms(1) curr_ns_def le_add1 new_sl_def nth_list_update_eq nth_list_update_neq order_refl)
+  by (metis \<open>sl (assign_seat winner rec) = new_sl\<close> assms(1) curr_ns_def le_add1 new_sl_def nth_list_update_eq nth_list_update_neq order_refl)
 qed
 
 fun break_tie :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
@@ -265,7 +265,7 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
 "assign_seats rec = (
       let winners = get_winners (fv rec) (p rec) in
       if length winners \<le> ns rec then 
-        let rec' =  (divisor_module [hd winners] rec) in
+        let rec' =  (assign_seat [hd winners] rec) in
                     \<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
@@ -302,11 +302,11 @@ proof(cases "length winners \<le> ns rec")
   case True
   define rec' 
     where 
-     "rec'= (divisor_module [hd winners] rec)"  
+     "rec'= (assign_seat [hd winners] rec)"  
   then have "assign_seats rec =  (
       let winners = get_winners (fv rec) (p rec) in
       if length winners \<le> ns rec then 
-        let rec' =  (divisor_module [hd winners] rec) in
+        let rec' =  (assign_seat [hd winners] rec) in
                     \<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
@@ -342,10 +342,10 @@ proof(cases "length winners \<le> ns rec")
     by (smt (verit, best) True)
   then have "sl (assign_seats rec) ! inde = sl rec' ! inde" 
     by simp
-  then have "... = (sl (divisor_module [hd winners] rec)) ! inde" 
+  then have "... = (sl (assign_seat [hd winners] rec)) ! inde" 
     using rec'_def by simp
   then have "... \<ge> (sl rec) ! inde" 
-    using assms divisor_module_mon by blast
+    using assms assign_seat_mon by blast
   then show ?thesis 
     using assms rec'_def by (metis \<open>sl (assign_seats rec) ! inde = sl rec' ! inde\<close>)
 next
@@ -356,7 +356,7 @@ next
    then have "assign_seats rec =  (
       let winners = get_winners (fv rec) (p rec) in
       if length winners \<le> ns rec then 
-        let rec' =  (divisor_module [hd winners] rec) in
+        let rec' =  (assign_seat [hd winners] rec) in
                     \<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
@@ -414,7 +414,7 @@ proof (cases "(length winners) \<le> ns rec")
   case True
   define rec' 
    where 
-     "rec'= (divisor_module [hd winners] rec)"  
+     "rec'= (assign_seat [hd winners] rec)"  
   have "assign_seats rec = \<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
@@ -428,12 +428,12 @@ proof (cases "(length winners) \<le> ns rec")
   by (smt (verit, best) True assign_seats.simps)
   then have "sl (assign_seats rec) = sl (rec')" 
     by simp
-  then have "sl (assign_seats rec) ! i2 = sl (divisor_module [hd winners] rec) ! i2" 
+  then have "sl (assign_seats rec) ! i2 = sl (assign_seat [hd winners] rec) ! i2" 
     using assms \<open>sl (assign_seats rec) = sl rec'\<close> using rec'_def by presburger
   then have "... = (sl rec) ! i2" 
-    using divisor_module_mantain_seats_lemma assms list.sel(1) by metis
+    using assign_seat_mantain_seats_lemma assms list.sel(1) by metis
   then show ?thesis
-  using \<open>sl (assign_seats rec) ! i2 = sl (divisor_module [hd winners] rec) ! i2\<close> by linarith
+  using \<open>sl (assign_seats rec) ! i2 = sl (assign_seat [hd winners] rec) ! i2\<close> by linarith
 next
   case False
  define rec''
@@ -442,7 +442,7 @@ next
   then have "assign_seats rec =  (
       let winners = get_winners (fv rec) (p rec) in
       if length winners \<le> ns rec then 
-        let rec' =  (divisor_module [hd winners] rec) in
+        let rec' =  (assign_seat [hd winners] rec) in
                     \<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
@@ -493,7 +493,7 @@ lemma assign_seats_update:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module"
   defines winners_def: "winners \<equiv> get_winners (fv rec) (p rec)"
-  defines rec'_def: "rec' \<equiv> divisor_module [hd winners] rec"
+  defines rec'_def: "rec' \<equiv> assign_seat [hd winners] rec"
   assumes "length winners \<le> ns rec"
   shows "assign_seats rec = \<lparr>res = (res rec'),
                             p = (p rec'),
@@ -517,7 +517,7 @@ assumes "length winners \<le> ns rec"
 assumes "inde < length (sl rec)"
 shows "sl (assign_seats rec) ! inde = sl rec ! inde + 1"
 proof - 
-  define rec' where  "rec' \<equiv> (divisor_module [hd winners] rec)"
+  define rec' where  "rec' \<equiv> (assign_seat [hd winners] rec)"
   have "sl (assign_seats rec) =  sl (\<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
@@ -531,11 +531,11 @@ proof -
     using assms assign_seats_update rec'_def by metis
   then have "sl (assign_seats rec) ! inde = (sl rec') ! inde"
     by simp 
-  also have "... = sl (divisor_module [hd winners] rec) ! inde" 
+  also have "... = sl (assign_seat [hd winners] rec) ! inde" 
     using assms rec'_def by simp
   also have "... = (list_update (sl rec) inde ((sl rec) ! inde + 1))
                    ! inde" 
-    using assms divisor_module_sl_update by (metis list.sel(1)) 
+    using assms assign_seat_sl_update by (metis list.sel(1)) 
   also have "... = sl rec ! inde + 1" 
     using nth_list_update_eq assms by simp
   finally have "sl (assign_seats rec) ! inde = sl rec ! inde + 1" 
@@ -747,7 +747,7 @@ next
    have "assign_seats rec =  (
       let winners = get_winners (fv rec) (p rec) in
       if length winners \<le> ns rec then 
-        let rec' =  (divisor_module [hd winners] rec) in
+        let rec' =  (assign_seat [hd winners] rec) in
                     \<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
