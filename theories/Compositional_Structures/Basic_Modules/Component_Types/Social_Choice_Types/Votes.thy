@@ -8,18 +8,11 @@ theory Votes
 HOL.List
 "HOL-Combinatorics.Multiset_Permutations"
 "HOL-Combinatorics.List_Permutation"
-(*Smart_Isabelle.Smart_Isabelle*)
 Preference_Relation
 Profile
 Result
 "List-Index.List_Index"
 begin
-
-(* \<equiv> *)
-
-value "remove_nth 1 [''0'', ''1'']"
-
-value "index [0::nat, 4, 5, 1] 1"
 
 definition above_set :: "_ \<Rightarrow> 'a \<Rightarrow> 'a set"
   where "above_set r a \<equiv> above (set r) a"
@@ -35,8 +28,6 @@ lemma [code]:
 fun count_above :: "('a rel) \<Rightarrow> 'a \<Rightarrow> nat" where
   "count_above r a = card (above r a)"
 
-value "count_above {(''partyA'', ''partyB''), (''partyA'', ''partyC'')} ''partyC''"
-
 subsection  \<open>Definition\<close>
 text  \<open>Parties is the list of parties, that can be of any type. 
        Votes is a function used to assign a rational number (indeed, the votes) to each party. \<close>
@@ -48,11 +39,6 @@ type_synonym ('a, 'b) Seats = "'a \<Rightarrow> 'b list"
 type_synonym 'b Votes = "'b \<Rightarrow> rat"
 
 type_synonym Params = "nat list"
-
-
-primrec get_index :: "('a \<Rightarrow> bool) \<Rightarrow> 'a list \<Rightarrow> nat" where
-"get_index P [] = 0"
-| "get_index P (x # xs) = (if P x then 0 else Suc (get_index P xs))"
 
 fun get_index_upd :: "'a \<Rightarrow> 'a list \<Rightarrow> nat" where
 "get_index_upd px p = index p px"
@@ -79,18 +65,19 @@ assumes "p1 \<in> set p"
   shows "get_index_upd p1 p \<noteq> get_index_upd p2 p"
 proof (rule ccontr)
   assume "\<not> (get_index_upd p1 p \<noteq> get_index_upd p2 p)"
-  then have "get_index_upd p1 p = get_index_upd p2 p" by simp
-  from this obtain n1 n2 where "get_index_upd p1 p = n1" and "get_index_upd p2 p = n2" by blast
+  then have "get_index_upd p1 p = get_index_upd p2 p" 
+    by simp
+  then obtain n1 n2 where "get_index_upd p1 p = n1" and "get_index_upd p2 p = n2" 
+    by blast
   hence "n1 = n2"
     by (meson \<open>\<not> get_index_upd p1 p \<noteq> get_index_upd p2 p\<close>)
   hence "p ! n1 = p1" 
     using assms get_index_upd_correct \<open>get_index_upd p1 p = n1\<close> by fastforce
   hence "p ! n2 = p2" 
-    using assms get_index_upd_correct \<open>get_index_upd p2 p = n2\<close>
-  using \<open>get_index_upd p1 p = get_index_upd p2 p\<close> by force
+    using assms get_index_upd_correct \<open>get_index_upd p2 p = n2\<close> 
+          \<open>get_index_upd p1 p = get_index_upd p2 p\<close> by force
   hence "p1 = p2" 
-    using assms \<open>\<not> get_index_upd p1 p \<noteq> get_index_upd p2 p\<close>
-          \<open>n1 = n2\<close> \<open>p ! n1 = p1\<close> by blast
+    using assms \<open>\<not> get_index_upd p1 p \<noteq> get_index_upd p2 p\<close> \<open>n1 = n2\<close> \<open>p ! n1 = p1\<close> by blast
   with assms show False by simp
 qed
 
