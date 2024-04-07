@@ -696,12 +696,17 @@ lemma assign_seats_concordant:
   m::"rat" and winners::"'b list" and v1::"rat" and v2::"rat" and
   party1::"'b" and party2::"'b" and parties::"'b Parties"
 defines 
-  "fv1 \<equiv> (fv rec) ! (get_index_upd party1 parties)" and
-  "fv2 \<equiv> (fv rec) ! (get_index_upd party2 parties)" and
-  "winners \<equiv> get_winners (fv rec) (p rec)" and
   "i1 \<equiv> get_index_upd party1 (p rec)" and
-  "i2 \<equiv> get_index_upd party2 (p rec)"
+  "i2 \<equiv> get_index_upd party2 (p rec)" and
+  "fv1 \<equiv> (fv rec) ! i1" and
+  "fv2 \<equiv> (fv rec) ! i2" and
+  "winners \<equiv> get_winners (fv rec) (p rec)"
 assumes 
+  "winners \<noteq> []" and
+  "party1 \<in> set (p rec)" and
+  "party2 \<in> set (p rec)" and
+  "i1 < length (fv rec)" and
+  "i2 < length (fv rec)" and
   "v1 > v2" and
   "party1 \<noteq> party2" and
   "fv1 \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! i1)))" and
@@ -730,19 +735,21 @@ proof(cases "length winners \<le> ns rec")
         then show ?thesis
         proof(cases "party2 = hd winners")
           case True
-          then show ?thesis using assms True assign_seats_helper_lemma by sledgehammer 
+          then show ?thesis using assms True assign_seats_helper_lemma by metis 
         next
           case False
           have "party2 \<noteq> hd winners" using False by simp
-          then have "winners = (get_winners (fv rec) (p rec))" using assms by simp
+          then have "party2 \<in> set (p rec)" using assms by simp
           then have "get_index_upd (hd winners) (p rec) \<noteq> i2" 
-            using assms False get_index_upd_correct by metis
+            using assms False get_index_upd_diff_elements
+          by (metis length_greater_0_conv length_pos_if_in_set)
           then have "sl (assign_seats rec) ! i2 = (sl rec) ! i2"
             using False assms i2_def i1_def 
                   assign_seats_not_winner_mantains_seats[of rec i2] by metis
           have "party1 \<noteq> hd winners" using \<open>party1 \<noteq> hd winners\<close> by simp
           then have "get_index_upd (hd winners) (p rec) \<noteq> i1" 
-            using assms False get_index_upd_correct by metis            
+            using assms False
+          by (metis get_index_upd_diff_elements length_greater_0_conv length_pos_if_in_set)            
           then have "sl (assign_seats rec) ! i1 = (sl rec) ! i1"
             using \<open>party1 \<noteq> hd winners\<close> assms i2_def i1_def 
                   assign_seats_not_winner_mantains_seats[of rec i1] by metis

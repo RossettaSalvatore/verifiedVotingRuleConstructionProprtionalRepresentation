@@ -74,7 +74,6 @@ lemma get_index_upd_diff_elements:
   fixes 
   p1::"'a" and p2::"'a" and p::"'a list"
 assumes "p1 \<in> set p"
-assumes "p2 \<in> set p"
   assumes "p1 \<noteq> p2" 
   assumes "p \<noteq> []"
   shows "get_index_upd p1 p \<noteq> get_index_upd p2 p"
@@ -87,7 +86,8 @@ proof (rule ccontr)
   hence "p ! n1 = p1" 
     using assms get_index_upd_correct \<open>get_index_upd p1 p = n1\<close> by fastforce
   hence "p ! n2 = p2" 
-    using assms get_index_upd_correct \<open>get_index_upd p2 p = n2\<close> by fastforce
+    using assms get_index_upd_correct \<open>get_index_upd p2 p = n2\<close>
+  using \<open>get_index_upd p1 p = get_index_upd p2 p\<close> by force
   hence "p1 = p2" 
     using assms \<open>\<not> get_index_upd p1 p \<noteq> get_index_upd p2 p\<close>
           \<open>n1 = n2\<close> \<open>p ! n1 = p1\<close> by blast
@@ -344,6 +344,9 @@ fun max_p:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
 "max_p m v ps w = w @ filter (\<lambda>x. v ! (get_index_upd x ps) = m) ps" 
 
+lemma max_p_hd_is_in_set:
+  shows "hd (max_p m v p []) \<in> set p"
+  by sledgehammer
 
 (* forse questo lemma prova che se il partito non ha il massimo dei voti allora non finisce
    nella lista dei vincitori *)
@@ -365,6 +368,10 @@ lemma max_parties_no_in:
 fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = 
     (let m = max_val_wrap v in max_p m v p [])"
+
+lemma get_winners_hd_is_in_set:
+  shows "hd (get_winners v p) \<in> set p"
+  by sorry
 
 lemma get_winners_not_winner_not_in_winners:
   fixes fv::"rat list" and m::"rat"
