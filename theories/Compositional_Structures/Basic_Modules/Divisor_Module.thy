@@ -17,17 +17,6 @@ Main
 
 begin
 
-(*
-- set of seats assigned and to assign in form (assigned, {}, to_assign);
-- fv, fract votes (Votes function);
-- list of parties;
-- list of indexes to iterate (maybe can be removed);
-- seats (Seats function);
-- number of seats to assign;
-- votes, "starting" votes (Votes function);
-- list of divisors ([1, 2, 3, ...] or [1, 3, 5, ...])
-*)
-
 text \<open> This record contains the list of parameters used in the whole divisor module.  \<close>
 record ('a::linorder, 'b) Divisor_Module =
   res :: "'a::linorder Result"
@@ -40,13 +29,6 @@ record ('a::linorder, 'b) Divisor_Module =
   sl :: "nat list" 
   d :: "nat list"
 
-locale typesl = 
-  fixes dm :: "('a::linorder, 'b) Divisor_Module"
-  and em :: "'a::linorder Electoral_Module"
-
-locale l2 = 
-  typesl + fixes n :: nat
-
 abbreviation ass_r :: "'a Result \<Rightarrow> 'a set" where
   "ass_r r \<equiv> fst r"
 
@@ -55,11 +37,9 @@ abbreviation disp_r :: "'a Result \<Rightarrow> 'a set" where
 
 subsection \<open> Definition \<close>
 
-
 text \<open> This function updates the "fractional votes" of the winning party, dividing the starting
        votes by the i-th parameter, where i is the number of seats won by the party. \<close>
 
-(* works adapted *)
 fun update_votes2 ::  "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        rat list" where 
 "update_votes2 winner r = 
@@ -198,7 +178,6 @@ proof -
   then show ?thesis
     using \<open>sl (divisor_module winner rec) ! inde = list_update (sl rec) inde (sl rec ! inde + 1) ! inde\<close> by auto
 qed
-
 
 lemma divisor_module_mon:
   fixes
@@ -881,8 +860,6 @@ fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarro
   "create_empty_seats indexes parties =
     (\<lambda>i. if i \<in> indexes then parties else [])"
 
-(* full divisor module function
-  calcola voti correttamente  *) 
 text \<open>This function takes in input the parameters and calculates
        the final output of the election.\<close>
 
@@ -913,7 +890,6 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
 definition my_set :: "nat set" where
   "my_set = {1, 2, 3, 4, 5}"
               
-(* works *)
 fun list_to_multiset :: "'a list \<Rightarrow> 'a multiset" where
   "list_to_multiset [] = {#}" |
   "list_to_multiset (x # xs) = {#x#} + list_to_multiset xs"
@@ -939,34 +915,6 @@ theorem votes_anonymous:
     calculate_votes_for_election p1 profile = 
     calculate_votes_for_election p2 profile"
   sorry
-
-(* Define the concordant property *)
-definition concordant :: "(('a, 'b) Divisor_Module \<Rightarrow> ('a, 'b) Divisor_Module) \<Rightarrow>
-                           ('a::linorder, 'b) Divisor_Module \<Rightarrow> bool" where
-  "concordant D dm = (\<forall>party1 party2 i.
-    get_votes party1 (p dm) (v dm) > get_votes party2 (p dm) (v dm) \<longrightarrow>
-    count_seats [party1] (s (D dm)) (i dm) \<ge> count_seats [party2] (s (D dm)) (i dm))"
-
-(* if one party has more votes than another than it will have at least the same seats *)
-theorem full_module_concordant:
-  fixes
-    rec:: "('a::linorder, 'b) Divisor_Module" and
-    pl::"'b Profile" and 
-    indexes::"'a::linorder set" and
-    se::"('a::linorder, 'b) Seats" and
-    party::"'b" and
-    parties::"'b Parties" 
-  defines "sl' \<equiv> sl (full_module rec pl)"
-  assumes "party1 \<in> set parties"
-  assumes "party2 \<in> set parties"
-  defines "rec' \<equiv> full_module rec pl"
-  defines "index1 \<equiv> get_index_upd party1 parties"
-  defines "index2 \<equiv> get_index_upd party2 parties"
-  shows "cnt_votes party1 pl 0 > cnt_votes party2 pl 0 \<Longrightarrow> 
-          sl' ! index1 \<ge> sl' ! index2"
-sorry
- 
-value "get_votes ''partyA'' [''partyA'', ''partyB''] [4, 5]"
 
 (* Define monotonicity property *)
 theorem monotonicity_property:
@@ -1042,8 +990,6 @@ definition new_record :: "'b Parties \<Rightarrow> nat \<Rightarrow> (nat, 'b) D
   - sto cercando di assegnare il seat al winner (RISOLTO)
 *)
 
-(* ns è un numero naturale *)
-(* i divisor sono numeri interi *)
 fun dhondt_method :: "'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Rightarrow>
                    (nat, 'b) Divisor_Module" where
 "dhondt_method partiti nseats pr = 
@@ -1054,7 +1000,6 @@ fun saintelague_method:: "'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile 
 "saintelague_method partiti nseats pr = 
   (let rec = new_record partiti nseats in full_module (rec\<lparr>d := filter (\<lambda>x. x mod 2 = 1)
                                             (upt 1 (2*ns rec))\<rparr>) pr)"
-
 
 value "dhondt_method parties 10 pref"
 
