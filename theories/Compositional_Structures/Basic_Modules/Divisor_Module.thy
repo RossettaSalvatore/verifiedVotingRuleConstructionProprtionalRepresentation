@@ -625,31 +625,6 @@ next
   by metis
 qed
 
-(*
-lemma assign_seats_ccontr:
-  fixes
-  rec::"('a::linorder, 'b) Divisor_Module" and
-  i2::"nat" and i1::"nat" and
-  m::"rat" and winners::"'b list" and
-  party1::"'b" and party2::"'b" and parties::"'b Parties"
-assumes "v1 > v2"
-assumes "party1 \<noteq> party2"
-  defines "i1 \<equiv> get_index_upd party1 (p rec)"
-  defines "i2 \<equiv> get_index_upd party2 (p rec)"
-  defines "fv1 \<equiv> v1 / (d rec) ! ((sl rec) ! i1)"
-  defines "fv2 \<equiv> v2 / (d rec) ! ((sl rec) ! i2)"
-  defines "winners \<equiv> get_winners (fv rec) (p rec)"
-  assumes "sl rec ! i1 \<ge> sl rec ! i2" 
-  assumes "i1 \<noteq> i2" 
-  assumes "i1 < length (sl rec)"
-  assumes "i2 < length (sl rec)"
-  assumes "party2 = hd winners"
-  assumes "length winners \<le> ns rec"
-  assumes "(d rec) ! ((sl rec) ! i2) \<noteq> 0"
-  assumes "sl rec ! i1 = sl rec ! i2"
-  shows "sl (assign_seats rec) ! i1 \<ge> sl (assign_seats rec) ! i2"
-proof (rule ccontr)
-*)
 
 (* voglio provare un singolo caso di quello che verrà dopo, il caso che voglio 
   provare è che se il partito2 vince allora comunque non supera i seat di partito1 *)
@@ -660,12 +635,15 @@ lemma assign_seats_helper_lemma:
   m::"rat" and winners::"'b list" and v1::"rat" and v2::"rat" and
   party1::"'b" and party2::"'b" and parties::"'b Parties"
 defines 
-  "fv1 \<equiv> (fv rec) ! (get_index_upd party1 parties)" and
-  "fv2 \<equiv> (fv rec) ! (get_index_upd party2 parties)" and
-  "winners \<equiv> get_winners (fv rec) (p rec)" and
   "i1 \<equiv> get_index_upd party1 (p rec)" and
-  "i2 \<equiv> get_index_upd party2 (p rec)"
+  "i2 \<equiv> get_index_upd party2 (p rec)" and
+  "fv1 \<equiv> (fv rec) ! i1" and
+  "fv2 \<equiv> (fv rec) ! i2" and
+  "winners \<equiv> get_winners (fv rec) (p rec)"
 assumes 
+  "winners \<noteq> []" and
+  "i1 < length (fv rec)" and
+  "i2 < length (fv rec)" and
   "v1 > v2" and
   "party1 \<noteq> party2" and
   "party2 = hd winners" and
@@ -690,9 +668,10 @@ proof(cases "sl rec ! i1 = sl rec ! i2")
   then have "fv1 > fv2" 
     using \<open>fv1 = v1 / (d rec) ! ((sl rec) ! i2)\<close> 
           \<open>fv2 = v2 / (d rec) ! ((sl rec) ! i2)\<close> \<open>v1 > v2\<close> assms
-  by (metis True assign_seats_helper_lemma_helper)
+  by (metis True divide_cancel_right divide_right_mono less_eq_rat_def of_int_of_nat_eq of_nat_le_0_iff verit_comp_simplify1(3))
   then have "party2 \<noteq> hd winners"
-    using True assign_seats_helper_lemma_helper assms fv1_def fv2_def winners_def by metis
+    using True assms fv1_def fv2_def winners_def
+  by (metis get_winners_not_winner_not_in_winners max_val_wrap_lemma verit_comp_simplify1(3))
   then show ?thesis
   using assms by blast
 next
@@ -751,7 +730,7 @@ proof(cases "length winners \<le> ns rec")
         then show ?thesis
         proof(cases "party2 = hd winners")
           case True
-          then show ?thesis using assms True assign_seats_helper_lemma by metis
+          then show ?thesis using assms True assign_seats_helper_lemma by sledgehammer 
         next
           case False
           have "party2 \<noteq> hd winners" using False by simp
