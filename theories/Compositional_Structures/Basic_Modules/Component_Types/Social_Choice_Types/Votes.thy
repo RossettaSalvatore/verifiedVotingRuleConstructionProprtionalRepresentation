@@ -239,6 +239,7 @@ fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Righ
        i = get_index_upd party ps in
       calc_votes parties ps prof (list_update votes i (n::nat)))"
 
+(*
 lemma simp_votes:
   fixes
     parties:: "'b Parties" and
@@ -265,7 +266,7 @@ lemma votes_perm:
                                             get_index_upd party parties
  = calc_votes parties' parties' profile [] ! get_index_upd party parties'"
   by sorry 
-
+*)
 (* this works 09/03/24 *)
 value "(calc_votes [''a'', ''b''] [''a'', ''b''] profile_list [0, 0])! (get_index_upd ''a'' [''a'', ''b''])"
 value "(calc_votes [''b'', ''a''] [''a'', ''b''] profile_list [0, 0])! (get_index_upd ''a'' [''b'', ''a''])"
@@ -344,10 +345,6 @@ fun max_p:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
 "max_p m v ps w = w @ filter (\<lambda>x. v ! (get_index_upd x ps) = m) ps" 
 
-lemma max_p_hd_is_in_set:
-  shows "hd (max_p m v p []) \<in> set p"
-  by sledgehammer
-
 (* forse questo lemma prova che se il partito non ha il massimo dei voti allora non finisce
    nella lista dei vincitori *)
 lemma max_parties_not_winner_not_in_winners:
@@ -368,10 +365,6 @@ lemma max_parties_no_in:
 fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = 
     (let m = max_val_wrap v in max_p m v p [])"
-
-lemma get_winners_hd_is_in_set:
-  shows "hd (get_winners v p) \<in> set p"
-  by sorry
 
 lemma get_winners_not_winner_not_in_winners:
   fixes fv::"rat list" and m::"rat"
@@ -421,7 +414,7 @@ fun count_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow>
   "count_seats p s i = 
     (card {ix. ix \<in> i \<and> s ix = p})"
 
-
+(*
 lemma max_parties_concordant:
   assumes "fp = p"
   assumes "ns1 = ns2"
@@ -443,6 +436,6 @@ assumes "mset parties = mset parties'"
 assumes "mset votes = mset votes'"
 shows "get_winners votes parties = get_winners votes' parties'"
   sorry
-
+*)
 
 end
