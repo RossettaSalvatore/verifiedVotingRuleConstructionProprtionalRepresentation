@@ -825,18 +825,33 @@ lemma [code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r)
   by (cases r) auto
 
 lemma loop_o_concordant:
-   fixes
+fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
-  i2::"nat" and i1::"nat" and
-  m::"rat" and winners::"'b list" and v1::"rat" and v2::"rat" and
-  party1::"'b" and party2::"'b" and parties::"'b Parties"
+  i2::"nat" and 
+  i1::"nat" and
+  m::"rat" and 
+  winners::"'b list" and 
+  v1::"rat" and 
+  v2::"rat" and
+  party1::"'b" and 
+  party2::"'b" and 
+  parties::"'b Parties"
 defines 
-  "fv1 \<equiv> (fv rec) ! (index parties party1)" and
-  "fv2 \<equiv> (fv rec) ! (index parties party2)" and
-  "winners \<equiv> get_winners (fv rec) (p rec)" and
   "i1 \<equiv> index (p rec) party1" and
-  "i2 \<equiv> index (p rec) party2"
+  "i2 \<equiv> index (p rec) party2" and
+  "fv1 \<equiv> (fv rec) ! i1" and
+  "fv2 \<equiv> (fv rec) ! i2" and
+  "winners \<equiv> get_winners (fv rec) (p rec)"
 assumes 
+  "p (assign_seats rec) = p rec" and
+  "d (assign_seats rec) = d rec" and
+  "sl (assign_seats rec) = sl rec" and
+  "fv (assign_seats rec) = fv rec" and
+  "winners \<noteq> []" and
+  "party1 \<in> set (p rec)" and
+  "party2 \<in> set (p rec)" and
+  "i1 < length (fv rec)" and
+  "i2 < length (fv rec)" and
   "v1 > v2" and
   "party1 \<noteq> party2" and
   "fv1 \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! i1)))" and
@@ -850,14 +865,7 @@ assumes
   shows "sl (loop_o rec) ! i1 \<ge> sl (loop_o rec) ! i2"
   using assms assign_seats_concordant
   by (induction rec rule:loop_o.induct)
-    auto
-
-(*  
-  apply (induction rec rule:loop_o.induct)
-  subgoal for r
-    using assign_seats_concordant[of v2 v1 party1 party2 r]
-    apply  (auto simp: Let_def split: if_splits simp del: assign_seats.simps)
-*)
+   (auto simp: Let_def split: if_splits simp del: assign_seats.simps)
 
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
   "create_empty_seats indexes parties =
