@@ -51,8 +51,7 @@ assumes "index p px < size p"
 lemma index_diff_elements:
   assumes 
     "p1 \<in> set p" and 
-    "p1 \<noteq> p2" and 
-    "p \<noteq> []"
+    "p1 \<noteq> p2"
   shows "index p p1 \<noteq> index p p2"
 proof (rule ccontr)
   assume "\<not> (index p p1 \<noteq> index p p2)"
