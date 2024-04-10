@@ -293,6 +293,72 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
 
 (* proof that for every candidate, the number of seats after 
    calling the function cannot decrease *)
+
+lemma get_winners_loser:
+  fixes 
+    rec::"('a::linorder, 'b) Divisor_Module" and 
+    v::"rat"
+  assumes
+  "party \<in> set (p rec)" and
+  "fvp = (fv rec) ! (index (p rec) party)" and
+  "party \<notin> set (get_winners (fv rec) (p rec))" and
+  "get_winners (fv rec) (p rec) \<noteq> []"
+shows "max_val_wrap (fv rec) > fvp"
+proof(rule ccontr)
+  assume "max_val_wrap (fv rec) = fvp"
+  then have "party \<in> set (get_winners (fv rec) (p rec))" 
+    using get_winners_in_win assms by (metis)
+  then have False using assms by blast
+qed
+
+lemma get_winners_mon:
+  fixes 
+    rec::"('a::linorder, 'b) Divisor_Module" and 
+    rec'::"('a::linorder, 'b) Divisor_Module" and
+    v::"rat" and v'::"rat"
+  assumes "p rec = p rec'" and
+  "v' > v" and
+  "i' = index (p rec) party" and
+  "(sl rec) ! i1 = (sl rec') ! i1" and
+  "((fv rec) ! (index (p rec) party)) = v / (di ((sl rec) ! i'))" and
+  "((fv rec') ! (index (p rec') party)) = v' / (di ((sl rec) ! i'))" and
+  "\<forall>x \<noteq> party. ((fv rec) ! (index (p rec) x)) = ((fv rec) ! (index (p rec) x))" and
+  "party \<notin> set (get_winners (fv rec') (p rec'))"
+  shows "party \<notin> set (get_winners (fv rec) (p rec))"
+  
+lemma assign_seats_incre:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  rec'::"('a::linorder, 'b) Divisor_Module" and
+  m::"rat" and v1::"rat" and v'::"rat" and
+  party::"'b" and parties::"'b list"
+assumes 
+  "parties = p rec" and
+  "p rec = p rec'" and
+  "(index parties party) < length (fv rec)" and
+  "(index parties party) < length (fv rec')" and
+  "v1' > v1" and
+  "party \<in> set parties" and
+  "(fv rec) ! (index parties party) = 
+    v1 / of_int ((d rec) ! ((sl rec) ! index parties party))" and
+  "(fv rec') ! (index parties party) = 
+    v1' / of_int ((d rec') ! ((sl rec') ! index parties party))" and
+  "sl rec' ! (index parties party) \<ge> sl rec ! (index parties party)" and
+  "(d rec) ! ((sl rec) ! ((index parties party))) \<noteq> 0" and
+  "(d rec') ! ((sl rec') ! ((index parties party))) \<noteq> 0" and
+  "(index parties party) < length (sl rec)" and
+  "(index parties party) < length (sl rec')"
+shows "sl (assign_seats rec) ! (index parties party) \<ge> 
+       sl (assign_seats rec') ! (index parties party)"
+proof(cases "party = (hd (get_winners (fv rec') (p rec')))")
+  case True
+  then show ?thesis sorry
+next
+  case False
+  then have "party \<noteq> (hd (get_winners (fv rec) (p rec)))" using assms by sledgehammer
+  then show ?thesis sorry
+qed
+
 lemma assign_seats_mon:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and 

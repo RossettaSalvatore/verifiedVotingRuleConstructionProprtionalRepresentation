@@ -14,6 +14,32 @@ Result
 "List-Index.List_Index"
 begin
 
+(* lemma perm induction *)
+lemma perm_induct:
+  assumes "P [] []"
+  assumes "\<And>x xs ys. P (x # xs) (x # ys)"
+  assumes "\<And>x y xs ys. P (x # y # xs) (y # x # ys)"   
+  assumes "\<And>xs ys zs. P xs ys \<Longrightarrow> P ys zs \<Longrightarrow> P xs zs" (* transitiva? *)
+  shows "mset xs = mset ys \<Longrightarrow> P xs ys"
+proof (induction xs arbitrary: ys)
+  case Nil
+  then show ?case
+    using assms by auto
+next
+  case (Cons x xs)
+  then show ?case
+    using assms
+    by (metis neq_Nil_conv perm_empty2)
+qed
+
+definition extract_element :: "'a multiset \<Rightarrow> 'a"
+where
+  "extract_element xs = fold_mset (\<lambda>x acc. x) undefined xs"
+
+fun blabla::"'a multiset \<Rightarrow> 'a multiset"
+  where 
+  "blabla xs = xs - mset ([(fold_mset (\<lambda>x acc. x) undefined xs)])"
+
 definition above_set :: "_ \<Rightarrow> 'a \<Rightarrow> 'a set"
   where "above_set r a \<equiv> above (set r) a"
 
@@ -27,6 +53,9 @@ lemma [code]:
  ex: a>b>c>d with ''c'' as input will return 3 *)
 fun count_above :: "('a rel) \<Rightarrow> 'a \<Rightarrow> nat" where
   "count_above r a = card (above r a)"
+
+fun count_above_mset :: "('a multiset rel) \<Rightarrow>'a multiset \<Rightarrow> nat" where
+  "count_above_mset r a = card (above r a)"
 
 subsection  \<open>Definition\<close>
 text  \<open>Parties is the list of parties, that can be of any type. 
@@ -88,61 +117,20 @@ fun cnt_votes :: "'a \<Rightarrow> 'a Profile \<Rightarrow> nat \<Rightarrow> na
         0 \<Rightarrow> cnt_votes p profil (n + 1)
       | _ \<Rightarrow> cnt_votes p profil n)"
 
-lemma perm_induct:
-  assumes "P [] []"
-  assumes "\<And>x xs ys. P (x # xs) (x # ys)"
-  assumes "\<And>x y xs ys. P (x # y # xs) (y # x # ys)"
-  assumes "\<And>xs ys zs. P xs ys \<Longrightarrow> P ys zs \<Longrightarrow> P xs zs"
-  shows "mset xs = mset ys \<Longrightarrow> P xs ys"
-proof (induction xs arbitrary: ys)
-  case Nil
-  then show ?case
-    using assms by auto
-next
-  case (Cons x xs)
-  then show ?case
-    using assms
-    by (metis neq_Nil_conv perm_empty2)
-qed
+definition convert_to_element :: "'a multiset \<Rightarrow> 'a" where
+  "convert_to_element M = (SOME x. x \<in># M)"
+
+fun cnt_votes_mset :: "'a multiset \<Rightarrow> (('a multiset \<times> 'a multiset) set) list \<Rightarrow> nat \<Rightarrow> nat" where
+  "cnt_votes_mset p [] n = n" |
+  "cnt_votes_mset p (px # profil) n = 
+     (case (count_above_mset px p) of
+        0 \<Rightarrow> cnt_votes_mset p profil (n + 1)
+      | _ \<Rightarrow> cnt_votes_mset p profil n)"
+
 
 text \<open> This function receives in input the list of parties and the list of preferation 
        relations. The output is the function Votes, in which every party has the 
        correspondent number of votes.  \<close>
-
-(* multiset version
-
-inductive fold_graph :: "('a \<Rightarrow> 'b \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a set \<Rightarrow> 'b \<Rightarrow> bool"
-  for f :: "'a \<Rightarrow> 'b \<Rightarrow> 'b" and z :: 'b
-  where
-    emptyI [intro]: "fold_graph f z {} z"
-  | insertI [intro]: "x \<notin> A \<Longrightarrow> fold_graph f z A y \<Longrightarrow> fold_graph f z (insert x A) (f x y)"
-
-definition fold :: "('a \<Rightarrow> 'b \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a set \<Rightarrow> 'b"
-  where "fold f z A = (if finite A then (THE y. fold_graph f z A y) else z)"
-
-definition fold_mset :: "('a \<Rightarrow> 'b \<Rightarrow> 'b) \<Rightarrow> 'b \<Rightarrow> 'a multiset \<Rightarrow> 'b"
-where
-  "fold_mset f s M = Finite_Set.fold (\<lambda>x. f x ^^ count M x) s (set_mset M)"
-
-lemma working. implement this with assumptions on later lemmas
-
-lemma update_at_index_nat_lemma:
-  fixes
-  xs::"nat list" and
-  i::"nat" and
-  n::"nat"
-assumes "i < length xs"
-assumes "xs \<noteq> []"
-  shows "(update_at_index_nat xs i n) ! i = n"
-proof - 
-  have "update_at_index_nat xs i n = list_update xs i n" using assms
-    by (metis update_at_index_nat.elims)
-  then have "update_at_index_nat xs i n ! i = list_update xs i n ! i" by simp
-  then have "... = n" using nth_list_update_eq assms by simp
-  then show ?thesis
-  by (simp add: \<open>update_at_index_nat xs i n = xs[i := n]\<close>)
-qed
-*)
 
 definition remove_some :: "'a multiset \<Rightarrow> 'a" where
 "remove_some M = (SOME x. x \<in> set_mset M)"
@@ -150,7 +138,6 @@ definition remove_some :: "'a multiset \<Rightarrow> 'a" where
 definition my_fold :: "('b \<Rightarrow> 'b \<Rightarrow> rat) \<Rightarrow> 'b Votes \<Rightarrow> 'a set \<Rightarrow> 'b Votes"
   where "my_fold f z A = (if finite A then z else z)"
 
-(* EXAMPLE *)
 (* Define the party multiset *)
 definition party_multiset :: "char list multiset" where
   "party_multiset = {#''a'', ''b'', ''c'', ''d''#}"
@@ -167,37 +154,15 @@ fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Righ
        i = index fp px in
       calc_votes ps fp prof (list_update votes i n))"
 
-(*
-lemma simp_votes:
-  fixes
-    parties:: "'b Parties" and
-    fparties::"'b Parties" and
-    party::"'b" and
-    profile:: "'b Profile" and
-    votes::"nat list"
-  assumes "party \<in> set parties"
-  assumes "parties = fparties"
-  assumes "votes ! get_index_upd party fparties = cnt_votes party profile 0"
-  shows "calc_votes parties fparties profile votes ! get_index_upd party fparties =
-         cnt_votes party profile 0" 
-  by sorry
+fun calc_votes_mset :: "'a multiset \<Rightarrow>'a multiset \<Rightarrow>  ('a multiset \<times> 'a multiset) set list \<Rightarrow> 'a Votes \<Rightarrow> 'a Votes" where
+  "calc_votes_mset empty_mset fp prof votes = votes" |
+  "calc_votes_mset ps fp prof votes = 
+      (let px = (extract_element ps); 
+       mn = ps - px;
+       n = cnt_votes_mset px prof 0 in
+      calc_votes_mset ps fp prof votes)"
 
-lemma votes_perm:
-  fixes
-    parties:: "'b Parties" and
-    parties':: "'b Parties" and
-    profile:: "'b Profile"
-  assumes "mset parties = mset parties'"
-  assumes "party \<in> set parties"
-  assumes "get_index_upd party parties < size parties"
-  shows "(calc_votes parties parties profile []) !
-                                            get_index_upd party parties
- = calc_votes parties' parties' profile [] ! get_index_upd party parties'"
-  by sorry 
-*)
-
-(*prove "p1 <~~> p2 \<Longrightarrow> (calc_votes p1 profl votes = calc_votes p2 profl votes)"
-*)
+value "extract_element {#''a'', ''b''#}"
 
 (*
 lemma calc_votes_permutation:
@@ -233,6 +198,14 @@ text \<open> This function receives in input the function Votes and the list of 
 fun max_val_wrap:: "rat list \<Rightarrow> rat" where 
 "max_val_wrap v = Max (set v)"
 
+lemma max_val_wrap:
+  fixes
+  v::"rat list" and
+  v'::"rat list"
+assumes "set v = set v'"
+shows "max_val_wrap v = max_val_wrap v'"
+  using assms by simp
+
 lemma max_val_wrap_lemma:
   fixes fvv::"rat list" and fv1::"rat"
   assumes "fv1 = fvv ! i1" and "i1 < length fvv"
@@ -241,7 +214,50 @@ lemma max_val_wrap_lemma:
 
 fun max_p:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
-"max_p m v ps w = w @ filter (\<lambda>x. v ! (index ps x) = m) ps" 
+"max_p m v ps w = filter (\<lambda>x. v ! (index ps x) = m) ps" 
+
+lemma max_p_in_win:
+  fixes v::"rat list" and m::"rat"
+  assumes "v ! (index ps px) = m" and "px \<in> set ps"
+  shows "px \<in> set (max_p m v ps [])"
+proof - have "max_p m v ps [] = filter (\<lambda>x. v ! (index ps x) = m) ps" using assms by simp
+  then have "px \<in> set (filter (\<lambda>x. v ! (index ps x) = m) ps)"
+    using assms by auto
+then show ?thesis by simp
+
+fun max_p_mset:: "rat \<Rightarrow> 'b Votes \<Rightarrow> 'b multiset
+                     \<Rightarrow> 'b multiset" where
+"max_p_mset m v ps = filter_mset (\<lambda>x. (v x) = m) ps" 
+
+fun empty_v :: "'b \<Rightarrow> rat" where
+  "empty_v p = 0"
+
+value "max_p_mset 5 empty_v {#''a'', ''b'', ''c'', ''d''#}"
+
+value "mset ([''1''])"
+
+lemma max_p_mset_perm:
+  fixes 
+  v::"rat list"
+assumes "ps = ps'" and "v = v'"
+shows  " max_p_mset m v ps =  max_p_mset m v' ps'"
+  using assms by simp
+
+value "max_p_mset (4::rat) [1::rat, 4, 3, 2] [a, b, c, d]"
+
+value "index (sorted_list_of_multiset {#b, a, c, d#}) a"
+
+lemma max_p_filter:
+  fixes 
+  v::"rat list"
+assumes "p \<noteq> []"
+assumes "v \<noteq> []"
+assumes "\<forall>x \<in> set p. (v ! index ps x = v' ! index ps' x)"
+assumes "mset (p') = mset (p)"
+assumes "mset (v') = mset (v)"
+shows  "mset (max_p m v ps []) = mset (max_p m v' ps' [])"
+  using assms by sorry
+
 
 lemma max_parties_no_in:
   assumes "px \<notin> set sw"
@@ -258,6 +274,42 @@ lemma max_parties_no_in_empty:
 
 fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = (let m = max_val_wrap v in max_p m v p [])"
+
+
+theorem get_winners_in_win:
+  fixes fv::"rat list" and m::"rat"
+  assumes "fv ! (index ps px) = max_val_wrap fv"
+  assumes "get_winners fv ps \<noteq> []" and "px \<in> set ps"
+  shows "px \<in> set (get_winners fv ps)"
+proof - have "get_winners fv ps = (let m = max_val_wrap fv in max_p m fv ps [])" 
+    using get_winners.simps by blast
+  then have "... = max_p (max_val_wrap fv) fv ps []" by simp
+  then show ?thesis using assms by simp
+qed
+
+fun get_winners_mset :: "rat list \<Rightarrow> 'b::linorder multiset \<Rightarrow> 'b multiset" where
+  "get_winners_mset v p = (let m = max_val_wrap v in max_p_mset m v p)"
+
+value "get_winners_mset [1, 4, 3, 2, 6, 3, 2] {#a, b, c, d, e, f, g#}"
+
+lemma get_winners_perm:
+  fixes 
+  v::"rat list" and p::"'b list"
+assumes "p \<noteq> []"
+assumes "v \<noteq> []"
+assumes "\<forall>x \<in> set p. (v ! index ps x = v' ! index ps' x)"
+assumes "set (p') = set (p)"
+assumes "set (v') = set (v)"
+shows "set (get_winners v' p') = set (get_winners v p)"
+proof - 
+  have "get_winners v p = (let m = max_val_wrap v in max_p m v p [])" 
+    using assms by simp
+  then have " ... = max_p (max_val_wrap v) v p []" by simp
+  then have "max_val_wrap v = max_val_wrap v'" using assms by simp
+  then have "get_winners v' p' = (let m = max_val_wrap v' in max_p m v' p' [])" by simp
+  then have " ... =  max_p (max_val_wrap v') v' p' []" using assms by simp
+  then have " ... = max_p (max_val_wrap v) v' p' []" using assms by simp
+  then show ?thesis by sledgehammer
 
 lemma get_winners_not_in_win:
   fixes fv::"rat list" and m::"rat"
