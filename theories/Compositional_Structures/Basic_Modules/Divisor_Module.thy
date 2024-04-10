@@ -843,9 +843,9 @@ qed
 text \<open>This loop applies the same functions until no more seats are available.\<close>
 function loop_o ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
-  where  
-  "ns r = 0  \<Longrightarrow> loop_o r = r" |
-  "ns r > 0 \<Longrightarrow> loop_o r = loop_o (assign_seats r)"
+  where
+ "ns r > 0 \<Longrightarrow> loop_o r = loop_o (assign_seats r)" |
+  "ns r = 0  \<Longrightarrow> loop_o r = r"
   by auto
 termination by (relation "measure (\<lambda>r. ns r)")
                (auto simp add: Let_def nseats_decreasing)
@@ -863,32 +863,41 @@ fixes
   parties::"'b Parties" and
   di::"nat list"
 assumes 
-  "parties = p (assign_seats rec)" and
-  "p rec = p (assign_seats rec)" and
-  "(index parties party1) < length (fv rec)" and
-  "(index parties party2) < length (fv rec)" and
-  "v1 > v2" and
-  "party1 \<in> set parties" and
-  "party2 \<in> set parties" and
-  "(fv rec) ! (index parties party1) = 
+ (*2*) "p (assign_seats rec) = p rec" and
+ (*3*)  "(index parties party1) < length (fv rec)" and
+ (*4*)  "(index parties party2) < length (fv rec)" and
+ (*5*)  "v1 > v2" and
+ (*6*)  "party1 \<in> set parties" and
+ (*7*)  "party2 \<in> set parties" and
+ (*8*)  "(fv rec) ! (index parties party1) = 
     v1 / of_int ((d rec) ! ((sl rec) ! index parties party1))" and
-  "(fv rec) ! (index parties party2) = 
+ (*9*)  "(fv rec) ! (index parties party2) = 
     v2 / of_int ((d rec) ! ((sl rec) ! index parties party2))" and
-  "sl rec ! (index parties party1) \<ge> sl rec ! (index parties party2)" and
-  "(d rec) ! ((sl rec) ! ((index parties party2))) \<noteq> 0" and
-  "(index parties party1) < length (sl rec)" and
-  "(index parties party2) < length (sl rec)"
-shows "sl (loop_o rec) ! ( index parties party1) \<ge> 
-       sl (loop_o rec) ! ( index parties party2)"
-  using assms assign_seats_concordant 
+(*10*)  "sl rec ! (index parties party1) \<ge> sl rec ! (index parties party2)"
+(*11*)  "(d rec) ! ((sl rec) ! ((index parties party2))) \<noteq> 0" and
+(*12*)  "(index parties party1) < length (sl rec)" and
+(*13*)  "(index parties party2) < length (sl rec)" and
+ (*3*)  "(index parties party1) < length (fv rec)" and
+ (*4*)  "(index parties party2) < length (fv rec)" and
+ (*5*)  "v1 > v2" and
+ (*6*)  "party1 \<in> set parties" and
+ (*7*)  "party2 \<in> set parties" and
+ (*8*)  "(fv rec) ! (index parties party1) = 
+    v1 / of_int ((d rec) ! ((sl rec) ! index parties party1))" and
+ (*9*)  "(fv rec) ! (index parties party2) = 
+    v2 / of_int ((d rec) ! ((sl rec) ! index parties party2))" and
+(*10*)  "sl rec ! (index parties party1) \<ge> sl rec ! (index parties party2)"
+(*11*)  "(d rec) ! ((sl rec) ! ((index parties party2))) \<noteq> 0" and
+(*12*)  "(index parties party1) < length (sl rec)" and
+(*13*)  "(index parties party2) < length (sl rec)"
+shows "sl (loop_o rec) ! (index parties party1) \<ge> 
+       sl (loop_o rec) ! (index parties party2)"
+  using assign_seats_concordant unfolding assms
   apply (induction rec rule:loop_o.induct)
   subgoal for r
-    using assign_seats_concordant
-    apply  (auto simp: Let_def split: if_splits simp del: assign_seats.simps)
+    apply (auto split: if_splits simp del: assign_seats.simps)
     done
-  subgoal for r
-    using nseats_decreasing assign_seats_concordant
-    apply  (auto simp: Let_def split: if_splits simp del: assign_seats.simps)
+    apply (auto simp: Let_def split: if_splits simp del: assign_seats.simps)
     done
 
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
