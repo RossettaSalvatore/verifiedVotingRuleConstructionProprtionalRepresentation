@@ -216,6 +216,16 @@ fun max_p:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
 "max_p m v ps w = filter (\<lambda>x. v ! (index ps x) = m) ps" 
 
+lemma max_p_no_empty:
+  fixes m::"rat" and v::"rat list" and ps::"'b list"
+  assumes "m = Max (set v)"
+  assumes "m > 0"
+  assumes "length v = length ps"
+  assumes "ps \<noteq> []"
+  assumes "\<forall>i j. p ! i \<noteq> p ! j"
+  shows "max_p m v ps w \<noteq> []"
+  using assms(5) by blast
+
 lemma max_p_in_win:
   fixes v::"rat list" and m::"rat"
   assumes "v ! (index ps px) = m" and "px \<in> set ps"
@@ -225,42 +235,9 @@ proof - have "max_p m v ps [] = filter (\<lambda>x. v ! (index ps x) = m) ps" us
     using assms by auto
 then show ?thesis by simp
 qed
-(*
-fun max_p_mset:: "rat \<Rightarrow> 'b Votes \<Rightarrow> 'b multiset
-                     \<Rightarrow> 'b multiset" where
-"max_p_mset m v ps = filter_mset (\<lambda>x. (v x) = m) ps" 
-*)
 
 fun empty_v :: "'b \<Rightarrow> rat" where
   "empty_v p = 0"
-
-value "max_p_mset 5 empty_v {#''a'', ''b'', ''c'', ''d''#}"
-
-value "mset ([''1''])"
-
-lemma max_p_mset_perm:
-  fixes 
-  v::"rat list"
-assumes "ps = ps'" and "v = v'"
-shows  " max_p_mset m v ps =  max_p_mset m v' ps'"
-  using assms by simp
-
-value "max_p_mset (4::rat) [1::rat, 4, 3, 2] [a, b, c, d]"
-
-value "index (sorted_list_of_multiset {#b, a, c, d#}) a"
-
-(*
-lemma max_p_filter:
-  fixes 
-  v::"rat list"
-assumes "p \<noteq> []"
-assumes "v \<noteq> []"
-assumes "\<forall>x \<in> set p. (v ! index ps x = v' ! index ps' x)"
-assumes "mset (p') = mset (p)"
-assumes "mset (v') = mset (v)"
-shows  "mset (max_p m v ps []) = mset (max_p m v' ps' [])"
-  using assms by sorry
-*)
 
 lemma max_parties_no_in:
   assumes "px \<notin> set sw"
@@ -278,6 +255,14 @@ lemma max_parties_no_in_empty:
 fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = (let m = max_val_wrap v in max_p m v p [])"
 
+lemma get_winners_no_empty:
+  fixes m::"rat" and v::"rat list" and ps::"'b list"
+  assumes "m > 0"
+  assumes "length v = length ps"
+  assumes "ps \<noteq> []"
+  assumes "\<forall>i j. p ! i \<noteq> p ! j"
+  shows "get_winners v ps \<noteq> []"
+  using assms(4) by blast
 
 theorem get_winners_in_win:
   fixes fv::"rat list" and m::"rat"
@@ -289,13 +274,6 @@ proof - have "get_winners fv ps = (let m = max_val_wrap fv in max_p m fv ps [])"
   then have "... = max_p (max_val_wrap fv) fv ps []" by simp
   then show ?thesis using assms by simp
 qed
-
-(*
-fun get_winners_mset :: "rat list \<Rightarrow> 'b::linorder multiset \<Rightarrow> 'b multiset" where
-  "get_winners_mset v p = (let m = max_val_wrap v in max_p_mset m v p)"
-*)
-
-value "get_winners_mset [1, 4, 3, 2, 6, 3, 2] {#a, b, c, d, e, f, g#}"
 
 (*
 lemma get_winners_perm:
