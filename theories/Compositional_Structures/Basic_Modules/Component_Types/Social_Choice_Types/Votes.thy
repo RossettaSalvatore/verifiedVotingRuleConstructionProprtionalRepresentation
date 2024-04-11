@@ -154,6 +154,7 @@ fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Righ
        i = index fp px in
       calc_votes ps fp prof (list_update votes i n))"
 
+(*
 fun calc_votes_mset :: "'a multiset \<Rightarrow>'a multiset \<Rightarrow>  ('a multiset \<times> 'a multiset) set list \<Rightarrow> 'a Votes \<Rightarrow> 'a Votes" where
   "calc_votes_mset empty_mset fp prof votes = votes" |
   "calc_votes_mset ps fp prof votes = 
@@ -161,8 +162,7 @@ fun calc_votes_mset :: "'a multiset \<Rightarrow>'a multiset \<Rightarrow>  ('a 
        mn = ps - px;
        n = cnt_votes_mset px prof 0 in
       calc_votes_mset ps fp prof votes)"
-
-value "extract_element {#''a'', ''b''#}"
+*)
 
 (*
 lemma calc_votes_permutation:
@@ -224,10 +224,12 @@ proof - have "max_p m v ps [] = filter (\<lambda>x. v ! (index ps x) = m) ps" us
   then have "px \<in> set (filter (\<lambda>x. v ! (index ps x) = m) ps)"
     using assms by auto
 then show ?thesis by simp
-
+qed
+(*
 fun max_p_mset:: "rat \<Rightarrow> 'b Votes \<Rightarrow> 'b multiset
                      \<Rightarrow> 'b multiset" where
 "max_p_mset m v ps = filter_mset (\<lambda>x. (v x) = m) ps" 
+*)
 
 fun empty_v :: "'b \<Rightarrow> rat" where
   "empty_v p = 0"
@@ -247,6 +249,7 @@ value "max_p_mset (4::rat) [1::rat, 4, 3, 2] [a, b, c, d]"
 
 value "index (sorted_list_of_multiset {#b, a, c, d#}) a"
 
+(*
 lemma max_p_filter:
   fixes 
   v::"rat list"
@@ -257,7 +260,7 @@ assumes "mset (p') = mset (p)"
 assumes "mset (v') = mset (v)"
 shows  "mset (max_p m v ps []) = mset (max_p m v' ps' [])"
   using assms by sorry
-
+*)
 
 lemma max_parties_no_in:
   assumes "px \<notin> set sw"
@@ -287,11 +290,14 @@ proof - have "get_winners fv ps = (let m = max_val_wrap fv in max_p m fv ps [])"
   then show ?thesis using assms by simp
 qed
 
+(*
 fun get_winners_mset :: "rat list \<Rightarrow> 'b::linorder multiset \<Rightarrow> 'b multiset" where
   "get_winners_mset v p = (let m = max_val_wrap v in max_p_mset m v p)"
+*)
 
 value "get_winners_mset [1, 4, 3, 2, 6, 3, 2] {#a, b, c, d, e, f, g#}"
 
+(*
 lemma get_winners_perm:
   fixes 
   v::"rat list" and p::"'b list"
@@ -310,6 +316,7 @@ proof -
   then have " ... =  max_p (max_val_wrap v') v' p' []" using assms by simp
   then have " ... = max_p (max_val_wrap v) v' p' []" using assms by simp
   then show ?thesis by sledgehammer
+*)
 
 lemma get_winners_not_in_win:
   fixes fv::"rat list" and m::"rat"

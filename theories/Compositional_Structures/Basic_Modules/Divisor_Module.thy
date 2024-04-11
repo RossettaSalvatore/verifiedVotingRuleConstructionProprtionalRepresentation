@@ -17,6 +17,19 @@ Main
 
 begin
 
+lemma ls_induction_1:
+  assumes "P xs"
+  shows "Q (xs::'a list)"
+  apply (induction xs)
+  oops
+
+lemma ls_induction_2:
+  assumes "P xs"
+  shows "Q (xs::'a list)"
+  using assms
+  apply (induction xs)
+  oops
+
 text \<open> This record contains the list of parameters used in the whole divisor module.  \<close>
 record ('a::linorder, 'b) Divisor_Module =
   res :: "'a::linorder Result"
@@ -52,20 +65,20 @@ text \<open> This function moves one seat from the disputed set to the assigned 
        returns the record with updated Seats function and "fractional" Votes entry 
        for the winning party. \<close>
 
-fun assign_seat :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
+fun assign_seat :: "'b list \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        ('a::linorder, 'b) Divisor_Module" where 
-"assign_seat winner rec =
+"assign_seat parties winner rec =
   (let 
     seat = Min (disp_r (res rec));
     new_s = update_seat seat winner (s rec);
     new_as = ass_r (res rec) \<union> {seat};
     new_fv = upd_votes winner (rec\<lparr>s:= new_s\<rparr>);
-    index = index (p rec) (hd winner);
+    index = index parties (hd winner);
     curr_ns = (sl rec) ! index;
     new_sl = list_update (sl rec) index ( (sl rec) ! index + 1);
     new_di =  disp_r (res rec) - {seat}
      in \<lparr>res = (new_as, {}, new_di),
-             p = (p rec),
+             p = parties,
              i = (i rec),
              s = new_s,
              ns = (ns rec),
@@ -78,10 +91,10 @@ fun assign_seat :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Ri
 (* this lemma shows that for every update of assign_seat, all the other 
    parties still have the same seats *)
 lemma assign_seat_mantain_seats_lemma:
-  assumes "i1 = index (p rec) (hd winner)"
+  assumes "i1 = index parties (hd winner)"
   assumes "i2 \<noteq> i1"
   assumes "i2 < length (sl rec)"
-  shows "sl (assign_seat winner rec) ! i2 =
+  shows "sl (assign_seat parties winner rec) ! i2 =
          (sl rec) ! i2"
 proof - 
    define seat new_s new_as new_fv ind curr_ns new_sl new_di 
@@ -89,12 +102,12 @@ proof -
           "new_s = update_seat seat winner (s rec)" and
           "new_as = ass_r (res rec) \<union> {seat}" and
           "new_fv = upd_votes winner (rec\<lparr>s:= new_s\<rparr>)" and
-          "ind =  index (p rec) (hd winner)" and
+          "ind =  index parties (hd winner)" and
           "curr_ns = (sl rec) ! ind" and
           "new_sl = list_update (sl rec) ind (curr_ns + 1)" and
           "new_di =  disp_r (res rec) - {seat}"
-  have "(assign_seat winner rec) =  \<lparr>res = (new_as, {}, new_di),
-             p = (p rec),
+  have "(assign_seat parties winner rec) =  \<lparr>res = (new_as, {}, new_di),
+             p = parties,
              i = (i rec),
              s = new_s,
              ns = (ns rec),
@@ -106,17 +119,17 @@ proof -
     unfolding assign_seat.simps new_sl_def Let_def
     using nth_list_update_eq curr_ns_def ind_def new_as_def new_di_def new_fv_def new_s_def seat_def 
     by fastforce
-  then have "sl (assign_seat winner rec) = new_sl" 
+  then have "sl (assign_seat parties winner rec) = new_sl" 
     by simp
   then have "... =  list_update (sl rec) ind (curr_ns + 1)" 
     using new_sl_def by simp
-  then have "sl (assign_seat winner rec) ! i2 = 
+  then have "sl (assign_seat parties winner rec) ! i2 = 
              (list_update (sl rec) ind (curr_ns + 1)) ! i2"
-    using \<open>sl (assign_seat winner rec) = new_sl\<close> by presburger
+    using \<open>sl (assign_seat parties winner rec) = new_sl\<close> by presburger
   then have "... = (sl rec) ! i2" 
     using nth_list_update_neq assms by (metis ind_def)
   then show ?thesis
-  using \<open>sl (assign_seat winner rec) ! i2 = (sl rec)[ind := curr_ns + 1] ! i2\<close> by presburger
+  using \<open>sl (assign_seat parties winner rec) ! i2 = (sl rec)[ind := curr_ns + 1] ! i2\<close> by presburger
 qed
 
 lemma assign_seat_sl_update:
@@ -124,8 +137,7 @@ lemma assign_seat_sl_update:
         rec :: "('a::linorder, 'b) Divisor_Module" and
         ind::"nat" and parties::"'b list"
       defines i_def: "ind \<equiv> index parties (hd winner)"
-      assumes "p rec = parties"
-  shows "sl (assign_seat winner rec) = 
+  shows "sl (assign_seat parties winner rec) = 
          list_update (sl rec) ind ((sl rec) ! ind + 1)"
 proof - 
   define seat new_s new_as new_fv ind curr_ns new_sl new_di 
@@ -137,7 +149,7 @@ proof -
           "curr_ns = (sl rec) ! ind" and
           "new_sl = list_update (sl rec) ind (curr_ns + 1)" and
           "new_di =  disp_r (res rec) - {seat}"
-  have "(assign_seat winner rec) =  \<lparr>res = (new_as, {}, new_di),
+  have "(assign_seat parties winner rec) =  \<lparr>res = (new_as, {}, new_di),
              p = parties,
              i = (i rec),
              s = new_s,
@@ -150,7 +162,7 @@ proof -
     unfolding assign_seat.simps new_sl_def Let_def
     using assms nth_list_update_eq curr_ns_def ind_def 
           new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
-  then have "sl(assign_seat winner rec) = new_sl" 
+  then have "sl(assign_seat parties winner rec) = new_sl" 
     by simp
   also have "... = list_update (sl rec) ind (curr_ns + 1)" 
     unfolding new_sl_def by simp
@@ -164,21 +176,21 @@ qed
 lemma assign_seat_increase_seats:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
-  winner::"'b list"
-defines i_def: "inde \<equiv> index (p rec) (hd winner)"
+  winner::"'b list" and parties::"'b list"
+defines i_def: "inde \<equiv> index parties (hd winner)"
 assumes "inde < length (sl rec)"
-shows "(sl (assign_seat winner rec)) ! inde =
+shows "(sl (assign_seat parties winner rec)) ! inde =
        (sl rec) ! inde + 1"
 proof -
-  have "sl (assign_seat winner rec) =  list_update (sl rec) inde ((sl rec) ! inde + 1)" 
+  have "sl (assign_seat parties winner rec) =  list_update (sl rec) inde ((sl rec) ! inde + 1)" 
     using assign_seat_sl_update assms by blast
-  then have "sl (assign_seat winner rec) ! inde = 
+  then have "sl (assign_seat parties winner rec) ! inde = 
         (list_update (sl rec) inde ((sl rec) ! inde + 1)) ! inde" 
     using assms by simp
   then have "... = ((sl rec) ! inde + 1)" 
     using nth_list_update_eq assms by simp
   then show ?thesis
-    using \<open>sl (assign_seat winner rec) ! inde = list_update (sl rec) inde (sl rec ! inde + 1) ! inde\<close> by auto
+    using \<open>sl (assign_seat parties winner rec) ! inde = list_update (sl rec) inde (sl rec ! inde + 1) ! inde\<close> by auto
 qed
 
 lemma assign_seat_mon:
@@ -188,7 +200,7 @@ lemma assign_seat_mon:
   ind::"nat" and
   parties::"'b Parties" 
 assumes "ind < length (sl rec)"
-  shows "sl (assign_seat winner rec) ! ind \<ge> 
+  shows "sl (assign_seat parties winner rec) ! ind \<ge> 
          (sl rec) ! ind"
 proof -
     define seat new_s new_as new_fv ind curr_ns new_sl new_di 
@@ -196,12 +208,12 @@ proof -
           "new_s = update_seat seat winner (s rec)" and
           "new_as = ass_r (res rec) \<union> {seat}" and
           "new_fv = upd_votes winner (rec\<lparr>s:= new_s\<rparr>)" and
-          "ind =  index (p rec) (hd winner)" and
+          "ind =  index parties (hd winner)" and
           "curr_ns = (sl rec) ! ind" and
           "new_sl = list_update (sl rec) ind (curr_ns + 1)" and
           "new_di =  disp_r (res rec) - {seat}"
-  have "(assign_seat winner rec) =  \<lparr>res = (new_as, {}, new_di),
-             p = (p rec),
+  have "(assign_seat parties winner rec) =  \<lparr>res = (new_as, {}, new_di),
+             p = parties,
              i = (i rec),
              s = new_s,
              ns = (ns rec),
@@ -212,21 +224,21 @@ proof -
             \<rparr>" 
     unfolding assign_seat.simps new_sl_def Let_def
   using nth_list_update_eq curr_ns_def ind_def new_as_def new_di_def new_fv_def new_s_def seat_def by fastforce
-  then have "sl (assign_seat winner rec) = new_sl" 
+  then have "sl (assign_seat parties winner rec) = new_sl" 
     by simp
-  then have "sl (assign_seat winner rec) ! ind  
+  then have "sl (assign_seat parties winner rec) ! ind  
               = new_sl ! ind" by simp
   then have "... = (list_update (sl rec) ind (curr_ns + 1)) ! ind" 
     using new_sl_def nth_list_update_eq by blast
   then show ?thesis
-  by (metis \<open>sl (assign_seat winner rec) = new_sl\<close> assms(1) curr_ns_def le_add1 new_sl_def nth_list_update_eq nth_list_update_neq order_refl)
+  by (metis \<open>sl (assign_seat parties winner rec) = new_sl\<close> assms(1) curr_ns_def le_add1 new_sl_def nth_list_update_eq nth_list_update_neq order_refl)
 qed
 
-fun break_tie :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
+fun break_tie :: "'b list \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow>
                        ('a::linorder, 'b) Divisor_Module" where 
-"break_tie winners rec =
+"break_tie parties winners rec =
           \<lparr>res = (res rec),
-             p = (p rec),
+             p = parties,
              i = (i rec),
              s = update_seat (Min (disp_r (res rec))) winners (s rec),
              ns = (ns rec),
@@ -240,14 +252,14 @@ lemma break_tie_lemma:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
   winner::"'b list"
-shows "sl (break_tie winner rec) = sl rec" by simp
+shows "sl (break_tie parties winner rec) = sl rec" by simp
 
 lemma break_tie_lemma_party:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
   winner::"'b list" and
   ind::"nat"
-shows "(sl (break_tie winner rec)) ! ind \<ge> sl rec ! ind" by simp
+shows "(sl (break_tie parties winner rec)) ! ind \<ge> sl rec ! ind" by simp
 
 fun defer_divisor :: "('a::linorder, 'b) Divisor_Module 
                       \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
@@ -262,12 +274,12 @@ text \<open>This function checks whether there are enough seats for all the winn
       - If yes, assign one seat to the first party in the queue.
       - If not, assign all remaining seats to the winning parties, making these seats 
         "disputed".\<close>
-fun assign_seats :: "('a::linorder, 'b) Divisor_Module
+fun assign_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Divisor_Module
                         \<Rightarrow> ('a::linorder, 'b) Divisor_Module" where
-"assign_seats rec = (
-      let winners = get_winners (fv rec) (p rec) in
+"assign_seats parties rec = (
+      let winners = get_winners (fv rec) parties in
       if length winners \<le> ns rec then 
-        let rec' =  (assign_seat [hd winners] rec) in
+        let rec' =  (assign_seat parties [hd winners] rec) in
                     \<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
@@ -279,7 +291,7 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
                          d = (d rec')
                         \<rparr>
       else
-         let rec'' = (break_tie winners rec) in
+         let rec'' = (break_tie parties winners rec) in
                        \<lparr>res = (res rec''),
                          p = (p rec''),
                          i = (i rec''),
@@ -293,24 +305,27 @@ fun assign_seats :: "('a::linorder, 'b) Divisor_Module
 
 (* proof that for every candidate, the number of seats after 
    calling the function cannot decrease *)
-
+(*
 lemma get_winners_loser:
   fixes 
     rec::"('a::linorder, 'b) Divisor_Module" and 
-    v::"rat"
+    v::"rat" and parties::"'b list"
   assumes
-  "party \<in> set (p rec)" and
-  "fvp = (fv rec) ! (index (p rec) party)" and
-  "party \<notin> set (get_winners (fv rec) (p rec))" and
-  "get_winners (fv rec) (p rec) \<noteq> []"
-shows "max_val_wrap (fv rec) > fvp"
-proof(rule ccontr)
-  assume "max_val_wrap (fv rec) = fvp"
-  then have "party \<in> set (get_winners (fv rec) (p rec))" 
+  "party \<in> set parties" and
+  "fvp = (fv rec) ! (index parties party)" and
+  "party \<notin> set (get_winners (fv rec) parties)" and
+  "get_winners (fv rec) parties \<noteq> []"
+shows "max_val_wrap (fv rec) \<noteq> fvp"
+proof 
+  assume "\<not>(max_val_wrap (fv rec) \<noteq> fvp)"
+  then have "party \<in> set (get_winners (fv rec) parties)" 
     using get_winners_in_win assms by (metis)
-  then have False using assms by blast
-qed
+  then have "\<not>(party \<notin> set (get_winners (fv rec) parties))" by simp
+  then have  "max_val_wrap (fv rec) \<noteq> fvp"
+    using assms(3) by blast
+qed *)
 
+(*
 lemma get_winners_mon:
   fixes 
     rec::"('a::linorder, 'b) Divisor_Module" and 
@@ -318,14 +333,15 @@ lemma get_winners_mon:
     v::"rat" and v'::"rat"
   assumes "p rec = p rec'" and
   "v' > v" and
-  "i' = index (p rec) party" and
+  "i' = index parties party" and
   "(sl rec) ! i1 = (sl rec') ! i1" and
-  "((fv rec) ! (index (p rec) party)) = v / (di ((sl rec) ! i'))" and
+  "((fv rec) ! (index parties party)) = v / (di ((sl rec) ! i'))" and
   "((fv rec') ! (index (p rec') party)) = v' / (di ((sl rec) ! i'))" and
-  "\<forall>x \<noteq> party. ((fv rec) ! (index (p rec) x)) = ((fv rec) ! (index (p rec) x))" and
+  "\<forall>x \<noteq> party. ((fv rec) ! (index parties x)) = ((fv rec) ! (index parties x))" and
   "party \<notin> set (get_winners (fv rec') (p rec'))"
-  shows "party \<notin> set (get_winners (fv rec) (p rec))"
-  
+  shows "party \<notin> set (get_winners (fv rec) parties)"
+  sorry
+
 lemma assign_seats_incre:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
@@ -355,26 +371,27 @@ proof(cases "party = (hd (get_winners (fv rec') (p rec')))")
   then show ?thesis sorry
 next
   case False
-  then have "party \<noteq> (hd (get_winners (fv rec) (p rec)))" using assms by sledgehammer
+  then have "party \<noteq> (hd (get_winners (fv rec) parties))" using assms by sorry
   then show ?thesis sorry
 qed
+*)
 
 lemma assign_seats_mon:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and 
   winners::"'b Parties" 
 assumes "inde < length (sl rec)"
-assumes "winners = get_winners (fv rec) (p rec)"
-shows "sl (assign_seats rec) ! inde \<ge> sl rec ! inde"
+assumes "winners = get_winners (fv rec) parties"
+shows "sl (assign_seats parties rec) ! inde \<ge> sl rec ! inde"
 proof(cases "length winners \<le> ns rec")
   case True
   define rec' 
     where 
-     "rec'= (assign_seat [hd winners] rec)"  
-  then have "assign_seats rec =  (
-      let winners = get_winners (fv rec) (p rec) in
+     "rec'= (assign_seat parties [hd winners] rec)"  
+  then have "assign_seats parties rec =  (
+      let winners = get_winners (fv rec) parties in
       if length winners \<le> ns rec then 
-        let rec' =  (assign_seat [hd winners] rec) in
+        let rec' =  (assign_seat parties [hd winners] rec) in
                     \<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
@@ -386,7 +403,7 @@ proof(cases "length winners \<le> ns rec")
                          d = (d rec')
                         \<rparr>
       else
-         let rec'' = (break_tie winners rec) in
+         let rec'' = (break_tie parties winners rec) in
                        \<lparr>res = (res rec''),
                          p = (p rec''),
                          i = (i rec''),
@@ -408,23 +425,23 @@ proof(cases "length winners \<le> ns rec")
                          d = (d rec')
                         \<rparr>" using rec'_def assms
     by (smt (verit, best) True)
-  then have "sl (assign_seats rec) ! inde = sl rec' ! inde" 
+  then have "sl (assign_seats parties rec) ! inde = sl rec' ! inde" 
     by simp
-  then have "... = (sl (assign_seat [hd winners] rec)) ! inde" 
+  then have "... = (sl (assign_seat parties [hd winners] rec)) ! inde" 
     using rec'_def by simp
   then have "... \<ge> (sl rec) ! inde" 
     using assms assign_seat_mon by blast
   then show ?thesis 
-    using assms rec'_def by (metis \<open>sl (assign_seats rec) ! inde = sl rec' ! inde\<close>)
+    using assms rec'_def by (metis \<open>sl (assign_seats parties rec) ! inde = sl rec' ! inde\<close>)
 next
   case False
   define rec'' 
     where 
-     "rec''= (break_tie winners rec)"  
-   then have "assign_seats rec =  (
-      let winners = get_winners (fv rec) (p rec) in
+     "rec''= (break_tie parties winners rec)"  
+   then have "assign_seats parties rec =  (
+      let winners = get_winners (fv rec) parties in
       if length winners \<le> ns rec then 
-        let rec' =  (assign_seat [hd winners] rec) in
+        let rec' =  (assign_seat parties [hd winners] rec) in
                     \<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
@@ -436,7 +453,7 @@ next
                          d = (d rec')
                         \<rparr>
       else
-         let rec'' = (break_tie winners rec) in
+         let rec'' = (break_tie parties winners rec) in
                        \<lparr>res = (res rec''),
                          p = (p rec''),
                          i = (i rec''),
@@ -458,12 +475,12 @@ next
                          d = (d rec'')
                         \<rparr>" using rec''_def assms
     by (smt (verit, best) False)
-  then have "sl (assign_seats rec) ! inde = sl (break_tie winners rec) ! inde" 
+  then have "sl (assign_seats parties rec) ! inde = sl (break_tie parties winners rec) ! inde" 
     using rec''_def by simp
   then have "... \<ge> sl rec ! inde" 
     by simp
   then show ?thesis
-    using \<open>sl (assign_seats rec) ! inde = sl (break_tie winners rec) ! inde\<close> by fastforce
+    using \<open>sl (assign_seats parties rec) ! inde = sl (break_tie parties winners rec) ! inde\<close> by fastforce
 qed
 
 (* proof that after calling assign_seats, the other parties not winning have 
@@ -472,18 +489,18 @@ lemma assign_seats_not_winner_mantains_seats:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and 
   winners::"'b list" and 
-  i2::"nat"
-  defines "winners \<equiv> get_winners (fv rec) (p rec)"
-  defines "i1 \<equiv> index (p rec) (hd winners)"
+  i2::"nat" and parties::"'b list"
+  defines "winners \<equiv> get_winners (fv rec) parties"
+  defines "i1 \<equiv> index parties (hd winners)"
   assumes "i1 \<noteq> i2"
   assumes "i2 < length (sl rec)"
-  shows "(sl rec) ! i2 = (sl (assign_seats rec)) ! i2"
+  shows "(sl rec) ! i2 = (sl (assign_seats parties rec)) ! i2"
 proof (cases "(length winners) \<le> ns rec")
   case True
   define rec' 
    where 
-     "rec'= (assign_seat [hd winners] rec)"  
-  have "assign_seats rec = \<lparr>res = (res rec'),
+     "rec'= (assign_seat parties [hd winners] rec)"  
+  have "assign_seats parties rec = \<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
                          s = (s rec'),
@@ -494,23 +511,23 @@ proof (cases "(length winners) \<le> ns rec")
                          d = (d rec')
                         \<rparr>" using rec'_def assms
   by (smt (verit, best) True assign_seats.simps)
-  then have "sl (assign_seats rec) = sl (rec')" 
+  then have "sl (assign_seats parties rec) = sl (rec')" 
     by simp
-  then have "sl (assign_seats rec) ! i2 = sl (assign_seat [hd winners] rec) ! i2" 
-    using assms \<open>sl (assign_seats rec) = sl rec'\<close> using rec'_def by presburger
+  then have "sl (assign_seats parties rec) ! i2 = sl (assign_seat parties [hd winners] rec) ! i2" 
+    using assms \<open>sl (assign_seats parties rec) = sl rec'\<close> using rec'_def by presburger
   then have "... = (sl rec) ! i2" 
     using assign_seat_mantain_seats_lemma assms list.sel(1) by metis
   then show ?thesis
-  using \<open>sl (assign_seats rec) ! i2 = sl (assign_seat [hd winners] rec) ! i2\<close> by linarith
+  using \<open>sl (assign_seats parties rec) ! i2 = sl (assign_seat parties [hd winners] rec) ! i2\<close> by linarith
 next
   case False
  define rec''
     where 
-     "rec''= break_tie winners rec"  
-  then have "assign_seats rec =  (
-      let winners = get_winners (fv rec) (p rec) in
+     "rec''= break_tie parties winners rec"  
+  then have "assign_seats parties rec =  (
+      let winners = get_winners (fv rec) parties in
       if length winners \<le> ns rec then 
-        let rec' =  (assign_seat [hd winners] rec) in
+        let rec' =  (assign_seat parties [hd winners] rec) in
                     \<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
@@ -522,7 +539,7 @@ next
                          d = (d rec')
                         \<rparr>
       else
-         let rec'' = (break_tie winners rec) in
+         let rec'' = (break_tie  parties winners rec) in
                        \<lparr>res = (res rec''),
                          p = (p rec''),
                          i = (i rec''),
@@ -544,26 +561,26 @@ next
                          d = (d rec'')
                         \<rparr>" using rec''_def assms
     by (smt (verit, best) False)
-  then have "sl (assign_seats rec) = sl (rec'')" 
+  then have "sl (assign_seats parties rec) = sl (rec'')" 
     by simp
-  then have "sl (assign_seats rec) ! i2 = sl (rec'') ! i2" 
+  then have "sl (assign_seats parties rec) ! i2 = sl (rec'') ! i2" 
     by simp
-  then have "... = sl (break_tie winners rec) ! i2" 
+  then have "... = sl (break_tie parties winners rec) ! i2" 
     using break_tie_lemma rec''_def by simp
   then have "... = (sl rec) ! i2" 
     by simp
   then show ?thesis
-    using \<open>sl (assign_seats rec) ! i2 = sl rec'' ! i2\<close> 
-          \<open>sl rec'' ! i2 = sl (break_tie winners rec) ! i2\<close> by force
+    using \<open>sl (assign_seats parties rec) ! i2 = sl rec'' ! i2\<close> 
+          \<open>sl rec'' ! i2 = sl (break_tie parties winners rec) ! i2\<close> by force
 qed
 
 lemma assign_seats_update:
   fixes
-  rec::"('a::linorder, 'b) Divisor_Module"
-  defines winners_def: "winners \<equiv> get_winners (fv rec) (p rec)"
-  defines rec'_def: "rec' \<equiv> assign_seat [hd winners] rec"
+  rec::"('a::linorder, 'b) Divisor_Module" and parties::"'b list"
+  defines winners_def: "winners \<equiv> get_winners (fv rec) parties"
+  defines rec'_def: "rec' \<equiv> assign_seat parties [hd winners] rec"
   assumes "length winners \<le> ns rec"
-  shows "assign_seats rec = \<lparr>res = (res rec'),
+  shows "assign_seats parties rec = \<lparr>res = (res rec'),
                             p = (p rec'),
                             i = (i rec'),
                             s = (s rec'),
@@ -578,14 +595,14 @@ lemma assign_seats_update:
    increased by one *)
 lemma assign_seats_seats_increased:
    fixes
-  rec::"('a::linorder, 'b) Divisor_Module"
-defines "winners \<equiv> get_winners (fv rec) (p rec)" 
+  rec::"('a::linorder, 'b) Divisor_Module" and parties::"'b list"
+defines "winners \<equiv> get_winners (fv rec) parties" 
 assumes "length winners \<le> ns rec" 
-assumes "index (p rec) (hd winners) < length (sl rec)"
-shows "sl (assign_seats rec) ! ( index (p rec) (hd winners)) = sl rec ! ( index (p rec) (hd winners)) + 1"
+assumes "index parties (hd winners) < length (sl rec)"
+shows "sl (assign_seats parties rec) ! ( index parties (hd winners)) = sl rec ! ( index parties (hd winners)) + 1"
 proof - 
-  define rec' where  "rec' \<equiv> (assign_seat [hd winners] rec)"
-  have "sl (assign_seats rec) =  sl (\<lparr>res = (res rec'),
+  define rec' where  "rec' \<equiv> (assign_seat parties [hd winners] rec)"
+  have "sl (assign_seats parties rec) =  sl (\<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
                          s = (s rec'),
@@ -596,19 +613,20 @@ proof -
                          d = (d rec')
                         \<rparr>)"    
     using assms assign_seats_update rec'_def by metis
-  then have "sl (assign_seats rec) ! ( index (p rec) (hd winners)) = (sl rec') ! ( index (p rec) (hd winners))"
+  then have "sl (assign_seats parties rec) ! ( index parties (hd winners)) = (sl rec') ! ( index parties (hd winners))"
     by simp 
-  also have "... = sl (assign_seat [hd winners] rec) ! ( index (p rec) (hd winners))" 
+  also have "... = sl (assign_seat parties [hd winners] rec) ! ( index parties (hd winners))" 
     using assms rec'_def by simp
-  also have "... = (list_update (sl rec) ( index (p rec) (hd winners)) ((sl rec) ! ( index (p rec) (hd winners)) + 1))
-                   ! ( index (p rec) (hd winners))" 
-    using assms assign_seat_sl_update by (metis list.sel(1)) 
-  also have "... = sl rec ! ( index (p rec) (hd winners)) + 1" 
+  also have "... = (list_update (sl rec) ( index parties (hd winners)) ((sl rec) ! ( index parties (hd winners)) + 1))
+                   ! ( index parties (hd winners))" 
+    using assms
+  by (metis assign_seat_increase_seats list.sel(1) nth_list_update_eq)
+  also have "... = sl rec ! ( index parties (hd winners)) + 1" 
     using nth_list_update_eq assms by simp
-  finally have "sl (assign_seats rec) ! ( index (p rec) (hd winners)) = sl rec ! ( index (p rec) (hd winners)) + 1" 
+  finally have "sl (assign_seats parties rec) ! ( index parties (hd winners)) = sl rec ! ( index parties (hd winners)) + 1" 
     by simp 
   then show ?thesis 
-    using \<open>sl (assign_seats rec) ! ( index (p rec) (hd winners)) = sl rec ! ( index (p rec) (hd winners)) + 1\<close>
+    using \<open>sl (assign_seats parties rec) ! ( index parties (hd winners)) = sl rec ! ( index parties (hd winners)) + 1\<close>
   by simp
 qed
 
@@ -630,11 +648,11 @@ lemma assign_seats_helper_lemma_helper:
   winners::"'b list"
 defines 
   "m \<equiv> max_val_wrap (fv rec)" and
-  "i1 \<equiv> index (p rec) party1" and
-  "i2 \<equiv> index (p rec) party2" and
+  "i1 \<equiv> index parties party1" and
+  "i2 \<equiv> index parties party2" and
   "fv1 \<equiv> (fv rec) ! i1" and
   "fv2 \<equiv> (fv rec) ! i2" and
-  "winners \<equiv> get_winners (fv rec) (p rec)"
+  "winners \<equiv> get_winners (fv rec) parties"
 assumes 
   "winners \<noteq> []" and
   "i1 < length (fv rec)" and
@@ -644,8 +662,8 @@ assumes
   "fv1 \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! i1)))" and
   "fv2 \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! i2)))" and
   "party1 \<noteq> party2" and
-  "get_index_upd party1 (p rec) < size (p rec)"
-  "get_index_upd party2 (p rec) < size (p rec)"
+  "get_index_upd party1 parties < size parties"
+  "get_index_upd party2 parties < size parties"
   "(d rec) ! ((sl rec) ! i2) \<noteq> 0" and
   "sl rec ! i1 = sl rec ! i2" and
   "i1 \<noteq> i2" and
@@ -658,7 +676,7 @@ proof (cases "fv1 = max_val_wrap (fv rec)")
     using assms divide_strict_right_mono by fastforce
   then have "fv2 \<noteq> max_val_wrap (fv rec)" 
     using assms True by force
-  then have "(fv rec) ! (index (p rec) party2) \<noteq> m" using assms by simp 
+  then have "(fv rec) ! (index parties party2) \<noteq> m" using assms by simp 
   then have "fv2 \<noteq> m" using assms by fastforce
   then have "party2 \<noteq> hd winners" using assms get_winners_not_in_win
   by metis
@@ -683,46 +701,46 @@ lemma assign_seats_helper_lemma_cond_ver:
   v1::"rat" and v2::"rat" and
   party1::"'b" and party2::"'b" and parties::"'b Parties"
 assumes 
-  "index (p rec) party1 < length (fv rec)" and
-  "index (p rec) party2 < length (fv rec)" and
+  "index parties party1 < length (fv rec)" and
+  "index parties party2 < length (fv rec)" and
   "v1 > v2" and
-  "party2 = hd ( get_winners (fv rec) (p rec))" and
-  "(fv rec) ! ( index (p rec) party1) \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! ( index (p rec) party1))))" and
-  "(fv rec) ! ( index (p rec) party2) \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! ( index (p rec) party2))))" and
+  "party2 = hd ( get_winners (fv rec) parties)" and
+  "(fv rec) ! ( index parties party1) \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! ( index parties party1))))" and
+  "(fv rec) ! ( index parties party2) \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! ( index parties party2))))" and
   "party1 \<noteq> party2" and
-  "(d rec) ! ((sl rec) !  index (p rec) party2) \<noteq> 0" and
-  "sl rec ! ( index (p rec) party1) \<ge> sl rec ! ( index (p rec) party2)" and
-  "length ( get_winners (fv rec) (p rec)) \<le> ns rec" and
-  "( index (p rec) party1) \<noteq> ( index (p rec) party2)" and
-  "( index (p rec) party1) < length (sl rec)" and
-  "( index (p rec) party2) < length (sl rec)"
-  shows "sl (assign_seats rec) ! ( index (p rec) party1) \<ge> sl (assign_seats rec) !  index (p rec) party2"
-proof(cases "sl rec ! ( index (p rec) party1) = sl rec ! ( index (p rec) party2)")
+  "(d rec) ! ((sl rec) !  index parties party2) \<noteq> 0" and
+  "sl rec ! ( index parties party1) \<ge> sl rec ! ( index parties party2)" and
+  "length ( get_winners (fv rec) parties) \<le> ns rec" and
+  "( index parties party1) \<noteq> ( index parties party2)" and
+  "( index parties party1) < length (sl rec)" and
+  "( index parties party2) < length (sl rec)"
+  shows "sl (assign_seats parties rec) ! ( index parties party1) \<ge> sl (assign_seats parties rec) !  index parties party2"
+proof(cases "sl rec ! ( index parties party1) = sl rec ! ( index parties party2)")
   case True \<comment> \<open> prova per assurdo  \<close>
- then have "(fv rec) ! ( index (p rec) party1) = v1 / (d rec) ! ((sl rec) ! ( index (p rec) party2))" 
+ then have "(fv rec) ! ( index parties party1) = v1 / (d rec) ! ((sl rec) ! ( index parties party2))" 
     using assms True
   by (smt (z3) of_int_of_nat_eq of_rat_divide of_rat_of_nat_eq)
-  then have "(fv rec) ! (index (p rec) party1) = v2 / (d rec) ! ((sl rec) ! ( index (p rec) party2))" 
+  then have "(fv rec) ! (index parties party1) = v2 / (d rec) ! ((sl rec) ! ( index parties party2))" 
     using assms 
   by (metis True divide_le_cancel find_max_votes_not_empty get_winners_not_in_win index_Nil max_val_wrap_lemma of_int_of_nat_eq of_nat_le_0_iff verit_comp_simplify1(3))
-  then have "party2 \<noteq> hd ( get_winners (fv rec) (p rec))"
+  then have "party2 \<noteq> hd ( get_winners (fv rec) parties)"
     using True assms  get_winners_not_in_win max_val_wrap_lemma verit_comp_simplify1(3)
-  by (smt (verit, del_insts) \<open>complex_of_rat (fv rec ! index (p rec) party1) = complex_of_rat v1 / complex_of_nat (d rec ! (sl rec ! index (p rec) party2))\<close> divide_cancel_right of_nat_0 of_nat_eq_iff of_rat_eq_iff verit_comp_simplify1(1))
+  by (smt (verit, del_insts) \<open>complex_of_rat (fv rec ! index parties party1) = complex_of_rat v1 / complex_of_nat (d rec ! (sl rec ! index parties party2))\<close> divide_cancel_right of_nat_0 of_nat_eq_iff of_rat_eq_iff verit_comp_simplify1(1))
   then show ?thesis
   using assms by blast
 next
   case False
-  have "sl rec ! (index (p rec) party1) > sl rec ! (index (p rec) party2)" using assms False
+  have "sl rec ! (index parties party1) > sl rec ! (index parties party2)" using assms False
   using le_neq_implies_less by presburger
-  then have "(index (p rec) party2) = index (p rec) (hd ( get_winners (fv rec) (p rec)))" using assms by blast
-  then have "sl (assign_seats rec) ! ((index (p rec) party2)) = sl rec ! ((index (p rec) party2)) + 1" 
-    using \<open>(index (p rec) party2) = index (p rec) (hd (get_winners (fv rec) (p rec)))\<close> assms 
+  then have "(index parties party2) = index parties (hd ( get_winners (fv rec) parties))" using assms by blast
+  then have "sl (assign_seats parties rec) ! ((index parties party2)) = sl rec ! ((index parties party2)) + 1" 
+    using \<open>(index parties party2) = index parties (hd (get_winners (fv rec) parties))\<close> assms 
           assign_seats_seats_increased False by blast
-  then have "sl (assign_seats rec) ! ( (index (p rec) party1)) = sl rec ! ( (index (p rec) party1))" 
+  then have "sl (assign_seats parties rec) ! ( (index parties party1)) = sl rec ! ( (index parties party1))" 
     using assms assign_seats_not_winner_mantains_seats False by metis
   then show ?thesis 
-    using \<open>sl (assign_seats rec) ! ( (index (p rec) party2)) = sl rec ! ( (index (p rec) party2)) + 1\<close> 
-          \<open>sl rec ! ( (index (p rec) party2)) < sl rec ! ( (index (p rec) party1))\<close> by linarith
+    using \<open>sl (assign_seats parties rec) ! ( (index parties party2)) = sl rec ! ( (index parties party2)) + 1\<close> 
+          \<open>sl rec ! ( (index parties party2)) < sl rec ! ( (index parties party1))\<close> by linarith
 qed
 
 lemma assign_seats_ccontr:
@@ -731,20 +749,20 @@ lemma assign_seats_ccontr:
   v1::"rat" and v2::"rat" and
   party1::"'b" and party2::"'b" and parties::"'b Parties"
 assumes 
-  "index (p rec) party1 < length (fv rec)" and
-  "index (p rec) party2 < length (fv rec)" and
+  "index parties party1 < length (fv rec)" and
+  "index parties party2 < length (fv rec)" and
   "v1 > v2" and
-  "party2 = hd ( get_winners (fv rec) (p rec))" and
-  "(fv rec) ! ( index (p rec) party1) \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! ( index (p rec) party1))))" and
-  "(fv rec) ! ( index (p rec) party2) \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! ( index (p rec) party2))))" and
+  "party2 = hd ( get_winners (fv rec) parties)" and
+  "(fv rec) ! ( index parties party1) = v1 / (of_int ((d rec) ! ((sl rec) ! ( index parties party1))))" and
+  "(fv rec) ! ( index parties party2) = v2 / (of_int ((d rec) ! ((sl rec) ! ( index parties party2))))" and
   "party1 \<noteq> party2" and
-  "(d rec) ! ((sl rec) !  index (p rec) party2) \<noteq> 0" and
-  "sl rec ! ( index (p rec) party1) \<ge> sl rec ! ( index (p rec) party2)" and
-  "( index (p rec) party1) \<noteq> ( index (p rec) party2)" and
-  "( index (p rec) party1) < length (sl rec)" and
-  "( index (p rec) party2) < length (sl rec)"
-  shows "sl (assign_seats rec) ! ( index (p rec) party1) \<ge> sl (assign_seats rec) !  index (p rec) party2"
-proof(cases  "length ( get_winners (fv rec) (p rec)) \<le> ns rec")
+  "(d rec) ! ((sl rec) !  index parties party2) \<noteq> 0" and
+  "sl rec ! ( index parties party1) \<ge> sl rec ! ( index parties party2)" and
+  "( index parties party1) \<noteq> ( index parties party2)" and
+  "( index parties party1) < length (sl rec)" and
+  "( index parties party2) < length (sl rec)"
+  shows "sl (assign_seats parties rec) ! ( index parties party1) \<ge> sl (assign_seats parties rec) !  index parties party2"
+proof(cases  "length ( get_winners (fv rec) parties) \<le> ns rec")
   case True
   then show ?thesis 
     using True assms assign_seats_helper_lemma_cond_ver by meson
@@ -752,8 +770,8 @@ next
   case False
    define rec''
     where 
-     "rec''= break_tie ( get_winners (fv rec) (p rec)) rec" 
-    have "sl (assign_seats rec) = sl rec''"  using False rec''_def
+     "rec''= break_tie parties ( get_winners (fv rec) parties) rec" 
+    have "sl (assign_seats parties rec) = sl rec''"  using False rec''_def
      by simp
   then show ?thesis
   by (metis assms(9) break_tie_lemma rec''_def)
@@ -765,34 +783,33 @@ lemma assign_seats_concordant:
   m::"rat" and v1::"rat" and v2::"rat" and
   party1::"'b" and party2::"'b" and parties::"'b list"
 assumes 
-  "parties = p rec" and
-  "(index parties party1) < length (fv rec)" and
-  "(index parties party2) < length (fv rec)" and
+  "(index  parties party1) < length (fv rec)" and
+  "(index  parties party2) < length (fv rec)" and
   "v1 > v2" and
-  "party1 \<in> set parties" and
-  "party2 \<in> set parties" and
-  "(fv rec) ! (index parties party1) = 
-    v1 / of_int ((d rec) ! ((sl rec) ! index parties party1))" and
-  "(fv rec) ! (index parties party2) = 
-    v2 / of_int ((d rec) ! ((sl rec) ! index parties party2))" and
-  "sl rec ! (index parties party1) \<ge> sl rec ! (index parties party2)" and
-  "(d rec) ! ((sl rec) ! ((index parties party2))) \<noteq> 0" and
-  "(index parties party1) < length (sl rec)" and
-  "(index parties party2) < length (sl rec)"
-shows "sl (assign_seats rec) ! ( index parties party1) \<ge> 
-       sl (assign_seats rec) ! ( index parties party2)"
-proof(cases "length ( get_winners (fv rec) parties) \<le> ns rec")
+  "party1 \<in> set  parties" and
+  "party2 \<in> set  parties" and
+  "(fv rec) ! (index  parties party1) = 
+    v1 / of_int ((d rec) ! ((sl rec) ! index  parties party1))" and
+  "(fv rec) ! (index  parties party2) = 
+    v2 / of_int ((d rec) ! ((sl rec) ! index  parties party2))" and
+  "sl rec ! (index  parties party1) \<ge> sl rec ! (index  parties party2)" and
+  "(d rec) ! ((sl rec) ! ((index  parties party2))) \<noteq> 0" and
+  "(index  parties party1) < length (sl rec)" and
+  "(index  parties party2) < length (sl rec)"
+shows "sl (assign_seats parties rec) ! (index  parties party1) \<ge> 
+       sl (assign_seats parties rec) ! (index  parties party2)"
+proof(cases "length ( get_winners (fv rec)  parties) \<le> ns rec")
   case True  \<comment> \<open>commment\<close> 
   (* let ?x = *)
   then show ?thesis 
-      proof(cases "party1 = hd (get_winners (fv rec) parties)")
+      proof(cases "party1 = hd (get_winners (fv rec)  parties)")
         case True
-        have "sl (assign_seats rec) ! ( index parties party1) = 
+        have "sl (assign_seats parties rec) ! ( index  parties party1) = 
               (sl rec) ! (index parties party1) + 1" 
-          using  \<open>length ( get_winners (fv rec) parties) \<le> ns rec\<close> 
+          using  \<open>length ( get_winners (fv rec)  parties) \<le> ns rec\<close> 
                   True assign_seats_seats_increased assms by blast
-        also have "sl (assign_seats rec) ! (index (p rec) party2) = 
-                   (sl rec) ! (index (p rec) party2)"
+        also have "sl (assign_seats parties rec) ! (index parties party2) = 
+                   (sl rec) ! (index parties party2)"
            using True assign_seats_not_winner_mantains_seats assms
            by (metis add.right_neutral add_less_same_cancel1 divide_cancel_right 
                divide_less_cancel of_int_of_nat_eq of_nat_eq_0_iff) 
@@ -802,42 +819,42 @@ proof(cases "length ( get_winners (fv rec) parties) \<le> ns rec")
       next
         case False
         then show ?thesis
-        proof(cases "party2 = hd ( get_winners (fv rec) (p rec))")
+        proof(cases "party2 = hd ( get_winners (fv rec) parties)")
           case True
           then show ?thesis 
             using assms True by (metis assign_seats_ccontr order_refl)
         next
           case False
-          have "party2 \<noteq> hd ( get_winners (fv rec) (p rec))" using False by simp
-          then have "index (p rec) (hd ( get_winners (fv rec) (p rec))) \<noteq>  
-                     index (p rec) party2" 
+          have "party2 \<noteq> hd ( get_winners (fv rec) parties)" using False by simp
+          then have "index parties (hd ( get_winners (fv rec) parties)) \<noteq>  
+                     index parties party2" 
             using assms False index_diff_elements by metis
-          then have "sl (assign_seats rec) ! ( index (p rec) party2) = 
-                     (sl rec) ! ( index (p rec) party2)"
+          then have "sl (assign_seats parties rec) ! ( index parties party2) = 
+                     (sl rec) ! ( index parties party2)"
             using False assms 
                   assign_seats_not_winner_mantains_seats using assms by metis
-          have "party1 \<noteq> hd ( get_winners (fv rec) parties)" 
-            using \<open>party1 \<noteq> hd ( get_winners (fv rec) parties)\<close> by simp
-          then have "index (p rec) (hd ( get_winners (fv rec) parties)) \<noteq> 
-                      (index (p rec) party1)" 
+          have "party1 \<noteq> hd ( get_winners (fv rec)  parties)" 
+            using \<open>party1 \<noteq> hd ( get_winners (fv rec)  parties)\<close> by simp
+          then have "index parties (hd ( get_winners (fv rec)  parties)) \<noteq> 
+                      (index parties party1)" 
             using assms False by (metis index_diff_elements)           
-        then have "sl (assign_seats rec) ! ( index (p rec) party1) = 
-                    (sl rec) ! ( index (p rec) party1)"
-            using \<open>party1 \<noteq> hd ( get_winners (fv rec) parties)\<close> assms 
+        then have "sl (assign_seats parties rec) ! ( index parties party1) = 
+                    (sl rec) ! ( index parties party1)"
+            using \<open>party1 \<noteq> hd ( get_winners (fv rec)  parties)\<close> assms 
                   assign_seats_not_winner_mantains_seats by metis
           then show ?thesis
-            using \<open>sl (assign_seats rec) ! index (p rec) party2 = sl rec ! index (p rec) party2\<close> assms(1) assms(9) by presburger
+            using \<open>sl (assign_seats parties rec) ! index parties party2 = sl rec ! index parties party2\<close> assms(8) by presburger
         qed
       qed
 next
   case False
   define rec''
     where 
-     "rec''= break_tie ( get_winners (fv rec) (p rec)) rec" 
-   then have "assign_seats rec =  (
-      let winners = get_winners (fv rec) (p rec) in
+     "rec''= break_tie parties ( get_winners (fv rec) parties) rec" 
+   then have "assign_seats parties rec =  (
+      let winners = get_winners (fv rec) parties in
       if length winners \<le> ns rec then 
-        let rec' =  (assign_seat [hd winners] rec) in
+        let rec' =  (assign_seat parties [hd winners] rec) in
                     \<lparr>res = (res rec'),
                          p = (p rec'),
                          i = (i rec'),
@@ -849,7 +866,7 @@ next
                          d = (d rec')
                         \<rparr>
       else
-         let rec'' = (break_tie winners rec) in
+         let rec'' = (break_tie parties winners rec) in
                        \<lparr>res = (res rec''),
                          p = (p rec''),
                          i = (i rec''),
@@ -871,35 +888,35 @@ next
                          d = (d rec'')
                         \<rparr>" using rec''_def assms
     by (smt (verit, best) False)
-   then have "sl (assign_seats rec) = sl rec''"  using False rec''_def by simp
-   then have "sl (assign_seats rec) ! (index (p rec) party1) = 
-              sl rec'' ! index (p rec) party1" 
+   then have "sl (assign_seats parties rec) = sl rec''"  using False rec''_def by simp
+   then have "sl (assign_seats parties rec) ! (index parties party1) = 
+              sl rec'' ! index parties party1" 
      by simp
-   then have "... = sl rec ! (index (p rec) party1)"
+   then have "... = sl rec ! (index parties party1)"
      using break_tie_lemma rec''_def by metis
-   also have "sl (assign_seats rec) ! (index (p rec) party2) = 
-              sl rec ! index (p rec) party2"
-     using \<open>sl (assign_seats rec) = sl rec''\<close> break_tie_lemma rec''_def by metis
+   also have "sl (assign_seats parties rec) ! (index parties party2) = 
+              sl rec ! index parties party2"
+     using \<open>sl (assign_seats parties rec) = sl rec''\<close> break_tie_lemma rec''_def by metis
   then show ?thesis
   using False assms
-  using \<open>sl (assign_seats rec) ! ( index (p rec) party1) = 
-          sl rec'' ! ( index (p rec) party1)\<close> calculation by metis
+  using \<open>sl (assign_seats parties rec) ! ( index parties party1) = 
+          sl rec'' ! ( index parties party1)\<close> calculation by metis
 qed
 
 lemma nseats_decreasing:
   assumes non_empty_parties: "p rec \<noteq> []"
   assumes n_positive: "(ns rec) > 0"
-  shows "ns (assign_seats rec) < ns rec"
-proof (cases "length (get_winners (fv rec) (p rec)) \<le> ns rec")
+  shows "ns (assign_seats parties rec) < ns rec"
+proof (cases "length (get_winners (fv rec) parties) \<le> ns rec")
   case True
-  then have "ns (assign_seats rec) = ns rec - 1"
+  then have "ns (assign_seats parties rec) = ns rec - 1"
     by (auto simp add: Let_def)
   also have "... < ns rec" using True n_positive non_empty_parties
     by simp
   finally show ?thesis .
 next
   case False
-  then have "ns (assign_seats rec) = 0"
+  then have "ns (assign_seats parties rec) = 0"
     by (auto simp add: Let_def)
   also have "... < ns rec" using n_positive
     by simp
@@ -908,15 +925,52 @@ qed
 
 text \<open>This loop applies the same functions until no more seats are available.\<close>
 function loop_o ::
-  "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
+  "'b Parties \<Rightarrow> ('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
   where
- "ns r > 0 \<Longrightarrow> loop_o r = loop_o (assign_seats r)" |
-  "ns r = 0  \<Longrightarrow> loop_o r = r"
+  "ns r = 0  \<Longrightarrow> loop_o parties r = r" |
+  "ns r > 0 \<Longrightarrow> loop_o parties r = loop_o parties (assign_seats parties r)"
+
   by auto
-termination by (relation "measure (\<lambda>r. ns r)")
+termination by (relation "measure (\<lambda>(parties, r). ns r)")
                (auto simp add: Let_def nseats_decreasing)
-lemma loop_o_lemma[code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
+lemma loop_o_lemma[code]: \<open>loop_o parties r = (if ns r = 0 then r else loop_o parties (assign_seats parties r))\<close>
   by (cases r) auto
+
+lemma loc_d:
+  assumes "ns r > 0"
+  shows "ns (loop_o parties r) = ns (loop_o parties (assign_seats parties r)) + 1"
+sorry
+
+lemma loop_o_concordant_one_case:
+fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  party1::"'b" and 
+  party2::"'b" and 
+  parties::"'b Parties"
+assumes
+     "sl rec ! (index  parties party1) \<ge> sl rec ! (index parties party2)" and "ns rec = 0"
+shows "sl (loop_o parties rec) ! (index parties party1) \<ge> 
+       sl (loop_o parties rec) ! (index parties party2)"
+  using assms by simp
+(*
+lemma loop_o_concordant_gt_case:
+fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  party1::"'b" and 
+  party2::"'b" and 
+  parties::"'b Parties"
+assumes 
+  "ns rec > 0"
+shows "sl (loop_o parties rec) ! (index parties party1) \<ge> 
+       sl (loop_o parties rec) ! (index parties party2)"
+  apply (induction rec rule:loop_o.induct)
+  subgoal premises p for r parties
+    using p(1) apply (auto simp: Let_def split: if_splits simp del: assign_seats.simps)
+    done
+  subgoal premises p for r parties
+    using p(1) proof - have "ns r = 0" using p(1) assms by simp
+    done
+*)
 
 lemma loop_o_concordant:
 fixes
@@ -928,43 +982,26 @@ fixes
   party2::"'b" and 
   parties::"'b Parties" and
   di::"nat list"
-assumes 
- (*2*) "p (assign_seats rec) = p rec" and
- (*3*)  "(index parties party1) < length (fv rec)" and
- (*4*)  "(index parties party2) < length (fv rec)" and
- (*5*)  "v1 > v2" and
- (*6*)  "party1 \<in> set parties" and
- (*7*)  "party2 \<in> set parties" and
- (*8*)  "(fv rec) ! (index parties party1) = 
-    v1 / of_int ((d rec) ! ((sl rec) ! index parties party1))" and
- (*9*)  "(fv rec) ! (index parties party2) = 
-    v2 / of_int ((d rec) ! ((sl rec) ! index parties party2))" and
-(*10*)  "sl rec ! (index parties party1) \<ge> sl rec ! (index parties party2)"
-(*11*)  "(d rec) ! ((sl rec) ! ((index parties party2))) \<noteq> 0" and
-(*12*)  "(index parties party1) < length (sl rec)" and
-(*13*)  "(index parties party2) < length (sl rec)" and
- (*3*)  "(index parties party1) < length (fv rec)" and
- (*4*)  "(index parties party2) < length (fv rec)" and
- (*5*)  "v1 > v2" and
- (*6*)  "party1 \<in> set parties" and
- (*7*)  "party2 \<in> set parties" and
- (*8*)  "(fv rec) ! (index parties party1) = 
-    v1 / of_int ((d rec) ! ((sl rec) ! index parties party1))" and
- (*9*)  "(fv rec) ! (index parties party2) = 
-    v2 / of_int ((d rec) ! ((sl rec) ! index parties party2))" and
-(*10*)  "sl rec ! (index parties party1) \<ge> sl rec ! (index parties party2)"
-(*11*)  "(d rec) ! ((sl rec) ! ((index parties party2))) \<noteq> 0" and
-(*12*)  "(index parties party1) < length (sl rec)" and
-(*13*)  "(index parties party2) < length (sl rec)"
-shows "sl (loop_o rec) ! (index parties party1) \<ge> 
-       sl (loop_o rec) ! (index parties party2)"
-  using assign_seats_concordant unfolding assms
-  apply (induction rec rule:loop_o.induct)
-  subgoal for r
-    apply (auto split: if_splits simp del: assign_seats.simps)
-    done
+assumes
+  "sl rec ! (index  parties party1) \<ge> sl rec ! (index  parties party2)"
+shows "sl (loop_o parties rec) ! (index parties party1) \<ge> 
+       sl (loop_o parties rec) ! (index parties party2)"
+proof (induction "ns rec")
+  case 0
+  then show ?case using assms by simp
+next
+  case (Suc x)
+  obtain x where "x = ns rec + 1" by simp
+  then "Suc x = ns rec" b
+  then show ?case sorry
+qed
+  subgoal for r parties
     apply (auto simp: Let_def split: if_splits simp del: assign_seats.simps)
     done
+  subgoal premises p for r parties
+    apply (auto simp: Let_def split: if_splits simp del: assign_seats.simps)
+    done
+
 
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" where
   "create_empty_seats indexes parties =
@@ -984,7 +1021,7 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
     let sv = calc_votes (p rec) (p rec) pl (v rec);
     sfv = start_fract_votes sv;
     empty_seats = create_empty_seats (i rec) (p rec)
-    in loop_o \<lparr> 
+    in loop_o (p rec) \<lparr> 
              res = res rec,
              p = p rec,
              i = i rec,
@@ -1007,23 +1044,23 @@ theorem full_module_concordant:
   parties::"'b Parties" and
   winners::"'b list"
 assumes 
-  "winners = get_winners (fv rec) (p rec)" and
-  "index (p rec) party1 = index (p (assign_seats rec)) party1" and
-  "index (p rec) party2 = index (p (assign_seats rec)) party2" and
+  "winners = get_winners (fv rec) parties" and
+  "index parties party1 = index (p (assign_seats rec)) party1" and
+  "index parties party2 = index (p (assign_seats rec)) party2" and
   "p (assign_seats (assign_seats rec)) = p rec" and
-  "get_winners (fv rec) (p rec) \<noteq> []" and
-  "party1 \<in> set (p rec)" and
-  "party2 \<in> set (p rec)" and
+  "get_winners (fv rec) parties \<noteq> []" and
+  "party1 \<in> set parties" and
+  "party2 \<in> set parties" and
   "v1 > v2" and
   "party1 \<noteq> party2" and
-  "(fv rec) ! (index (p rec) party1) \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! (index (p rec) party1))))" and
-  "(fv rec) ! (index (p rec) party2) \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! (index (p rec) party1))))" and
-  "(d rec) ! ((sl rec) ! (index (p rec) party1)) \<noteq> 0" and
-  "(index (p rec) party1) \<noteq> ( index (p rec) party2)" and
-  "(index (p rec) party1) < length (sl rec)" and
-  "(index (p rec) party1) < length (sl rec)" and
+  "(fv rec) ! (index parties party1) \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! (index parties party1))))" and
+  "(fv rec) ! (index parties party2) \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! (index parties party1))))" and
+  "(d rec) ! ((sl rec) ! (index parties party1)) \<noteq> 0" and
+  "(index parties party1) \<noteq> ( index parties party2)" and
+  "(index parties party1) < length (sl rec)" and
+  "(index parties party1) < length (sl rec)" and
   "length winners \<le> ns rec"
-  shows "sl (full_module rec pl) ! ( index (p rec) party1) \<ge> sl (full_module rec pl) ! ( index (p rec) party2)"
+  shows "sl (full_module rec pl) ! ( index parties party1) \<ge> sl (full_module rec pl) ! ( index parties party2)"
   using loop_o_concordant assms by force
 
 (* Define a set *)
@@ -1146,24 +1183,24 @@ theorem dhont_method_concordant:
   parties::"'b Parties" and
   winners::"'b list"
 assumes 
-  "winners = get_winners (fv rec) (p rec)" and
-  "index (p rec) party1 = index (p (assign_seats rec)) party1" and
-  "index (p rec) party2 = index (p (assign_seats rec)) party2" and
+  "winners = get_winners (fv rec) parties" and
+  "index parties party1 = index (p (assign_seats rec)) party1" and
+  "index parties party2 = index (p (assign_seats rec)) party2" and
   "p (assign_seats (assign_seats rec)) = p rec" and
-  "get_winners (fv rec) (p rec) \<noteq> []" and
-  "party1 \<in> set (p rec)" and
-  "party2 \<in> set (p rec)" and
+  "get_winners (fv rec) parties \<noteq> []" and
+  "party1 \<in> set parties" and
+  "party2 \<in> set parties" and
   "v1 > v2" and
   "party1 \<noteq> party2" and
-  "(fv rec) ! (index (p rec) party1) \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! (index (p rec) party1))))" and
-  "(fv rec) ! (index (p rec) party2) \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! (index (p rec) party1))))" and
-  "(d rec) ! ((sl rec) ! (index (p rec) party1)) \<noteq> 0" and
-  "(index (p rec) party1) \<noteq> ( index (p rec) party2)" and
-  "(index (p rec) party1) < length (sl rec)" and
-  "(index (p rec) party1) < length (sl rec)" and
+  "(fv rec) ! (index parties party1) \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! (index parties party1))))" and
+  "(fv rec) ! (index parties party2) \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! (index parties party1))))" and
+  "(d rec) ! ((sl rec) ! (index parties party1)) \<noteq> 0" and
+  "(index parties party1) \<noteq> ( index parties party2)" and
+  "(index parties party1) < length (sl rec)" and
+  "(index parties party1) < length (sl rec)" and
   "length winners \<le> ns rec"
-  shows "sl (dhondt_method parties n pl) ! ( index (p rec) party1) \<ge> sl (dhondt_method parties n pl) ! ( index (p rec) party2)"
-  using full_module_concordant assms by sledgehammer
+  shows "sl (dhondt_method parties n pl) ! ( index parties party1) \<ge> sl (dhondt_method parties n pl) ! ( index parties party2)"
+  using full_module_concordant assms by sorry
 
 fun saintelague_method:: "'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Rightarrow>
                    (nat, 'b) Divisor_Module" where
@@ -1182,23 +1219,23 @@ theorem saintelague_method_concordant:
   parties::"'b Parties" and
   winners::"'b list"
 assumes 
-  "winners = get_winners (fv rec) (p rec)" and
-  "index (p rec) party1 = index (p (assign_seats rec)) party1" and
-  "index (p rec) party2 = index (p (assign_seats rec)) party2" and
+  "winners = get_winners (fv rec) parties" and
+  "index parties party1 = index (p (assign_seats rec)) party1" and
+  "index parties party2 = index (p (assign_seats rec)) party2" and
   "p (assign_seats (assign_seats rec)) = p rec" and
-  "get_winners (fv rec) (p rec) \<noteq> []" and
-  "party1 \<in> set (p rec)" and
-  "party2 \<in> set (p rec)" and
+  "get_winners (fv rec) parties \<noteq> []" and
+  "party1 \<in> set parties" and
+  "party2 \<in> set parties" and
   "v1 > v2" and
   "party1 \<noteq> party2" and
-  "(fv rec) ! (index (p rec) party1) \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! (index (p rec) party1))))" and
-  "(fv rec) ! (index (p rec) party2) \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! (index (p rec) party1))))" and
-  "(d rec) ! ((sl rec) ! (index (p rec) party1)) \<noteq> 0" and
-  "(index (p rec) party1) \<noteq> ( index (p rec) party2)" and
-  "(index (p rec) party1) < length (sl rec)" and
-  "(index (p rec) party1) < length (sl rec)" and
+  "(fv rec) ! (index parties party1) \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! (index parties party1))))" and
+  "(fv rec) ! (index parties party2) \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! (index parties party1))))" and
+  "(d rec) ! ((sl rec) ! (index parties party1)) \<noteq> 0" and
+  "(index parties party1) \<noteq> ( index parties party2)" and
+  "(index parties party1) < length (sl rec)" and
+  "(index parties party1) < length (sl rec)" and
   "length winners \<le> ns rec"
-  shows "sl (saintelague_method parties n pl) ! ( index (p rec) party1) \<ge> sl (saintelague_method parties n pl) ! ( index (p rec) party1)"
+  shows "sl (saintelague_method parties n pl) ! ( index parties party1) \<ge> sl (saintelague_method parties n pl) ! ( index parties party1)"
   using full_module_concordant assms by force
 
 value "dhondt_method parties 10 pref"
