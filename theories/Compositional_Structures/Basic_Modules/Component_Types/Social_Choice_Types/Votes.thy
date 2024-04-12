@@ -198,6 +198,82 @@ text \<open> This function receives in input the function Votes and the list of 
 fun max_val_wrap:: "rat list \<Rightarrow> rat" where 
 "max_val_wrap v = Max (set v)"
 
+(* i have to prove that for different votes almost the same but with m > v' > v
+   then m = m' *)
+lemma minus_max:
+ assumes "ip = index parties party"
+  "size v = size parties" and
+  "max_val_wrap v \<noteq> v ! ip" and
+  "finite (set v)"
+shows "Max(set v) = Max ((set v) - {v ! ip})" 
+  by (metis Diff_empty Diff_insert0 Max.remove assms(3) assms(4) max_def max_val_wrap.simps)
+
+(*
+lemma max_val_helper_list_helper:
+  assumes "parties \<noteq> []"
+  assumes "size v = size v'"
+  assumes "party \<in> set parties"
+  assumes "ip = index parties party" and "x \<noteq> party" 
+  assumes "v ! index parties x = v' ! index parties x"
+  shows "remove_nth ip v = remove_nth ip v'" using assms by sledgehammer 
+ *)
+(*
+lemma max_val_helper_helper:
+  shows "xs ! i \<noteq> x"
+  sorry
+*)
+lemma max_val_helper:
+  fixes
+  ip::"nat"
+  assumes "ip = index parties party"
+  "size v = size parties" and "size v' = size parties"
+shows "max_val_wrap v = max_val_wrap v'" 
+  by sorry
+
+(*
+lemma max_val_helper:
+  fixes
+  ip::"nat"
+  assumes "ip = index parties party"
+  assumes "x \<noteq> party \<Longrightarrow> v ! index parties x = v' ! index parties x"
+  assumes "v' ! ip > v ! ip" and "finite (set v)" and "finite (set v')" and
+  "size v = size parties" and "size v' = size parties" and
+  "max_val_wrap v \<noteq> v ! ip" and "max_val_wrap v' \<noteq> v' ! ip"
+shows "max_val_wrap v = max_val_wrap v'" 
+proof - 
+  assume "max_val_wrap v \<noteq> max_val_wrap v'" 
+  also have "max_val_wrap v = (Max(set v))" by simp
+  also have "max_val_wrap v' = (Max(set v'))" by simp
+  also obtain x where "v ! x = Max(set v)" 
+    using assms by (metis Max_in calculation empty_iff nth_equalityI nth_last_index nth_mem)
+  then obtain x' where "v' ! x' = Max(set v')" 
+   using assms by (metis Max_in calculation empty_iff nth_equalityI nth_last_index nth_mem)
+   then have "x \<noteq> ip" using assms
+  by (metis \<open>v ! x = Max (set v)\<close> max_val_wrap.simps)
+  then have "x' \<noteq> ip" using assms
+  by (metis \<open>v' ! x' = Max (set v')\<close> max_val_wrap.simps)
+  then have "v ! x \<noteq> v' ! x'" using assms \<open>v! x = Max(set v)\<close> 
+                                          \<open>v'! x' = Max(set v')\<close>
+                                          \<open> max_val_wrap v = Max(set v)\<close>
+                                          \<open> max_val_wrap v' = Max(set v')\<close>
+                                          \<open> max_val_wrap v \<noteq> max_val_wrap v'\<close> 
+    by presburger    
+  then have "x \<noteq> index parties party" using assms
+    using \<open>x \<noteq> ip\<close>
+  by metis
+  then have "parties ! x \<noteq> party" 
+    using assms max_val_helper_helper by presburger
+  then have "x' \<noteq> index parties party" using assms
+    using \<open>x' \<noteq> ip\<close> by blast
+  then have "parties ! x' \<noteq> party" 
+    using assms max_val_helper_helper by presburger
+  then have "parties ! x = parties ! x'"
+    using max_val_helper_helper by presburger
+  then have "v ! x = v' ! x'" using assms
+    by (metis max_val_helper_helper)
+  then show ?thesis sorry
+*)
+
 lemma max_val_wrap:
   fixes
   v::"rat list" and
@@ -216,15 +292,75 @@ fun max_p:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
 "max_p m v ps w = filter (\<lambda>x. v ! (index ps x) = m) ps" 
 
+lemma max_p_ne:
+  assumes "party \<in> set ps" and 
+    "party \<notin> set (max_p m v ps w)" and 
+    "m>0" and 
+    "ps \<noteq> []"
+  shows "v ! index ps party \<noteq> m"
+  using assms by simp
+
+lemma max_p_gt:
+  assumes "party \<in> set ps" and 
+    "party \<notin> set (max_p m v ps w)" and 
+    "m>0" and 
+    "ps \<noteq> []" and
+    "m = max_val_wrap v" and
+    "size v = size ps"
+  shows "v ! index ps party < m"
+proof - have "v ! index ps party \<noteq> m" using max_p_ne assms by simp
+  then have "v ! index ps party \<noteq> Max(set v)" using assms by simp
+  then show ?thesis using assms order_neq_le_trans
+  by (metis index_less_size_conv max_val_wrap.elims max_val_wrap_lemma)
+qed
+
+(*
 lemma max_p_no_empty:
-  fixes m::"rat" and v::"rat list" and ps::"'b list"
+  fixes m::"rat" and v::"rat list" and parties::"'b list" and il::"nat list"
   assumes "m = Max (set v)"
   assumes "m > 0"
-  assumes "length v = length ps"
-  assumes "ps \<noteq> []"
-  assumes "\<forall>i j. p ! i \<noteq> p ! j"
-  shows "max_p m v ps w \<noteq> []"
-  using assms(5) by blast
+  assumes "(set v) \<noteq> {}" and
+  "finite (set v)"
+  assumes "length v = length parties"
+  assumes "parties \<noteq> []"
+  assumes "\<forall>i j. i \<noteq> j \<Longrightarrow> parties ! i \<noteq> parties ! j"
+  shows "max_p m v parties w \<noteq> []"
+proof - 
+  have "m = Max (set v)" 
+    using assms by simp
+  then have "Max(set v) \<in> (set v)" 
+    using assms by simp
+  then have "\<exists>y. y \<in> set parties \<Longrightarrow> Max(set v) = v ! index parties y \<Longrightarrow> filter (\<lambda>x. v ! (index parties x) = Max(set v)) parties \<noteq> []" 
+    using assms by sledgehammer
+  then show ?thesis
+*)
+
+
+lemma P_no:
+  fixes m::"rat" and v::"rat list" and ps::"'b list"
+  assumes 
+    "x \<in> set xs" and  
+    "\<not>(P x)"
+  shows "x \<notin> set (filter(\<lambda>x. P x) xs)"
+  using assms by simp
+
+lemma filter_loss:
+  fixes m::"rat" and v::"rat list" and ps::"'b list"
+  assumes 
+    "party \<in> set parties" and
+    "m = Max(set v)" and
+    "\<not> (v ! (index parties party) = m)"
+  shows "party \<notin> set (filter (\<lambda>x. v ! (index parties x) = m) parties)"
+  using assms by simp
+
+lemma max_p_loss:
+  fixes m::"rat" and v::"rat list" and ps::"'b list"
+  assumes 
+    "party \<in> set parties" and
+    "m = Max(set v)" and
+    "\<not> (v ! (index parties party) = m)"
+  shows "party \<notin> set (max_p m v parties w)"
+  using assms by simp
 
 lemma max_p_in_win:
   fixes v::"rat list" and m::"rat"
@@ -255,14 +391,33 @@ lemma max_parties_no_in_empty:
 fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = (let m = max_val_wrap v in max_p m v p [])"
 
+lemma get_winners_gt:
+  assumes "party \<in> set ps" and 
+    "party \<notin> set (get_winners v ps)" and 
+    "ps \<noteq> []" and
+    "size v = size ps"
+  shows "v ! index ps party < max_val_wrap v"
+proof - 
+  have "party \<notin> set (max_p (max_val_wrap v) v ps [])" 
+    using assms by simp
+  then show ?thesis
+    using assms index_less_size_conv max_p_in_win max_val_wrap_lemma order_le_imp_less_or_eq
+    by metis
+qed
+
 lemma get_winners_no_empty:
   fixes m::"rat" and v::"rat list" and ps::"'b list"
-  assumes "m > 0"
-  assumes "length v = length ps"
-  assumes "ps \<noteq> []"
   assumes "\<forall>i j. p ! i \<noteq> p ! j"
   shows "get_winners v ps \<noteq> []"
-  using assms(4) by blast
+  using assms by blast
+
+lemma get_winners_loss:
+  fixes m::"rat" and v::"rat list" and ps::"'b list"
+  assumes 
+    "party \<in> set parties" and
+    "(v ! (index parties party) \<noteq> Max(set v))"
+  shows "party \<notin> set (get_winners v parties)"
+  using assms by simp
 
 theorem get_winners_in_win:
   fixes fv::"rat list" and m::"rat"
