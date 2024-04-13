@@ -222,6 +222,7 @@ lemma max_val_helper_helper:
   shows "xs ! i \<noteq> x"
   sorry
 *)
+(*
 lemma max_val_helper:
   fixes
   ip::"nat"
@@ -229,7 +230,7 @@ lemma max_val_helper:
   "size v = size parties" and "size v' = size parties"
 shows "max_val_wrap v = max_val_wrap v'" 
   by sorry
-
+*)
 (*
 lemma max_val_helper:
   fixes
