@@ -1094,43 +1094,6 @@ lemma liste_lemma_semplice:
 shows "max_val_wrap l' = l' ! iw"
   sorry
 
-lemma assign_seats_incre_case_vincitore_debole_implica_vincitore_forte:
-  fixes
-  rec::"('a::linorder, 'b) Divisor_Module" and
-  rec'::"('a::linorder, 'b) Divisor_Module" and
-  m::"rat" and v::"rat" and v'::"rat" and
-  party::"'b" and parties::"'b list"
-assumes 
-  "winners = get_winners (fv rec) (p rec)" and
-  "winners' = get_winners (fv rec') (p rec)" and
-  "p rec \<noteq> []" and
-  "size (fv rec) = size (p rec)" and 
-  "size (fv rec') = size (p rec)" and
-  "party \<in> set (p rec)" and
-  "p rec = p rec'" and
-  "(index (p rec) party) < length (fv rec)" and
-  "(index (p rec) party) < length (fv rec')" and
-  "\<forall>x \<noteq> index (p rec) party. (fv rec') ! x \<le> (fv rec) ! x" and
-  "sl rec' ! (index (p rec) party) \<ge> sl rec ! (index (p rec) party)" and
-  "(d rec) ! ((sl rec) ! ((index parties party))) \<noteq> 0" and
-  "(d rec') ! ((sl rec') ! ((index parties party))) \<noteq> 0" and
-  "index (p rec) party < length (sl rec)" and
-  "index (p rec) party < length (sl rec')" and 
-  "fv rec' ! index (p rec) party > fv rec ! index (p rec) party" and
-  "party = hd winners"
-shows "party = hd winners'"
-proof -  have "max_val_wrap (fv rec') > max_val_wrap (fv rec)"
-  by (metis assms dual_order.trans find_max_votes_not_empty get_winners_not_in_win leD max_val_wrap_lemma order_le_imp_less_or_eq order_less_imp_le)
-  then have "max_val_wrap (fv rec) = fv rec ! index (p rec) party"
-    by (metis assms find_max_votes_not_empty get_winners_not_in_win)
-  then have "fv rec' ! index (p rec) party > max_val_wrap (fv rec)"
-    using assms by linarith
-  then have "max_val_wrap (fv rec') = fv rec' ! index (p rec) party"
-    by (metis \<open>max_val_wrap (fv rec) = fv rec ! index (p rec) party\<close> assms(10) liste_lemma_semplice)
-  
-  then show ?thesis sorry
-qed
-
 lemma assign_seats_case_TFqq:
   fixes
   rec::"('a::linorder, 'b) Divisor_Module" and
@@ -1154,6 +1117,48 @@ proof -
   then show ?thesis
     using \<open>sl (assign_seats (p rec) rec) ! index (p rec) party = sl rec ! index (p rec) party\<close>
     using assms(2) by linarith
+qed
+
+
+lemma assign_seats_incre_case_TTFq:
+  fixes
+  rec::"('a::linorder, 'b) Divisor_Module" and
+  rec'::"('a::linorder, 'b) Divisor_Module" and
+  m::"rat" and v::"rat" and v'::"rat" and
+  party::"'b"
+assumes 
+  "winners = get_winners (fv rec) (p rec)" and
+  "winners' = get_winners (fv rec') (p rec)" and
+  "p rec \<noteq> []" and
+  "size (fv rec) = size (p rec)" and 
+  "size (fv rec') = size (p rec)" and
+  "party \<in> set (p rec)" and
+  "v' > v" and
+  "fv rec ! index  (p rec) party = v / of_int ((d rec) ! (sl rec ! index  (p rec) party))" and
+  "fv rec ! index  (p rec) party = v' / of_int ((d rec) ! (sl rec' ! index  (p rec) party))" and
+  "(index  (p rec) party) < length (fv rec)" and
+  "sl rec' ! (index  (p rec) party) \<ge> sl rec ! (index  (p rec) party)" and
+  "(d rec) ! ((sl rec) !  index (p rec) party) \<noteq> 0" and
+  "(d rec) ! ((sl rec') !  index (p rec) party) \<noteq> 0" and
+  "index (p rec) party < length (sl rec')" and 
+  "index (p rec) party < length (sl rec)" and
+  "\<forall> x \<noteq> index (p rec) party. (fv rec') ! x \<le> (fv rec) ! x" and
+  "length winners' \<le> ns rec'" and
+  "length winners \<le> ns rec" and
+  "party \<noteq> hd (winners')"
+shows "sl (assign_seats  (p rec) rec') ! (index  (p rec) party) \<ge> 
+       sl (assign_seats  (p rec) rec) ! (index  (p rec) party)"
+proof(cases "party = hd winners")
+  case True \<comment> \<open>TTFT\<close>
+  then show ?thesis sorry
+next
+  case False \<comment> \<open>TTFF\<close>
+  have "sl (assign_seats  (p rec) rec') ! (index  (p rec) party) = sl rec' ! index (p rec) party" 
+    by (metis assign_seats_not_winner_mantains_seats assms(10) assms(14) assms(19) assms(2) assms(4) index_correct)
+  then have "sl (assign_seats (p rec) rec) ! (index  (p rec) party) = sl rec ! index (p rec) party" 
+    by (metis False assign_seats_not_winner_mantains_seats assms(1) assms(10) assms(15) assms(4) index_correct)
+  then show ?thesis
+    using \<open>sl (assign_seats (p rec) rec') ! index (p rec) party = sl rec' ! index (p rec) party\<close> assms(11) by presburger
 qed
 
 lemma assign_seats_monotone:
