@@ -467,6 +467,14 @@ proof -
           \<open>get_winners fv ps = (let m = max_val_wrap fv in max_p m fv ps [])\<close> by metis
 qed
 
+lemma get_winners_only_winner:
+  fixes fv::"rat list" and m::"rat"
+  assumes "fv ! (index ps px) = max_val_wrap fv"
+  and "\<forall>x \<noteq> index ps px. fv ! (index ps x) < max_val_wrap fv"  
+assumes "get_winners fv ps \<noteq> []"
+  shows "px = hd (get_winners fv ps)"
+  by (metis assms(1) assms(2) assms(3) get_winners_not_in_win verit_comp_simplify1(1))
+
 lemma find_max_votes_not_empty:
   fixes
   v::"rat list" and
