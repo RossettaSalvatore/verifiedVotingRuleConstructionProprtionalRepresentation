@@ -467,6 +467,7 @@ proof -
           \<open>get_winners fv ps = (let m = max_val_wrap fv in max_p m fv ps [])\<close> by metis
 qed
 
+
 lemma get_winners_only_winner:
   fixes fv::"rat list" and m::"rat"
   assumes "fv ! (index ps px) = max_val_wrap fv"
@@ -474,6 +475,76 @@ lemma get_winners_only_winner:
 assumes "get_winners fv ps \<noteq> []"
   shows "px = hd (get_winners fv ps)"
   by (metis assms(1) assms(2) assms(3) get_winners_not_in_win verit_comp_simplify1(1))
+
+(*
+lemma Max_ge [simp]:
+  assumes "finite A" and "x \<in> A"
+  shows "x \<le> Max A"
+  using assms by (fact Max.coboundedI)
+
+*)
+
+lemma get_winners_weak_winner_implies_helper:
+  assumes "x < size fv"
+shows "Max(set fv) \<ge> fv ! x" using assms by simp
+
+(*
+lemma Max_eqI:
+  assumes "finite A"
+  assumes "\<And>y. y \<in> A \<Longrightarrow> y \<le> x"
+    and "x \<in> A"
+  shows "Max A = x"
+*)
+lemma max_val_wrap_eqI:
+  assumes "\<And>y. y \<in> (set fv) \<Longrightarrow> y \<le> fv ! x"
+    and "fv ! x \<in> (set fv)"
+  shows "Max(set fv) = fv ! x"
+  using Max_eqI assms by blast
+
+lemma max_val_wrap_eqI_2:
+assumes 
+"\<And>x. fv ! index parties x \<in> (set fv) \<Longrightarrow> fv' ! index parties x \<le> fv ! index parties x"
+"fv' ! x \<in> (set fv')"
+shows "\<And>x. fv ! index parties x \<in> (set fv) \<Longrightarrow> fv' ! index parties x \<le> Max(set fv)"
+using Max_eqI
+  by (meson List.finite_set Max_ge assms dual_order.trans)
+
+lemma max_val_wrap_eqI_3:
+  assumes 
+"fv' ! index parties w \<in> (set fv')" and
+"fv ! index parties w = max_val_wrap fv" and
+"fv' ! index parties w > fv ! index parties w" 
+shows "max_val_wrap fv' > max_val_wrap fv"
+  using max_val_wrap.simps List.finite_set Max.coboundedI assms dual_order.strict_trans 
+        nless_le by metis
+
+lemma max_eqI_4:
+  assumes 
+"l ! x = Max(set l)" and
+"l' ! x > l ! x" and 
+"x \<noteq> y" and
+"l ! y \<ge> l' ! y" 
+shows "l' ! y \<le> Max (set l')"
+  by sledgehammer
+
+lemma get_winners_weak_winner_implies:
+  fixes 
+fv::"rat list" and
+fv'::"rat list" and 
+m::"rat"
+assumes "finite (set fv)" and
+"index ps x < size fv" and 
+"size fv = size fv'" and
+"fv ! (index ps px) = max_val_wrap fv" and 
+"x \<noteq> index ps px" and 
+"fv ! index ps px < fv' ! index ps px" and
+"fv ! (index ps x) \<ge> fv' ! index ps x" and 
+"get_winners fv ps \<noteq> []" and 
+"px = hd (get_winners fv ps)" and 
+"get_winners fv' ps \<noteq> []"
+  shows "px = hd (get_winners fv' ps)"
+proof - have "max_val_wrap fv \<ge> fv ! index ps x" by (simp add: assms(2))
+  then have "max_val_wrap fv' > max_val_wrap fv" by sledgehammer
 
 lemma find_max_votes_not_empty:
   fixes
