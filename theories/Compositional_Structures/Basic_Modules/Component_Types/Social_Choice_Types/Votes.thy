@@ -343,7 +343,7 @@ lemma max_p_loss:
 lemma max_p_in_win:
   fixes v::"rat list" and m::"rat"
   assumes "v ! (index ps px) = m" and "px \<in> set ps"
-  shows "px \<in> set (max_p m v ps [])"
+  shows "px \<in> set (max_p m v ps q)"
 proof - have "max_p m v ps [] = filter (\<lambda>x. v ! (index ps x) = m) ps" using assms by simp
   then have "px \<in> set (filter (\<lambda>x. v ! (index ps x) = m) ps)"
     using assms by auto
@@ -449,9 +449,9 @@ lemma get_winners_only_winner:
   fixes fv::"rat list" and m::"rat"
   assumes "fv ! (index ps px) = max_val_wrap fv"
   and "\<forall>x \<noteq> index ps px. fv ! (index ps x) < max_val_wrap fv"  
-assumes "get_winners fv ps \<noteq> []"
+  and "get_winners fv ps \<noteq> []"
   shows "px = hd (get_winners fv ps)"
-  by (metis assms(1) assms(2) assms(3) get_winners_not_in_win verit_comp_simplify1(1))
+  by (metis assms get_winners_not_in_win verit_comp_simplify1(1))
 
 (*
 lemma Max_ge [simp]:
@@ -497,31 +497,114 @@ shows "max_val_wrap fv' > max_val_wrap fv"
 
 lemma max_eqI_4:
   assumes 
-"x \<le> length l" and 
-"finite (set l)" and
+"x < length l" and 
 "length l = length l'" and
 "l ! x = Max(set l)" and
 "l' ! x > l ! x" and 
-"\<forall>y \<noteq> x. y \<le> length l \<Longrightarrow> l ! y \<ge> l' ! y" 
-shows "l' ! x = Max (set l')" sorry
+"\<And>y. y \<noteq> x \<Longrightarrow> y < length l \<Longrightarrow> l' ! y \<le> l ! y" 
+shows "l' ! x = Max (set l')"
+proof(rule ccontr)
+  assume "l' ! x \<noteq> Max (set l')"
+  then have "\<exists>y. y \<noteq> x \<longrightarrow> y < length l \<longrightarrow> Max(set l') = l' ! y" 
+    by auto
+  then have "\<And>y. y < length l \<Longrightarrow> l ! y \<le> Max(set l)" 
+    by simp 
+  then have "\<And>y. y \<noteq> x \<longrightarrow> y < length l \<longrightarrow> l' ! y \<le> Max(set l)"
+    by (meson assms(5) dual_order.trans)
+  then have "Max(set l') > Max(set l)"
+    using assms dual_order.strict_trans1 
+          get_winners_weak_winner_implies_helper by metis
+  then have "\<And>y. y \<noteq> x \<longrightarrow> y < length l \<longrightarrow> l' ! y < Max(set l')"
+    using \<open>\<And>y. y \<noteq> x \<longrightarrow> y < length l \<longrightarrow> l' ! y \<le> Max (set l)\<close> by fastforce
+  then show False 
+    using \<open>\<exists>y. y \<noteq> x \<longrightarrow> y < length l \<longrightarrow> Max(set l') = l' ! y\<close> 
+          \<open>\<And>y. y \<noteq> x \<longrightarrow> y < length l \<longrightarrow> l' ! y < Max(set l')\<close> assms
+          \<open>\<And>y. y \<noteq> x \<longrightarrow> y < length l \<longrightarrow> l' ! y \<le> Max (set l)\<close> 
+          \<open>l' ! x \<noteq> Max (set l')\<close> in_set_conv_nth leD linorder_le_cases 
+          max_val_wrap_eqI order.strict_trans2
+  by (metis (no_types, opaque_lifting))
 qed
+
+lemma max_eqI_5:
+  fixes 
+fv::"rat list" and
+fv'::"rat list" and 
+m::"rat"
+assumes
+"index ps px < length fv" and
+"length fv = length fv'" and
+"fv ! index ps px = Max(set fv)" and
+"fv' ! index ps px > fv ! index ps px" and
+"\<And>y. y \<noteq> index ps px \<Longrightarrow> y < length fv \<Longrightarrow> fv' ! y \<le> fv ! y"
+shows "Max(set fv') = fv' ! index ps px"
+  by (metis assms max_eqI_4)
 
 lemma get_winners_weak_winner_implies:
   fixes 
 fv::"rat list" and
 fv'::"rat list" and 
-m::"rat"
-assumes "finite (set fv)" and
-"index ps x < size fv" and 
-"size fv = size fv'" and
-"fv ! (index ps px) = max_val_wrap fv" and 
-"x \<noteq> index ps px" and 
-"fv ! index ps px < fv' ! index ps px" and
-"fv ! (index ps x) \<ge> fv' ! index ps x" and 
-"get_winners fv ps \<noteq> []" and 
-"px = hd (get_winners fv ps)" and 
+m'::"rat"
+assumes
+"index ps px < length fv" and
+"length fv = length fv'" and
+"px \<in> set ps" and
+"fv ! index ps px = Max(set fv)" and
+"fv' ! index ps px > fv ! index ps px" and
+"\<And>y. y \<noteq> index ps px \<Longrightarrow> y < length fv \<Longrightarrow> fv' ! y \<le> fv ! y" and 
 "get_winners fv' ps \<noteq> []"
-  shows "px = hd (get_winners fv' ps)" sorry
+shows "px \<in> set (get_winners fv' ps)"
+  by (metis assms get_winners_in_win max_eqI_4 max_val_wrap.simps)
+
+lemma filter_size_is_one_helper:
+  fixes 
+fv::"rat list"
+assumes
+"x < length fv" and 
+"m = Max(set fv)" and
+"fv ! x = m" and
+"\<And>y. y \<noteq> x \<Longrightarrow> y < length fv \<Longrightarrow> fv ! y < m" 
+shows "length (filter (\<lambda>x. fv ! x =  m) ps) = 1"
+  by sledgehammer
+
+lemma filter_size_is_one:
+  fixes 
+fv::"rat list" and
+fv'::"rat list"
+assumes
+"index ps px < length fv" and
+"length fv = length fv'" and
+"px \<in> set ps" and
+"fv ! index ps px = Max(set fv)" and
+"fv' ! index ps px > fv ! index ps px" and
+"\<And>y. y \<noteq> index ps px \<Longrightarrow> y < length fv \<Longrightarrow> fv' ! y \<le> fv ! y"
+shows "length (filter (\<lambda>x. fv' ! (index ps x) =  Max(set fv')) ps) = 1"
+proof -
+  have "\<And>y. y \<noteq> index ps px \<longrightarrow> y < length fv \<longrightarrow> fv' ! y < Max(set fv')" 
+  by (metis assms(1) assms(2) assms(4) assms(5) assms(6) dual_order.trans get_winners_weak_winner_implies_helper leD order_le_imp_less_or_eq)
+  then show ?thesis by sledgehammer
+  qed
+
+lemma get_winners_size_is_one:
+  fixes 
+fv::"rat list" and
+fv'::"rat list" and 
+m'::"rat"
+assumes
+"index ps px < length fv" and
+"length fv = length fv'" and
+"px \<in> set ps" and
+"fv ! index ps px = Max(set fv)" and
+"fv' ! index ps px > fv ! index ps px" and
+"\<And>y. y \<noteq> index ps px \<Longrightarrow> y < length fv \<Longrightarrow> fv' ! y \<le> fv ! y" and 
+"get_winners fv' ps \<noteq> []"
+shows "length (get_winners fv' ps) = 1"
+proof(rule ccontr)
+  assume "length (get_winners fv' ps) > 1"
+  then have "\<exists>y. y \<noteq> index ps px \<longrightarrow> y < length fv \<longrightarrow> fv' ! y = Max(set fv')" 
+    by blast
+  also have "\<exists>y. y \<noteq> index ps px \<longrightarrow> y < length fv \<longrightarrow> fv' ! y < Max(set fv')" 
+    by blast
+  show False
 qed
 
 fun update_seat :: "'a::linorder \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats 
