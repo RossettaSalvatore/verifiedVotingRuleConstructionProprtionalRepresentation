@@ -209,29 +209,6 @@ shows "Max(set v) = Max ((set v) - {v ! ip})"
   by (metis Diff_empty Diff_insert0 Max.remove assms(3) assms(4) max_def max_val_wrap.simps)
 
 (*
-lemma max_val_helper_list_helper:
-  assumes "parties \<noteq> []"
-  assumes "size v = size v'"
-  assumes "party \<in> set parties"
-  assumes "ip = index parties party" and "x \<noteq> party" 
-  assumes "v ! index parties x = v' ! index parties x"
-  shows "remove_nth ip v = remove_nth ip v'" using assms by sledgehammer 
- *)
-(*
-lemma max_val_helper_helper:
-  shows "xs ! i \<noteq> x"
-  sorry
-*)
-(*
-lemma max_val_helper:
-  fixes
-  ip::"nat"
-  assumes "ip = index parties party"
-  "size v = size parties" and "size v' = size parties"
-shows "max_val_wrap v = max_val_wrap v'" 
-  by sorry
-*)
-(*
 lemma max_val_helper:
   fixes
   ip::"nat"
@@ -520,12 +497,14 @@ shows "max_val_wrap fv' > max_val_wrap fv"
 
 lemma max_eqI_4:
   assumes 
+"x \<le> length l" and 
+"finite (set l)" and
+"length l = length l'" and
 "l ! x = Max(set l)" and
 "l' ! x > l ! x" and 
-"x \<noteq> y" and
-"l ! y \<ge> l' ! y" 
-shows "l' ! y \<le> Max (set l')"
-  by sledgehammer
+"\<forall>y \<noteq> x. y \<le> length l \<Longrightarrow> l ! y \<ge> l' ! y" 
+shows "l' ! x = Max (set l')" sorry
+qed
 
 lemma get_winners_weak_winner_implies:
   fixes 
@@ -542,18 +521,8 @@ assumes "finite (set fv)" and
 "get_winners fv ps \<noteq> []" and 
 "px = hd (get_winners fv ps)" and 
 "get_winners fv' ps \<noteq> []"
-  shows "px = hd (get_winners fv' ps)"
-proof - have "max_val_wrap fv \<ge> fv ! index ps x" by (simp add: assms(2))
-  then have "max_val_wrap fv' > max_val_wrap fv" by sledgehammer
-
-lemma find_max_votes_not_empty:
-  fixes
-  v::"rat list" and
-  p::"'b Parties"
-  assumes "p \<noteq> []"
-  shows "get_winners v p \<noteq> []"
-  using assms
-  sorry
+  shows "px = hd (get_winners fv' ps)" sorry
+qed
 
 fun update_seat :: "'a::linorder \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats 
                     \<Rightarrow> ('a::linorder, 'b) Seats" where
@@ -564,18 +533,5 @@ text \<open> This function counts seats of a given party. \<close>
 fun cnt_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
                     'a::linorder set => nat" where
   "cnt_seats p s i = card {ix. ix \<in> i \<and> s ix = p}"
-
-(*
-lemma anonymous_total:
-  fixes
-parties::"'b Parties" and
-parties'::"'b Parties" and
-votes::"rat list" and
-votes'::"rat list"
-assumes "mset parties = mset parties'"
-assumes "mset votes = mset votes'"
-shows "get_winners votes parties = get_winners votes' parties'"
-  sorry
-*)
 
 end
