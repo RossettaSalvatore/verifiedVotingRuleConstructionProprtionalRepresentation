@@ -195,7 +195,7 @@ qed
 text \<open> This function receives in input the function Votes and the list of parties. The 
        output is the list of parties with the maximum number of votes.  \<close>
 
-fun max_val_wrap:: "rat list \<Rightarrow> rat" where 
+fun max_val_wrap:: "'a::linorder list \<Rightarrow> 'a::linorder" where 
 "max_val_wrap v = Max (set v)"
 
 (* i have to prove that for different votes almost the same but with m > v' > v
@@ -266,7 +266,7 @@ lemma max_val_wrap_lemma:
   shows "max_val_wrap fvv \<ge> fv1"
   by (simp add: assms)
 
-fun max_p:: "rat \<Rightarrow> rat list \<Rightarrow> 'b Parties
+fun max_p:: "'a \<Rightarrow>'a::linorder list \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
 "max_p m v ps w = filter (\<lambda>x. v ! (index ps x) = m) ps" 
 
@@ -341,7 +341,7 @@ lemma max_p_loss:
   using assms by simp
 
 lemma max_p_in_win:
-  fixes v::"rat list" and m::"rat"
+  fixes v::"'a::linorder list" and m::"'a::linorder"
   assumes "v ! (index ps px) = m" and "px \<in> set ps"
   shows "px \<in> set (max_p m v ps q)"
 proof - have "max_p m v ps [] = filter (\<lambda>x. v ! (index ps x) = m) ps" using assms by simp
@@ -366,8 +366,10 @@ lemma max_parties_no_in_empty:
   shows "px \<notin> set (max_p m v ps [])"
   using assms max_parties_no_in by simp
 
-fun get_winners :: "rat list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
+fun get_winners :: "'a::linorder list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = (let m = max_val_wrap v in max_p m v p [])"
+
+
 
 lemma get_winners_gt:
   assumes "party \<in> set ps" and 
@@ -398,14 +400,16 @@ lemma get_winners_loss:
   using assms by simp
 
 theorem get_winners_in_win:
-  fixes fv::"rat list" and m::"rat"
-  assumes "fv ! (index ps px) = max_val_wrap fv"
-  assumes "get_winners fv ps \<noteq> []" and "px \<in> set ps"
+  fixes fv::"'a::linorder list" and m::"'a"
+  assumes "fv ! (index ps px) = max_val_wrap fv" and 
+    "px \<in> set ps"
   shows "px \<in> set (get_winners fv ps)"
 proof - have "get_winners fv ps = (let m = max_val_wrap fv in max_p m fv ps [])" 
     using get_winners.simps by blast
-  then have "... = max_p (max_val_wrap fv) fv ps []" by simp
-  then show ?thesis using assms by simp
+  then have "... = max_p (max_val_wrap fv) fv ps []" 
+    by simp
+  then show ?thesis 
+    using assms max_p_in_win \<open>get_winners fv ps = (let m = max_val_wrap fv in max_p m fv ps [])\<close> by metis
 qed
 
 (*
@@ -550,8 +554,7 @@ assumes
 "px \<in> set ps" and
 "fv ! index ps px = Max(set fv)" and
 "fv' ! index ps px > fv ! index ps px" and
-"\<And>y. y \<noteq> index ps px \<Longrightarrow> y < length fv \<Longrightarrow> fv' ! y \<le> fv ! y" and 
-"get_winners fv' ps \<noteq> []"
+"\<And>y. y \<noteq> index ps px \<Longrightarrow> y < length fv \<Longrightarrow> fv' ! y \<le> fv ! y"
 shows "px \<in> set (get_winners fv' ps)"
   by (metis assms get_winners_in_win max_eqI_4 max_val_wrap.simps)
 
@@ -560,71 +563,95 @@ lemma filter_size_is_one_helper:
 fv::"'a :: linorder list"
 assumes
 "x < length fv" and
-"m = Max(set fv)" and
 "fv ! x = m" and
 strict_le: "\<And>y. y \<noteq> x \<Longrightarrow> y < length fv \<Longrightarrow> fv ! y < m"
 shows "length (filter (\<lambda>x. fv ! x =  m) [0..<length fv]) = 1"
 proof -
   have le: \<open>[0..<length fv] = ([0..<x] @ [x] @ [Suc x ..< length fv])\<close>
-    using \<open>fv ! x = m\<close>
-    by (metis append_Cons assms(1) leI le_add_diff_inverse less_imp_le_nat not_less_zero
-        self_append_conv2 upt_add_eq_append upt_rec)
+    using \<open>fv ! x = m\<close> append_Cons assms(1) leI le_add_diff_inverse less_imp_le_nat not_less_zero
+        self_append_conv2 upt_add_eq_append upt_rec
+    by metis
   show \<open>length (filter (\<lambda>x. fv ! x =  m) [0..<length fv]) = 1\<close>
-    using strict_le assms(1,3) unfolding le by (force simp: filter_empty_conv)
+    using strict_le assms unfolding le by (force simp: filter_empty_conv)
 qed
 
 lemma filter_size_is_one_helper_my_case:
   fixes
-fv::"'a :: linorder list"
+fv::"rat list"
 assumes
-"x < length fv" and
-"m = Max(set fv)" and
-"fv ! x = m" and
-strict_le: "\<And>y. y \<noteq> x \<Longrightarrow> y < length fv \<Longrightarrow> fv ! y < m" and 
+"index ps x < length fv" and
+"fv ! index ps x = m" and
+strict_le: "\<And>y. y \<noteq> index ps x \<Longrightarrow> y < length fv \<Longrightarrow> fv ! y < m" and 
 "length (filter (\<lambda>x. fv ! (index ps x) = m) ps) = length (filter (\<lambda>x. fv ! x =  m) [0..<length fv])"
 shows "length (filter (\<lambda>x. fv ! (index ps x) = m) ps) = 1"
-  by (metis assms(1) assms(2) assms(3) assms(5) filter_size_is_one_helper strict_le)
+  by (metis assms filter_size_is_one_helper)
 
-lemma filter_size_is_one:
-  fixes 
-fv::"rat list" and
-fv'::"rat list"
+lemma filter_size_is_one_helper_my_case_2:
+  fixes
+fv::"rat list" and m::"rat" 
 assumes
-"index ps px < length fv" and
-"length fv = length fv'" and
-"px \<in> set ps" and
-"fv ! index ps px = Max(set fv)" and
-"fv' ! index ps px > fv ! index ps px" and
-"\<And>y. y \<noteq> index ps px \<Longrightarrow> y < length fv \<Longrightarrow> fv' ! y \<le> fv ! y"
-shows "length (filter (\<lambda>x. fv' ! (index ps x) =  Max(set fv')) ps) = 1"
-proof -
-  have "\<And>y. y \<noteq> index ps px \<longrightarrow> y < length fv \<longrightarrow> fv' ! y < Max(set fv')" 
-  by (metis assms(1) assms(2) assms(4) assms(5) assms(6) dual_order.trans get_winners_weak_winner_implies_helper leD order_le_imp_less_or_eq)
-  then show ?thesis by sledgehammer
-  qed
-
-lemma get_winners_size_is_one:
-  fixes 
-fv::"rat list" and
-fv'::"rat list" and 
-m'::"rat"
-assumes
-"index ps px < length fv" and
-"length fv = length fv'" and
-"px \<in> set ps" and
-"fv ! index ps px = Max(set fv)" and
-"fv' ! index ps px > fv ! index ps px" and
-"\<And>y. y \<noteq> index ps px \<Longrightarrow> y < length fv \<Longrightarrow> fv' ! y \<le> fv ! y" and 
-"get_winners fv' ps \<noteq> []"
-shows "length (get_winners fv' ps) = 1"
-proof(rule ccontr)
-  assume "length (get_winners fv' ps) > 1"
-  then have "\<exists>y. y \<noteq> index ps px \<longrightarrow> y < length fv \<longrightarrow> fv' ! y = Max(set fv')" 
-    by blast
-  also have "\<exists>y. y \<noteq> index ps px \<longrightarrow> y < length fv \<longrightarrow> fv' ! y < Max(set fv')" 
-    by blast
-  show False
+"index ps x < length fv" and
+"fv ! index ps x = m" and
+strict_le: "\<And>y. y \<noteq> index ps x \<Longrightarrow> y < length fv \<Longrightarrow> fv ! y < m" and 
+"length (filter (\<lambda>x. fv ! (index ps x) = m) ps) = length (filter (\<lambda>x. fv ! x =  m) [0..<length fv])"
+shows "length (max_p m fv ps []) = 1"
+proof - have "length (filter (\<lambda>x. fv ! x =  m) [0..<length fv]) = 1" 
+  using assms(1) assms(2) assms(3) filter_size_is_one_helper by metis
+  then show ?thesis 
+    using assms(4) max_p.simps by metis
 qed
+
+lemma filter_size_is_one_helper_my_case_3:
+  fixes
+fv::"'a::linorder list" and m::"'a::linorder" 
+assumes
+"index ps x < length fv" and
+"m = Max(set fv)" and
+"fv ! index ps x = m" and
+strict_le: "\<And>y. y \<noteq> index ps x \<Longrightarrow> y < length fv \<Longrightarrow> fv ! y < m" and 
+"length (get_winners fv ps) = length (filter (\<lambda>x. fv ! x =  m) [0..<length fv])"
+shows "length (get_winners fv ps) = 1"
+  using assms(1) assms(3) assms(5) filter_size_is_one_helper strict_le by auto
+
+lemma filter_size_is_one_helper_my_case_4:
+  fixes
+fv::"'a::linorder list" and m::"'a::linorder" 
+assumes
+"party \<in> set parties" and
+"index parties party < length fv" and
+"m = Max(set fv)" and
+"fv ! index parties party = m" and
+strict_le: "\<And>y. y \<noteq> index parties party \<Longrightarrow> y < length fv \<Longrightarrow> fv ! y < m" and 
+"length (get_winners fv parties) = length (filter (\<lambda>x. fv ! x =  m) [0..<length fv])"
+shows "party = hd (get_winners fv parties)"
+proof - have "length (get_winners fv parties) = 1" 
+    using filter_size_is_one_helper_my_case_3
+  by (metis assms(2) assms(3) assms(4) assms(6) strict_le)
+  then have "party \<in> set (get_winners fv parties)" 
+    using assms(1) assms(3) assms(4) get_winners_in_win max_val_wrap.elims by metis
+  then show ?thesis 
+    using \<open>length (get_winners fv parties) = 1\<close> \<open>party \<in> set (get_winners fv parties)\<close> hd_conv_nth 
+          in_set_conv_nth length_greater_0_conv less_one by metis
+qed
+
+
+(*
+lemma get_winners_loss:
+  fixes m::"rat" and v::"rat list" and ps::"'b list"
+  assumes 
+    "party \<in> set parties" and
+    "(v ! (index parties party) \<noteq> Max(set v))"
+  shows "party \<notin> set (get_winners v parties)"
+  using assms by simp
+*)
+
+lemma get_winners_rev:
+  assumes "party \<in> set ps" and 
+    "ps \<noteq> []" and
+    "size v = size ps" and
+    "party = hd (get_winners v ps)" and "get_winners v ps \<noteq> []"
+  shows "v ! index ps party = max_val_wrap v"
+  by (metis assms(4) assms(5) get_winners_not_in_win)
 
 fun update_seat :: "'a::linorder \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats 
                     \<Rightarrow> ('a::linorder, 'b) Seats" where
