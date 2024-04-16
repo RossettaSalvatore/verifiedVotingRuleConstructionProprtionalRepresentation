@@ -556,15 +556,34 @@ shows "px \<in> set (get_winners fv' ps)"
   by (metis assms get_winners_in_win max_eqI_4 max_val_wrap.simps)
 
 lemma filter_size_is_one_helper:
-  fixes 
-fv::"rat list"
+  fixes
+fv::"'a :: linorder list"
 assumes
-"x < length fv" and 
+"x < length fv" and
 "m = Max(set fv)" and
 "fv ! x = m" and
-"\<And>y. y \<noteq> x \<Longrightarrow> y < length fv \<Longrightarrow> fv ! y < m" 
-shows "length (filter (\<lambda>x. fv ! x =  m) ps) = 1"
-  by sledgehammer
+strict_le: "\<And>y. y \<noteq> x \<Longrightarrow> y < length fv \<Longrightarrow> fv ! y < m"
+shows "length (filter (\<lambda>x. fv ! x =  m) [0..<length fv]) = 1"
+proof -
+  have le: \<open>[0..<length fv] = ([0..<x] @ [x] @ [Suc x ..< length fv])\<close>
+    using \<open>fv ! x = m\<close>
+    by (metis append_Cons assms(1) leI le_add_diff_inverse less_imp_le_nat not_less_zero
+        self_append_conv2 upt_add_eq_append upt_rec)
+  show \<open>length (filter (\<lambda>x. fv ! x =  m) [0..<length fv]) = 1\<close>
+    using strict_le assms(1,3) unfolding le by (force simp: filter_empty_conv)
+qed
+
+lemma filter_size_is_one_helper_my_case:
+  fixes
+fv::"'a :: linorder list"
+assumes
+"x < length fv" and
+"m = Max(set fv)" and
+"fv ! x = m" and
+strict_le: "\<And>y. y \<noteq> x \<Longrightarrow> y < length fv \<Longrightarrow> fv ! y < m" and 
+"length (filter (\<lambda>x. fv ! (index ps x) = m) ps) = length (filter (\<lambda>x. fv ! x =  m) [0..<length fv])"
+shows "length (filter (\<lambda>x. fv ! (index ps x) = m) ps) = 1"
+  by (metis assms(1) assms(2) assms(3) assms(5) filter_size_is_one_helper strict_le)
 
 lemma filter_size_is_one:
   fixes 
