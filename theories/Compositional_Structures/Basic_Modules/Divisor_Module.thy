@@ -1144,7 +1144,7 @@ assumes
   "length winners' \<le> ns rec'" and
   "length winners \<le> ns rec" and
   "party \<noteq> hd (winners')" and
-  "party = hd (winners)"
+  "party = hd (winners)" and
   "p rec = p rec'" 
 shows "sl (assign_seats rec') ! (index  (p rec) party) \<ge> 
        sl (assign_seats rec) ! (index  (p rec) party)"
@@ -1263,13 +1263,14 @@ assumes
   "length winners' \<le> ns rec'" and
   "length winners \<le> ns rec" and
   "party \<noteq> hd (winners')" and
+  "party = hd (winners)" and
   "p rec = p rec'" 
 shows "sl (assign_seats rec') ! (index  (p rec) party) \<ge> 
        sl (assign_seats rec) ! (index  (p rec) party)"
 proof(cases "party = hd winners")
   case True \<comment> \<open>TTFT\<close>
   then show ?thesis using \<open>party = hd winners\<close> assms 
-                          assign_seats_incre_case_TTFT sorry 
+                          assign_seats_incre_case_TTFT by auto 
 next
   case False \<comment> \<open>TTFF\<close>
   then show ?thesis
