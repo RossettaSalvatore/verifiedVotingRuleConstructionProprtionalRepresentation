@@ -266,7 +266,7 @@ lemma max_val_wrap_lemma:
   shows "max_val_wrap fvv \<ge> fv1"
   by (simp add: assms)
 
-fun max_p:: "'a \<Rightarrow>'a::linorder list \<Rightarrow> 'b Parties
+fun max_p:: "'a::linorder \<Rightarrow>'a::linorder list \<Rightarrow> 'b Parties
                      \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
 "max_p m v ps w = filter (\<lambda>x. v ! (index ps x) = m) ps" 
 
@@ -277,20 +277,6 @@ lemma max_p_ne:
     "ps \<noteq> []"
   shows "v ! index ps party \<noteq> m"
   using assms by simp
-
-lemma max_p_gt:
-  assumes "party \<in> set ps" and 
-    "party \<notin> set (max_p m v ps w)" and 
-    "m>0" and 
-    "ps \<noteq> []" and
-    "m = max_val_wrap v" and
-    "size v = size ps"
-  shows "v ! index ps party < m"
-proof - have "v ! index ps party \<noteq> m" using max_p_ne assms by simp
-  then have "v ! index ps party \<noteq> Max(set v)" using assms by simp
-  then show ?thesis using assms order_neq_le_trans
-  by (metis index_less_size_conv max_val_wrap.elims max_val_wrap_lemma)
-qed
 
 (*
 lemma max_p_no_empty:
@@ -353,37 +339,9 @@ qed
 fun empty_v :: "'b \<Rightarrow> rat" where
   "empty_v p = 0"
 
-lemma max_parties_no_in:
-  assumes "px \<notin> set sw"
-  assumes "m > 0"
-  assumes "v ! (index ps px) = 0"
-  shows "px \<notin> set (max_p m v ps sw)"
-  using assms by (induction ps sw rule: max_p.induct) auto
-
-lemma max_parties_no_in_empty:
-  assumes "m > 0"
-  assumes "v ! (index ps px) = 0"
-  shows "px \<notin> set (max_p m v ps [])"
-  using assms max_parties_no_in by simp
-
 fun get_winners :: "'a::linorder list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = (let m = max_val_wrap v in max_p m v p [])"
 
-
-
-lemma get_winners_gt:
-  assumes "party \<in> set ps" and 
-    "party \<notin> set (get_winners v ps)" and 
-    "ps \<noteq> []" and
-    "size v = size ps"
-  shows "v ! index ps party < max_val_wrap v"
-proof - 
-  have "party \<notin> set (max_p (max_val_wrap v) v ps [])" 
-    using assms by simp
-  then show ?thesis
-    using assms index_less_size_conv max_p_in_win max_val_wrap_lemma order_le_imp_less_or_eq
-    by metis
-qed
 
 lemma get_winners_no_empty:
   fixes m::"rat" and v::"rat list" and ps::"'b list"
@@ -651,7 +609,12 @@ lemma get_winners_rev:
     "size v = size ps" and
     "party = hd (get_winners v ps)" and "get_winners v ps \<noteq> []"
   shows "v ! index ps party = max_val_wrap v"
-  by (metis assms(4) assms(5) get_winners_not_in_win)
+proof(rule ccontr)
+  assume "v ! index ps party \<noteq> max_val_wrap v"
+  then have "party \<notin> set (get_winners v ps)" using assms by simp
+  then show False
+    using assms(4) assms(5) list.set_sel(1) by blast
+qed
 
 fun update_seat :: "'a::linorder \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats 
                     \<Rightarrow> ('a::linorder, 'b) Seats" where
