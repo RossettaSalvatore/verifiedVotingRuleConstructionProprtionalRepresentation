@@ -31,6 +31,14 @@ definition remove_some :: "'a multiset \<Rightarrow> 'a" where
 fun empty_votes :: "char list \<Rightarrow> rat" where
   "empty_votes p = 0"
 
+fun start_votes :: "'a list \<Rightarrow> nat list" where
+  "start_votes [] = []" |
+  "start_votes (x # xs) = 0 # start_votes xs"
+
+fun start_seats :: "'a list \<Rightarrow> nat list" where
+  "start_seats [] = []" |
+  "start_seats (x # xs) = 0 # start_seats xs"
+
 text \<open> This function returns the rank of one candidate over a ballot. \<close>
 fun count_above :: "('a rel) \<Rightarrow> 'a \<Rightarrow> nat" where
   "count_above r a = card (above r a)"
