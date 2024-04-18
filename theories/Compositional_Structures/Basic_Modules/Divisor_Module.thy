@@ -93,36 +93,6 @@ fun full_module:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<
              d = d rec
             \<rparr>)"
 
-theorem full_module_concordant:
-  fixes
-  rec::"('a::linorder, 'b) Divisor_Module" and
-  m::"rat" and 
-  v1::"rat" and 
-  v2::"rat" and
-  party1::"'b" and 
-  party2::"'b" and 
-  parties::"'b Parties" and
-  winners::"'b list"
-assumes 
-  "winners = get_winners (fv rec) parties" and
-  "index parties party1 = index (p (assign_seats rec)) party1" and
-  "index parties party2 = index (p (assign_seats rec)) party2" and
-  "p (assign_seats (assign_seats rec)) = p rec" and
-  "get_winners (fv rec) parties \<noteq> []" and
-  "party1 \<in> set parties" and
-  "party2 \<in> set parties" and
-  "v1 > v2" and
-  "party1 \<noteq> party2" and
-  "(fv rec) ! (index parties party1) \<equiv> v1 / (of_int ((d rec) ! ((sl rec) ! (index parties party1))))" and
-  "(fv rec) ! (index parties party2) \<equiv> v2 / (of_int ((d rec) ! ((sl rec) ! (index parties party1))))" and
-  "(d rec) ! ((sl rec) ! (index parties party1)) \<noteq> 0" and
-  "(index parties party1) \<noteq> ( index parties party2)" and
-  "(index parties party1) < length (sl rec)" and
-  "(index parties party1) < length (sl rec)" and
-  "length winners \<le> ns rec"
-  shows "sl (full_module rec pl) ! ( index parties party1) \<ge> sl (full_module rec pl) ! ( index parties party2)"
-  using loop_o_concordant assms sorry
-
 fun start_votes :: "'a list \<Rightarrow> nat list" where
   "start_votes [] = []" |
   "start_votes (x # xs) = 0 # start_votes xs"
