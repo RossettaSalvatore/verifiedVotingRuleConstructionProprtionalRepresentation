@@ -407,7 +407,8 @@ shows "length (get_winners fv ps) = 1"
 
 text \<open> This theorem states that if one the parties in the winners list gets its 
        votes increased, then it will become the only winner. \<close>
-theorem  fixes
+theorem get_winners_size_one:
+  fixes
 fv::"'a::linorder list"
 assumes
 "party \<in> set parties" and
