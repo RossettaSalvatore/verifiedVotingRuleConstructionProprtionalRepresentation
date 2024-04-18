@@ -14,6 +14,20 @@ Result
 "List-Index.List_Index"
 begin
 
+subsection  \<open>Definition\<close>
+text  \<open>Parties is the list of candidates that can be of any polymorphic type 'b. \<close>
+type_synonym 'b Parties = "'b list"
+
+text  \<open>Every seat is unique and has a set of parties to which it is assigned. 
+       In the most common case, when it will be assigned to one party, it will be a 
+       single element list. 
+       In case of a tie, all the tied parties will be in the list, giving the chance in the 
+       output to easily which parties contend for the seat. \<close>
+
+type_synonym ('a, 'b) Seats = "'a \<Rightarrow> 'b list"
+
+type_synonym Params = "nat list"
+
 text \<open> Auxiliary Code \<close> 
 
 definition above_set :: "_ \<Rightarrow> 'a \<Rightarrow> 'a set"
@@ -46,19 +60,14 @@ fun count_above :: "('a rel) \<Rightarrow> 'a \<Rightarrow> nat" where
 fun count_above_mset :: "('a multiset rel) \<Rightarrow>'a multiset \<Rightarrow> nat" where
   "count_above_mset r a = card (above r a)"
 
-subsection  \<open>Definition\<close>
-text  \<open>Parties is the list of candidates that can be of any polymorphic type 'b. \<close>
-type_synonym 'b Parties = "'b list"
+fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" 
+  where 
+"create_empty_seats indexes parties =
+    (\<lambda>i. if i \<in> indexes then parties else [])"
 
-text  \<open>Every seat is unique and has a set of parties to which it is assigned. 
-       In the most common case, when it will be assigned to one party, it will be a 
-       single element list. 
-       In case of a tie, all the tied parties will be in the list, giving the chance in the 
-       output to easily which parties contend for the seat. \<close>
-
-type_synonym ('a, 'b) Seats = "'a \<Rightarrow> 'b list"
-
-type_synonym Params = "nat list"
+fun start_fract_votes :: "nat list \<Rightarrow> rat list" where
+  "start_fract_votes [] = []" |
+  "start_fract_votes (nn # nns) = (of_nat nn) # start_fract_votes nns"
 
 text \<open> This function retrieves the votes for the specified party. \<close>
 

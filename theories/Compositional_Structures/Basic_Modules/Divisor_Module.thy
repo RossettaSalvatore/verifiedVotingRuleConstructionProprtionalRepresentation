@@ -31,28 +31,6 @@ termination by (relation "measure (\<lambda>r. ns r)")
 lemma loop_o_lemma[code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
   by (cases r) auto
 
-lemma loop_o_concordant:
-fixes
-  rec::"('a::linorder, 'b) Divisor_Module" and
-  m::"rat" and 
-  v1::"rat" and 
-  v2::"rat" and
-  party1::"'b" and 
-  party2::"'b" and 
-  parties::"'b Parties" and
-  di::"nat list"
-assumes
-  "sl rec ! (index  parties party1) \<ge> sl rec ! (index  parties party2)"
-shows "sl (loop_o rec) ! (index parties party1) \<ge> 
-       sl (loop_o rec) ! (index parties party2)"
-proof (induction "rec" rule:loop_o.induct)
-  case (1 r)
-  then show ?case sorry
-next
-  case (2 r)
-  then show ?case sorry
-qed
-
 fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" 
   where 
 "create_empty_seats indexes parties =
