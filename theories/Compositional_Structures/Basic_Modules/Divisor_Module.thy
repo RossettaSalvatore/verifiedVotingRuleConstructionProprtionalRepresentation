@@ -31,15 +31,6 @@ termination by (relation "measure (\<lambda>r. ns r)")
 lemma loop_o_lemma[code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
   by (cases r) auto
 
-fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats" 
-  where 
-"create_empty_seats indexes parties =
-    (\<lambda>i. if i \<in> indexes then parties else [])"
-
-fun start_fract_votes :: "nat list \<Rightarrow> rat list" where
-  "start_fract_votes [] = []" |
-  "start_fract_votes (nn # nns) = (of_nat nn) # start_fract_votes nns"
-
 text \<open>This function is executing the whole divisor method, taking in input the 
        already initialized record and calculates the final output of the election.
       The Divisor Method is allocating a number of seats based on the number of votes of
