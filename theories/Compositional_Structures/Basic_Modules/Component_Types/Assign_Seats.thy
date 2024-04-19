@@ -573,8 +573,8 @@ assumes
   "index (p rec) party1 < length (fv rec)" and
   "v1 > v2" and
   "party2 = hd (get_winners (fv rec) (p rec))" and
-  "fv rec ! index (p rec) party1 \<equiv> v1 / of_int (d rec ! (sl rec ! index (p rec) party1))" and
-  "fv rec ! index (p rec) party2 \<equiv> v2 / of_int (d rec ! (sl rec ! index (p rec) party2))" and
+  "fv rec ! index (p rec) party1 \<equiv> v1 / of_int(d rec ! (sl rec ! index (p rec) party1))" and
+  "fv rec ! index (p rec) party2 \<equiv> v2 / of_int(d rec ! (sl rec ! index (p rec) party2))" and
   "(d rec) ! (sl rec !  index (p rec) party2) \<noteq> 0" and
   "sl rec ! index (p rec) party1 \<ge> sl rec ! index (p rec) party2" and
   "length (get_winners (fv rec) (p rec)) \<le> ns rec" and
@@ -622,8 +622,8 @@ assumes
   "index (p rec) party1 < length (fv rec)" and
   "v1 > v2" and
   "party2 = hd ( get_winners (fv rec) (p rec))" and
-  "fv rec ! index (p rec) party1 = v1 / of_int (d rec ! (sl rec ! index (p rec) party1))" and
-  "fv rec ! index (p rec) party2 = v2 / of_int (d rec ! (sl rec ! index (p rec) party2))" and
+  "fv rec ! index (p rec) party1 = v1 / of_int(d rec ! (sl rec ! index (p rec) party1))" and
+  "fv rec ! index (p rec) party2 = v2 / of_int(d rec ! (sl rec ! index (p rec) party2))" and
   "d rec ! (sl rec ! index (p rec) party2) \<noteq> 0" and
   "sl rec ! index (p rec) party1 \<ge> sl rec ! index (p rec) party2" and
   "get_winners (fv rec) (p rec) \<noteq> []" and
@@ -895,8 +895,8 @@ assumes
   "length (fv rec) = length (fv rec')" and
   "party \<in> set (p rec')" and
   "v' > v" and
-  "fv rec ! index (p rec) party = v / of_int (d rec ! (sl rec ! index (p rec) party))" and
-  "fv rec' ! index (p rec) party = v' / of_int (d rec ! (sl rec' ! index (p rec) party))" and
+  "fv rec ! index (p rec) party = v / of_int(d rec ! (sl rec ! index (p rec) party))" and
+  "fv rec' ! index (p rec) party = v' / of_int(d rec ! (sl rec' ! index (p rec) party))" and
   "sl rec' ! index (p rec) party \<ge> sl rec ! index  (p rec) party" and
   "d rec ! (sl rec ! index (p rec) party) \<noteq> 0" and
   "d rec ! (sl rec' ! index (p rec) party) \<noteq> 0" and
@@ -983,8 +983,8 @@ assumes
   "length (fv rec) = length (fv rec')" and
   "party \<in> set (p rec')" and
   "v' > v" and
-  "fv rec ! index (p rec) party = v / of_int (d rec ! (sl rec ! index (p rec) party))" and
-  "fv rec' ! index (p rec) party = v' / of_int (d rec ! (sl rec' ! index (p rec) party))" and
+  "fv rec ! index (p rec) party = v / of_int(d rec ! (sl rec ! index (p rec) party))" and
+  "fv rec' ! index (p rec) party = v' / of_int(d rec ! (sl rec' ! index (p rec) party))" and
   "sl rec' ! index (p rec) party \<ge> sl rec ! index (p rec) party" and
   "d rec ! (sl rec ! index (p rec) party) \<noteq> 0" and
   "d rec ! (sl rec' ! index (p rec) party) \<noteq> 0" and
@@ -1049,8 +1049,8 @@ assumes
   "size (fv rec') = size (p rec)" and
   "party \<in> set (p rec')" and
   "v' > v" and
-  "fv rec ! index (p rec) party = v / of_int (d rec ! (sl rec ! index (p rec) party))" and
-  "fv rec' ! index (p rec) party = v' / of_int (d rec ! (sl rec' ! index (p rec) party))" and
+  "fv rec ! index (p rec) party = v / of_int(d rec ! (sl rec ! index (p rec) party))" and
+  "fv rec' ! index (p rec) party = v' / of_int(d rec ! (sl rec' ! index (p rec) party))" and
   "sl rec' ! index (p rec) party \<ge> sl rec ! index (p rec) party" and
   "d rec ! (sl rec' !  index (p rec) party) \<noteq> 0" and
   "index (p rec) party < length (sl rec')" and 
@@ -1161,8 +1161,8 @@ assumes
   "size (fv rec') = size (p rec)" and
   "party \<in> set (p rec')" and
   "v' > v" and
-  "fv rec ! index (p rec) party = v / of_int (d rec ! (sl rec ! index (p rec) party))" and
-  "fv rec' ! index (p rec) party = v' / of_int (d rec ! (sl rec' ! index (p rec) party))" and
+  "fv rec ! index (p rec) party = v / of_int(d rec ! (sl rec ! index (p rec) party))" and
+  "fv rec' ! index (p rec) party = v' / of_int(d rec ! (sl rec' ! index (p rec) party))" and
   "sl rec' ! index  (p rec) party \<ge> sl rec ! index  (p rec) party" and
   "d rec ! (sl rec !  index (p rec) party) \<noteq> 0" and
   "d rec ! (sl rec' !  index (p rec) party) \<noteq> 0" and
@@ -1253,8 +1253,8 @@ assumes
   "size (fv rec') = size (p rec)" and
   "party \<in> set (p rec')" and
   "v' > v" and
-  "fv rec ! index (p rec) party = v / of_int (d rec ! (sl rec ! index (p rec) party))" and
-  "fv rec' ! index (p rec) party = v' / of_int (d rec ! (sl rec' ! index (p rec) party))" and
+  "fv rec ! index (p rec) party = v / of_int(d rec ! (sl rec ! index (p rec) party))" and
+  "fv rec' ! index (p rec) party = v' / of_int(d rec ! (sl rec' ! index (p rec) party))" and
   "sl rec' ! index  (p rec) party \<ge> sl rec ! index (p rec) party" and
   "d rec ! (sl rec ! index (p rec) party) \<noteq> 0" and
   "d rec ! (sl rec' ! index (p rec) party) \<noteq> 0" and
@@ -1297,8 +1297,8 @@ assumes
   "size (fv rec') = size (p rec)" and
   "party \<in> set (p rec')" and
   "v' > v" and
-  "fv rec ! index (p rec) party = v / of_int (d rec ! (sl rec ! index (p rec) party))" and
-  "fv rec' ! index (p rec) party = v' / of_int (d rec ! (sl rec' ! index (p rec) party))" and
+  "fv rec ! index (p rec) party = v / of_int(d rec ! (sl rec ! index (p rec) party))" and
+  "fv rec' ! index (p rec) party = v' / of_int(d rec ! (sl rec' ! index (p rec) party))" and
   "sl rec' ! index (p rec) party \<ge> sl rec ! index (p rec) party" and
   "d rec ! (sl rec ! index (p rec) party) \<noteq> 0" and
   "d rec ! (sl rec' ! index (p rec) party) \<noteq> 0" and
@@ -1341,8 +1341,8 @@ assumes
   "length (fv rec) = length (fv rec')" and
   "party \<in> set (p rec')" and
   "v' > v" and
-  "fv rec ! index (p rec) party = v / of_int (d rec ! (sl rec ! index (p rec) party))" and
-  "fv rec' ! index (p rec) party = v' / of_int (d rec ! (sl rec' ! index (p rec) party))" and
+  "fv rec ! index (p rec) party = v / of_int(d rec ! (sl rec ! index (p rec) party))" and
+  "fv rec' ! index (p rec) party = v' / of_int(d rec ! (sl rec' ! index (p rec) party))" and
   "sl rec' ! index (p rec) party \<ge> sl rec ! index (p rec) party" and
   "(d rec) ! ((sl rec) !  index (p rec) party) \<noteq> 0" and
   "(d rec) ! ((sl rec') !  index (p rec) party) \<noteq> 0" and
@@ -1381,7 +1381,7 @@ proof(cases "length winners' \<le> ns rec'")
 qed
 
 text \<open> This lemma states that the number of available seats is decreasing after calling
-       assign seats function. It helps the termination proof of the loop of Divisor Module. \<close>
+       assign seats function. It helps the termination proof of the loop of Divisor Module.\<close>
 
 lemma nseats_decreasing:
   assumes 

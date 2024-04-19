@@ -34,6 +34,7 @@ session Verified_Voting_Rule_Construction = HOL +
     "Compositional_Structures/Basic_Modules/Component_Types/Social_Choice_Types/Norm"
     "Compositional_Structures/Basic_Modules/Component_Types/Social_Choice_Types/Result"
     "Compositional_Structures/Basic_Modules/Component_Types/Social_Choice_Types/Profile"
+    "Compositional_Structures/Basic_Modules/Component_Types/Social_Choice_Types/Votes"
   (* "Refined Data Types" *)
     "Compositional_Structures/Basic_Modules/Component_Types/Social_Choice_Types/Refined_Types/Preference_List"
     "Compositional_Structures/Basic_Modules/Component_Types/Social_Choice_Types/Refined_Types/Profile_List"
@@ -51,7 +52,8 @@ session Verified_Voting_Rule_Construction = HOL +
     "Compositional_Structures/Basic_Modules/Component_Types/Consensus_Class"
     "Compositional_Structures/Basic_Modules/Component_Types/Distance_Rationalization"
     "Compositional_Structures/Basic_Modules/Component_Types/Votewise_Distance_Rationalization"
-  (* "Basic Modules" *)
+    "Compositional_Structures/Basic_Modules/Component_Types/Assign_Seats"
+(* "Basic Modules" *)
     "Compositional_Structures/Basic_Modules/Defer_Module"
     "Compositional_Structures/Basic_Modules/Drop_Module"
     "Compositional_Structures/Basic_Modules/Pass_Module"
@@ -62,6 +64,7 @@ session Verified_Voting_Rule_Construction = HOL +
     "Compositional_Structures/Basic_Modules/Copeland_Module"
     "Compositional_Structures/Basic_Modules/Minimax_Module"
     "Compositional_Structures/Basic_Modules/Elect_First_Module"
+    "Compositional_Structures/Basic_Modules/Divisor_Module"
   (* "Compositional Structures" *)
     "Compositional_Structures/Drop_And_Pass_Compatibility"
     "Compositional_Structures/Revision_Composition"

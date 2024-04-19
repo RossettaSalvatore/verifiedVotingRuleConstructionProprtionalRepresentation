@@ -63,7 +63,8 @@ fun new_record :: "'b Parties \<Rightarrow> nat \<Rightarrow> (nat, 'b) Divisor_
                                v = start_votes cp, fv = [],
                                sl = start_seats cp, d = [] \<rparr>"
 
-fun new_record_generic :: "'a::linorder list \<Rightarrow> 'b Parties \<Rightarrow> nat \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
+fun new_record_generic :: "'a::linorder list \<Rightarrow> 'b Parties \<Rightarrow> nat \<Rightarrow> 
+                            ('a::linorder, 'b) Divisor_Module"
   where
   "new_record_generic l cp cns = \<lparr> res =  ({}, {}, (set l)), p = cp, i = (set l), 
                                s = create_empty_seats (set l) cp, ns = cns, 
@@ -78,14 +79,16 @@ text \<open> The D'Hondt method is the most classic variant of the Divisor Metho
 fun dhondt_method :: "'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Rightarrow>
                    (nat, 'b) Divisor_Module" where
 "dhondt_method partiti nseats pr =
-    (let rec = new_record partiti nseats in divisor_method (rec\<lparr>d := upt 1 (ns rec)\<rparr>) pr)"
+    (let rec = new_record partiti nseats in 
+      divisor_method (rec\<lparr>d := upt 1 (ns rec)\<rparr>) pr)"
 
 text \<open> This is a more generic version of the D'Hondt method, in which it is possible to
        choose the way to identify the seats, as long as it is a linearly ordered type. \<close>
 fun dhondt_method_generic :: "'a::linorder list \<Rightarrow> 'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Rightarrow>
                    ('a::linorder, 'b) Divisor_Module" where
 "dhondt_method_generic l partiti nseats pr =
-    (let rec = new_record_generic l partiti nseats in divisor_method (rec\<lparr>d := upt 1 (ns rec)\<rparr>) pr)"
+    (let rec = new_record_generic l partiti nseats in 
+      divisor_method (rec\<lparr>d := upt 1 (ns rec)\<rparr>) pr)"
 
 text \<open> The Sainte-Laguë method is a variant of the Divisor Method, in which the
        factors used to scale the votes are odd natural numbers (1, 3, 5, ...). 
@@ -95,18 +98,18 @@ text \<open> The Sainte-Laguë method is a variant of the Divisor Method, in whi
 fun saintelague_method:: "'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Rightarrow>
                    (nat, 'b) Divisor_Module" where
 "saintelague_method partiti nseats pr = 
-  (let rec = new_record partiti nseats in divisor_method (rec\<lparr>d := filter (\<lambda>x. x mod 2 = 1)
-                                            (upt 1 (2*ns rec))\<rparr>) pr)"
+  (let rec = new_record partiti nseats in 
+   divisor_method (rec\<lparr>d := filter (\<lambda>x. x mod 2 = 1) (upt 1 (2*ns rec))\<rparr>) pr)"
 
 text \<open> This is a more generic version of the Sainte-Laguëmethod, in which it is possible to
        choose the way to identify the seats, as long as it is a linearly ordered type. \<close>
 fun saintelague_method_generic:: "'a::linorder list \<Rightarrow> 'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Rightarrow>
                    ('a::linorder, 'b) Divisor_Module" where
 "saintelague_method_generic l partiti nseats pr = 
-  (let rec = new_record_generic l partiti nseats in divisor_method (rec\<lparr>d := filter (\<lambda>x. x mod 2 = 1)
-                                            (upt 1 (2*ns rec))\<rparr>) pr)"
+  (let rec = new_record_generic l partiti nseats in 
+   divisor_method (rec\<lparr>d := filter (\<lambda>x. x mod 2 = 1) (upt 1 (2*ns rec))\<rparr>) pr)"
 
-(* Example *)
+(* Example 
 definition pref_rel_a :: "char list Preference_Relation" where
 "pref_rel_a = {(''b'', ''a''), (''d'', ''c''), 
                 (''d'',''a''), (''c'', ''b''), 
@@ -137,5 +140,5 @@ definition parties :: "char list list" where
 value "dhondt_method parties 10 pref"
 
 value "saintelague_method parties 10 pref"
-
+*)
 end

@@ -212,7 +212,7 @@ lemma max_p_ne:
   using assms by simp
 
 
-text \<open> This lemma shows that max_p output cannot be empty. \<close>
+text \<open> This lemma shows that max_p cannot be empty. \<close>
 lemma max_p_no_empty:
   assumes "m = Max (set v)" and
   "(set v) \<noteq> {}" and
@@ -290,7 +290,8 @@ proof -
   then have "... = max_p (max_v fv) fv ps" 
     by simp
   then show ?thesis 
-    using assms max_p_in_win \<open>get_winners fv ps = (let m = max_v fv in max_p m fv ps)\<close> by metis
+    using assms max_p_in_win \<open>get_winners fv ps = (let m = max_v fv in max_p m fv ps)\<close> 
+    by metis
 qed
 
 lemma get_winners_not_in_win:
