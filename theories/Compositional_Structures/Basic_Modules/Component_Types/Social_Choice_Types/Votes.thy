@@ -17,6 +17,7 @@ begin
 subsection  \<open>Definition\<close>
 text  \<open>Parties is the list of candidates that can be of any polymorphic type 'b. \<close>
 type_synonym 'b Parties = "'b list"
+type_synonym 'b Votes = "'b list"
 
 text  \<open>Every seat is unique and has a set of parties to which it is assigned. 
        In the most common case, when it will be assigned to one party, it will be a 
@@ -45,7 +46,7 @@ definition remove_some :: "'a multiset \<Rightarrow> 'a" where
 fun empty_votes :: "char list \<Rightarrow> rat" where
   "empty_votes p = 0"
 
-fun start_votes :: "'a list \<Rightarrow> nat list" where
+fun start_votes :: "'a list \<Rightarrow> nat Votes" where
   "start_votes [] = []" |
   "start_votes (x # xs) = 0 # start_votes xs"
 
@@ -65,13 +66,13 @@ fun create_empty_seats :: "'a::linorder set \<Rightarrow> 'b Parties \<Rightarro
 "create_empty_seats indexes parties =
     (\<lambda>i. if i \<in> indexes then parties else [])"
 
-fun start_fract_votes :: "nat list \<Rightarrow> rat list" where
+fun start_fract_votes :: "nat Votes \<Rightarrow> rat Votes" where
   "start_fract_votes [] = []" |
   "start_fract_votes (nn # nns) = (of_nat nn) # start_fract_votes nns"
 
 text \<open> This function retrieves the votes for the specified party. \<close>
 
-fun get_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> nat list \<Rightarrow> nat" where
+fun get_votes :: "'b \<Rightarrow> 'b Parties \<Rightarrow> nat Votes \<Rightarrow> nat" where
 "get_votes px ps v = v ! index ps px"
 
 text \<open> This function counts votes for one party and add returns the number of votes. \<close>
@@ -95,39 +96,43 @@ text \<open> This function receives in input the list of parties and the list of
        relations. The output is a list in which every party has the 
        correspondent number of votes. \<close>
 
-fun calc_votes :: "'a list \<Rightarrow> 'a list \<Rightarrow> 'a Profile \<Rightarrow> nat list \<Rightarrow> nat list" where
+fun calc_votes :: "'a Parties \<Rightarrow> 'a Parties \<Rightarrow> 'a Profile \<Rightarrow> nat Votes \<Rightarrow> nat Votes" where
   "calc_votes [] fp pl votes = votes" |
   "calc_votes (px # ps) fp pl votes = 
       (let n = cnt_votes px pl 0;
        i = index fp px in
       calc_votes ps fp pl (list_update votes i n))"
 
-text \<open> This function calculates the maximum number of votes. \<close>
 
-fun max_v:: "'a::linorder list \<Rightarrow> 'a::linorder" where 
+text \<open> This function calculates the maximum number of votes. \<close>
+fun max_v:: "'a::linorder Votes \<Rightarrow> 'a::linorder" where 
 "max_v v = Max (set v)"
 
-fun max_p:: "'a::linorder \<Rightarrow>'a::linorder list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" 
+fun max_p:: "'a::linorder \<Rightarrow>'a::linorder Votes \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" 
   where
 "max_p m v ps = filter (\<lambda>x. v ! (index ps x) = m) ps" 
 
 fun empty_v :: "'b \<Rightarrow> rat" where
   "empty_v p = 0"
 
-text \<open> This function calculates the winners between candidates according to the votes. \<close>
+text \<open> 
+This function calculates the winners between candidates according to the votes.
+\<close>
 
-fun get_winners :: "'a::linorder list \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
+fun get_winners :: "'a::linorder Votes \<Rightarrow> 'b Parties \<Rightarrow> 'b Parties" where
   "get_winners v p = (let m = max_v v in max_p m v p)"
 
 text \<open> This function assigns the n-th seat to the winner. \<close>
 
-fun update_seat :: "'a::linorder \<Rightarrow> 'b list \<Rightarrow> ('a::linorder, 'b) Seats 
+fun update_seat :: "'a::linorder \<Rightarrow> 'b Parties \<Rightarrow> ('a::linorder, 'b) Seats 
                     \<Rightarrow> ('a::linorder, 'b) Seats" where
   "update_seat seat w seats = seats(seat := w)"
 
-text \<open> This function counts seats of a given party. \<close>
+text \<open> 
+This function counts seats of a given party. 
+\<close>
 
-fun cnt_seats :: "'b list \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
+fun cnt_seats :: "'b Parties \<Rightarrow> ('a::linorder, 'b) Seats \<Rightarrow> 
                     'a::linorder set => nat" where
   "cnt_seats p s i = card {ix. ix \<in> i \<and> s ix = p}"
 

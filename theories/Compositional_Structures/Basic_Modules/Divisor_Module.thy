@@ -20,15 +20,15 @@ begin
 
 text \<open>This recursive loop applies the assign_seats function until no more seats are 
       available.\<close>
-function loop_o ::
+function loop_div ::
   "('a::linorder, 'b) Divisor_Module \<Rightarrow> ('a::linorder, 'b) Divisor_Module"
   where
-  "ns r = 0  \<Longrightarrow> loop_o r = r" |
-  "ns r > 0 \<Longrightarrow> loop_o r = loop_o (assign_seats r)"
+  "ns r = 0  \<Longrightarrow> loop_div r = r" |
+  "ns r > 0 \<Longrightarrow> loop_div r = loop_div (assign_seat r)"
   by auto
 termination by (relation "measure (\<lambda>r. ns r)")
                (auto simp add: Let_def nseats_decreasing)
-lemma loop_o_lemma[code]: \<open>loop_o r = (if ns r = 0 then r else loop_o (assign_seats r))\<close>
+lemma loop_div_lemma[code]: \<open>loop_div r = (if ns r = 0 then r else loop_div (assign_seat r))\<close>
   by (cases r) auto
 
 text \<open>This function is executing the whole divisor method, taking in input the 
@@ -40,11 +40,12 @@ text \<open>This function is executing the whole divisor method, taking in input
       remaining seats will not be assigned and will remain "disputed". \<close>
 
 fun divisor_method:: "('a::linorder, 'b) Divisor_Module \<Rightarrow> 'b Profile \<Rightarrow>
-                   ('a::linorder, 'b) Divisor_Module" where
+                   ('a::linorder, 'b) Divisor_Module" 
+  where
 "divisor_method rec pl = (
     let sv = calc_votes (p rec) (p rec) pl (v rec);
     sfv = start_fract_votes sv
-    in loop_o \<lparr> 
+    in loop_div \<lparr> 
              res = res rec,
              p = p rec,
              i = i rec,
@@ -77,7 +78,8 @@ text \<open> The D'Hondt method is the most classic variant of the Divisor Metho
        of seats and fully executes the D'Hondt method. In this function, seats are 
        identified by natural numbers. \<close>
 fun dhondt_method :: "'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Rightarrow>
-                   (nat, 'b) Divisor_Module" where
+                   (nat, 'b) Divisor_Module" 
+  where
 "dhondt_method partiti nseats pr =
     (let rec = new_record partiti nseats in 
       divisor_method (rec\<lparr>d := upt 1 (ns rec)\<rparr>) pr)"
@@ -85,7 +87,8 @@ fun dhondt_method :: "'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Ri
 text \<open> This is a more generic version of the D'Hondt method, in which it is possible to
        choose the way to identify the seats, as long as it is a linearly ordered type. \<close>
 fun dhondt_method_generic :: "'a::linorder list \<Rightarrow> 'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Rightarrow>
-                   ('a::linorder, 'b) Divisor_Module" where
+                   ('a::linorder, 'b) Divisor_Module" 
+  where
 "dhondt_method_generic l partiti nseats pr =
     (let rec = new_record_generic l partiti nseats in 
       divisor_method (rec\<lparr>d := upt 1 (ns rec)\<rparr>) pr)"
@@ -96,7 +99,8 @@ text \<open> The Sainte-Laguë method is a variant of the Divisor Method, in whi
        of seats and fully executes the Sainte-Laguë method. In this function, the seats
        are identified with natural numbers. \<close>
 fun saintelague_method:: "'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Rightarrow>
-                   (nat, 'b) Divisor_Module" where
+                   (nat, 'b) Divisor_Module" 
+  where
 "saintelague_method partiti nseats pr = 
   (let rec = new_record partiti nseats in 
    divisor_method (rec\<lparr>d := filter (\<lambda>x. x mod 2 = 1) (upt 1 (2*ns rec))\<rparr>) pr)"
@@ -104,7 +108,8 @@ fun saintelague_method:: "'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile 
 text \<open> This is a more generic version of the Sainte-Laguëmethod, in which it is possible to
        choose the way to identify the seats, as long as it is a linearly ordered type. \<close>
 fun saintelague_method_generic:: "'a::linorder list \<Rightarrow> 'b Parties \<Rightarrow> nat \<Rightarrow> 'b Profile \<Rightarrow>
-                   ('a::linorder, 'b) Divisor_Module" where
+                   ('a::linorder, 'b) Divisor_Module" 
+  where
 "saintelague_method_generic l partiti nseats pr = 
   (let rec = new_record_generic l partiti nseats in 
    divisor_method (rec\<lparr>d := filter (\<lambda>x. x mod 2 = 1) (upt 1 (2*ns rec))\<rparr>) pr)"
