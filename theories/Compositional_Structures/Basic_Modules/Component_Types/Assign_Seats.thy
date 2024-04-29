@@ -931,7 +931,7 @@ proof -
    then show ?thesis 
      using Suc_eq_plus1 True \<open>sl (assign_seat rec') = sl rec'\<close> less_eq_Suc_le by metis
   next
-   case False \<comment> \<open> per assurdo \<close>
+   case False
    then have "(fv rec) ! index (p rec) party = Max(set (fv rec))" 
      using assms(2) assms(26) assms(4) get_winners_not_in_win max_v.elims by metis
    then have "\<And>y. y \<noteq> index (p rec) party \<Longrightarrow> y < length (fv rec) \<Longrightarrow> 
@@ -1362,21 +1362,21 @@ assumes
 shows "sl (assign_seat rec') ! index (p rec) party \<ge> 
        sl (assign_seat rec) ! index (p rec) party"
 proof(cases "length winners' \<le> ns rec'")
-  case True \<comment> \<open>T\<close>
+  case True
   then show ?thesis using \<open>length winners' \<le> ns rec'\<close> assms 
                           assign_seat_monotone_case_T by metis
   next
-  case False  \<comment> \<open>F\<close>
+  case False
   then have "length winners' > ns rec'" 
     using False by simp
   then show ?thesis 
   proof(cases "length winners \<le> ns rec")
-    case True  \<comment> \<open>FT\<close>
+    case True 
     then show ?thesis 
       using \<open>length winners'>ns rec'\<close> \<open>length winners \<le> ns rec\<close> assms 
         assign_seat_incre_case_FT by metis
   next
-    case False \<comment> \<open>FF\<close>
+    case False
     then show ?thesis 
       using False assign_seat_break_tie_case assms
             linorder_le_less_linear assign_seat_case_TFqq 
